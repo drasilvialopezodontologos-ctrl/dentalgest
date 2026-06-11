@@ -1,0 +1,19 @@
+# Datos locales (no subir a GitHub — contienen información de pacientes y caja)
+data.json
+data_*.json
+*.json
+
+# Claude session files
+.claude/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log

@@ -346,15 +346,87 @@
         }
 
         /* ============================================================
-           RESPONSIVE
+           RESPONSIVE — MOBILE
         ============================================================ */
+
+        /* Botón hamburguesa — solo visible en móvil */
+        #hamburger-btn {
+            display: none;
+            position: fixed;
+            top: 13px; left: 13px;
+            z-index: 300;
+            background: var(--white);
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            width: 38px; height: 38px;
+            font-size: 18px;
+            cursor: pointer;
+            align-items: center; justify-content: center;
+            box-shadow: var(--shadow-sm);
+            color: var(--dark);
+        }
+
+        /* Overlay oscuro detrás del sidebar abierto */
+        #sb-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 199;
+        }
+        #sb-overlay.visible { display: block; }
+
         @media (max-width:900px) {
             :root { --sidebar:0px; }
             #sidebar { transform:translateX(-256px); transition:transform .25s ease; width:256px; }
-            #sidebar.open { transform:translateX(0); }
+            #sidebar.open { transform:translateX(0); box-shadow:4px 0 24px rgba(0,0,0,.3); }
             #mainContent { margin-left:0; }
-            .page-content { padding:16px; }
+            #hamburger-btn { display:flex; }
+
+            /* Page headers en móvil */
+            .page-header { padding:12px 16px 12px 60px; flex-wrap:wrap; gap:8px; }
+            .ph-left h1 { font-size:15px; }
+            .ph-left p { font-size:11px; margin-top:1px; }
+            .ph-right { gap:6px; flex-wrap:wrap; }
+
+            /* Contenido */
+            .page-content { padding:14px 14px; }
+            .page-body { padding:14px 14px; }
             .form-grid, .form-grid-3 { grid-template-columns:1fr; }
+
+            /* Tablas horizontalmente scrollables en móvil */
+            .cat-table-wrap, .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+            .cat-table { font-size:12px; min-width:500px; }
+
+            /* Tabs de filtros: wrap */
+            .comm-filter-tabs, .rep-tabs, .nom-tabs { flex-wrap:wrap; gap:4px; }
+            .comm-tab, .rep-tab, .nom-tab { font-size:12px; padding:7px 12px; }
+
+            /* Cards del dashboard */
+            .db-grid-4 { grid-template-columns:repeat(2,1fr) !important; }
+            .db-grid-2 { grid-template-columns:1fr !important; }
+
+            /* Botones primarios: tamaño táctil mínimo */
+            .btn { min-height:38px; font-size:13px; }
+            .btn-sm { min-height:32px; font-size:12px; padding:4px 12px; }
+
+            /* Modales: full width en móvil */
+            .modal-box { width:95vw !important; max-width:95vw !important; margin:0; border-radius:14px; }
+
+            /* Filtros en historial, etc. */
+            .hst-filters, .gx-filters { flex-direction:column; gap:8px; }
+
+            /* Sección de saldos de caja */
+            .caja-bolsillos { grid-template-columns:1fr 1fr !important; }
+
+            /* Ocultar columnas opcionales en tablas pequeñas */
+            .hide-mobile { display:none !important; }
+        }
+
+        @media (max-width:480px) {
+            .db-grid-4 { grid-template-columns:1fr !important; }
+            .caja-bolsillos { grid-template-columns:1fr !important; }
+            .page-header { padding:10px 12px 10px 56px; }
+            .ph-left p { display:none; }
         }
 
         /* ============================================================
@@ -859,6 +931,11 @@
 <div id="appShell" class="hidden">
 
     <!-- SIDEBAR -->
+    <!-- Overlay móvil (cierra el sidebar al tocar fuera) -->
+    <div id="sb-overlay" onclick="closeSidebar()"></div>
+    <!-- Botón hamburguesa móvil -->
+    <button id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+
     <aside id="sidebar">
         <div class="sb-logo">
             <div class="sb-logo-top">
@@ -2712,8 +2789,26 @@ function enterApp(){
 /* ── Navegación ── */
 let _currentPage = '';
 
+function toggleSidebar() {
+    const sb = g('sidebar');
+    const ov = g('sb-overlay');
+    if (!sb) return;
+    const isOpen = sb.classList.contains('open');
+    if (isOpen) { sb.classList.remove('open'); ov.classList.remove('visible'); }
+    else         { sb.classList.add('open');    ov.classList.add('visible'); }
+}
+function closeSidebar() {
+    const sb = g('sidebar');
+    const ov = g('sb-overlay');
+    if (sb) sb.classList.remove('open');
+    if (ov) ov.classList.remove('visible');
+}
+
 async function navigate(page) {
     _currentPage = page;
+
+    // En móvil, cerrar sidebar después de navegar
+    if (window.innerWidth <= 900) closeSidebar();
 
     document.querySelectorAll('[id^="page-"]').forEach(el=>el.classList.add('hidden'));
     const t=g('page-'+page);

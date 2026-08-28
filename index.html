@@ -3257,6 +3257,7 @@ async function _dgArrancarConSesion() {
     if (!ok) return;               // sesión rechazada: ya se mostró la pantalla de cuenta
     ponerAlDiaElCatalogo();
     ponerAlDiaLasEmpleadas();
+    ponerAlDiaLosHonorarios();
     if (caja) caja.style.opacity = '1';
     loadConfig();
 
@@ -6526,6 +6527,11 @@ const EXPENSE_CATS = {
     // ── Personal ─────────────────────────────────────────────────
     nomina:       { label:'👥 Nómina empleadas',          providers:['Sandry Karina Flórez','Zury Saray Peinado','Ambas empleadas'] },
     segsoc:       { label:'🏥 Seguridad social',          providers:['EPS empleador','Pensión empleador','ARL Clase I','Caja Compensación'] },
+    /* Un especialista no es una empleada. No tiene sueldo, ni prestaciones, ni
+       le corresponde seguridad social a cargo de la clínica: cobra honorarios
+       por lo que hace. Meterlo en «Nómina» mezcla dos cosas que se declaran
+       distinto y hace imposible saber cuánto cuesta cada una. */
+    honorarios:   { label:'🩺 Honorarios especialistas',  providers:['Diana Valencia'] },
     pasajes:      { label:'🚌 Pasajes especialistas',     providers:['Diana Valencia'] },
     capacitacion: { label:'📚 Capacitación / Formación',  providers:[] },
     // ── Operativos ────────────────────────────────────────────────
@@ -7769,6 +7775,135 @@ function getEmpleadasActivas() {
 
 /* Pasa las dos de siempre a la base la primera vez, con los sueldos que ya
    estaban puestos. Se hace una sola vez; después no vuelve a tocar nada. */
+/* ── Honorarios que quedaron escritos DENTRO de la nota ─────────────────────
+   Los cobros que se importaron del Excel traen el honorario del especialista
+   metido en el texto —«honorario atribuido a este paciente: $70.000»— y el
+   campo de comisión en cero, marcados 'owner', que es como la app dice «esto
+   se lo queda la clínica». Por eso Reportes mostraba a la Dra. Diana Valencia
+   con comisión $0 teniendo trato al 35%: la plata estaba, pero escrita donde
+   ninguna cuenta la mira.
+
+   Aquí ese número pasa al campo de comisión, que es donde vive el de todos los
+   demás doctores, y el cobro entra a la pantalla de Comisiones como cualquier
+   otro. Un dato en su campo se suma solo; un dato en una frase hay que leerlo.
+
+   El estado importa más de lo que parece. «Te queda» resta las comisiones
+   PENDIENTES y los gastos registrados. Los honorarios de las semanas que ella
+   ya pagó están en Gastos, así que marcarlos pendientes los restaría dos veces
+   y le mostraría una pérdida que no existe. Por eso lo ya pagado se marca
+   pagado, y sólo queda pendiente lo que de verdad debe.                      */
+/* «Honorario», «Honararios», «honorarios»… Estos renglones se teclean rápido y
+   de afán, y la conciliación no puede depender de que la palabra salga
+   perfecta: en agosto uno dice «Honararios». Se busca el tronco «hon…ari», que
+   aguanta el dedazo sin confundirse con otra cosa. Una sola regla para los dos
+   pasos de abajo: si cambia el criterio y uno se entera y el otro no, un pago
+   mixto se iría entero para pasajes. Pasó. */
+const _diceHonorario = txt => /hon\w*ari/i.test(String(txt || ''));
+
+function ponerAlDiaLosHonorarios() {
+    const tx = DB.get('tx') || [];
+    const gx = DB.get('gx') || [];
+    if (!tx.length) return;
+
+    /* 1. De la nota al campo. Sólo toca lo que trae la firma del problema:
+          honorario escrito en la nota y campo de comisión vacío. Un cobro ya
+          corregido a mano no vuelve a tocarse, y correr esto dos veces no
+          cambia nada la segunda vez. */
+    let movidos = 0;
+    tx.forEach(t => {
+        const h = _honorarioEnNota(t);
+        if (!h || (t.commission || 0) > 0) return;
+        const pct = pctComision(t.docId);
+        t.commission  = h;
+        t.commStatus  = 'pending';
+        t.commPaidAmount = 0;
+        t.commPaidAt  = '';
+        t.commLabel   = pct ? `${Math.round(pct * 100)}% de lo cobrado` : 'Honorario del especialista';
+        t.notes       = _repNotaExtra(t);
+        movidos++;
+    });
+    /* Aquí había un «si no moví nada, me voy» que parecía un ahorro y era una
+       trampa: los pasos 2 y 3 sólo corrían en la misma sesión que el paso 1.
+       Bastaba recargar para que la conciliación quedara a medias PARA SIEMPRE
+       —los honorarios pasados a comisión, pero ninguno marcado como pagado— y
+       la app le mostraría como deuda plata que ya había pagado. Los tres pasos
+       son inofensivos si no hay nada que hacer; que corran siempre. */
+
+    /* 2. Lo que ya le pagó. Los pagos semanales están en Gastos con el nombre
+          del doctor, la palabra «honorario» y la semana: «Honorario Semana 3
+          al 8 … 4 pasajes». De ahí sale qué cobros quedaron saldados.
+          Se separa además el pasaje, que iba sumado en el mismo renglón: son
+          dos cosas distintas —una es el precio del trabajo, la otra un apoyo
+          de transporte— y juntas no dejan responder cuánto cuesta cada una. */
+    const docs  = getDoctores();
+    const nuevos = [];
+    let saldados = 0, separados = 0;
+
+    gx.forEach(x => {
+        const txt = String(x.desc || '');
+        if (!_diceHonorario(txt)) return;
+        const docId = Object.keys(docs).find(id =>
+            docs[id].name && txt.toLowerCase().includes(docs[id].name.toLowerCase()));
+        if (!docId) return;
+        const sem = /semana\s+(\d{1,2})\s*al\s*(\d{1,2})/i.exec(txt);
+        if (!sem) return;
+
+        const mes = String(x.date || '').slice(0, 8);           // «2026-08-»
+        const dd  = n => mes + String(n).padStart(2, '0');
+        const del = dd(sem[1]), al = dd(sem[2]);
+
+        const suyos = tx.filter(t => t.docId === docId && t.commStatus === 'pending'
+                                  && t.date >= del && t.date <= al && (t.commission || 0) > 0);
+        const honor = suyos.reduce((s, t) => s + t.commission, 0);
+        /* Si la cuenta no cabe dentro de lo que pagó, algo no entendí de esa
+           nota. Antes que inventar un reparto, no se toca y se queda como está:
+           ella lo verá pendiente en Comisiones, que es visible y se arregla. */
+        if (!honor || honor > (x.amount || 0)) return;
+
+        suyos.forEach(t => {
+            t.commStatus     = 'paid';
+            t.commPaidAmount = t.commission;
+            t.commPaidAt     = x.date;
+            t.commPaidMethod = x.paySource || 'efectivo';
+            saldados++;
+        });
+
+        const pasaje = (x.amount || 0) - honor;
+        x.amount   = honor;
+        x.cat      = 'honorarios';
+        x.catLabel = EXPENSE_CATS.honorarios.label;
+        x.desc     = `Honorarios ${docs[docId].name} — semana ${sem[1]} al ${sem[2]}`;
+        if (pasaje > 0) {
+            nuevos.push({ ...x, id: 'gx' + Date.now() + '_' + (separados++),
+                amount: pasaje, cat: 'pasajes', catLabel: EXPENSE_CATS.pasajes.label,
+                desc: `Pasajes ${docs[docId].name} — semana ${sem[1]} al ${sem[2]}` });
+        }
+    });
+
+    /* 3. Pasajes sueltos. Algunos renglones son sólo transporte —«10 Pasajes
+          consulta»— y también quedaron en Nómina. Se mueven a su categoría,
+          pero SÓLO si son de un especialista: el pasaje de una empleada sí es
+          parte de su nómina, y sacarlo de ahí le desarmaría el costo laboral
+          justo donde importa para prestaciones y seguridad social. */
+    const emps = Object.values(getEmployees() || {}).map(e => (e.name || '').toLowerCase());
+    let sueltos = 0;
+    gx.forEach(x => {
+        if (x.cat !== 'nomina' || !/pasaje/i.test(x.desc || '') || _diceHonorario(x.desc)) return;
+        const t = String(x.desc).toLowerCase();
+        if (emps.some(n => n && t.includes(n.split(' ')[0]))) return;   // es de una empleada
+        const doc = Object.values(docs).find(dc => dc.name && t.includes(dc.name.toLowerCase()));
+        if (!doc) return;
+        x.cat = 'pasajes'; x.catLabel = EXPENSE_CATS.pasajes.label;
+        sueltos++;
+    });
+
+    DB.set('tx', tx);
+    DB.set('gx', gx.concat(nuevos));
+    console.log(`[honorarios] ${movidos} cobros pasaron de la nota al campo de comisión, ` +
+                `${saldados} quedaron saldados, ${nuevos.length} pasajes separados, ` +
+                `${sueltos} renglones de pasaje reclasificados`);
+}
+
 function ponerAlDiaLasEmpleadas() {
     const guardadas = DB.get('empleadas');
     if (guardadas && Object.keys(guardadas).length) return;

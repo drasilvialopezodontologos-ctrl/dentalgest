@@ -2900,7 +2900,13 @@ function _dgSyncServer() {
         _dgSyncServer._p = new Promise(res => { _dgSyncServer._res = res; });
     }
     _dgSyncServer._t = setTimeout(async () => {
-        const rows = Object.entries(_dgCache).map(([key, value]) => ({ key, value }));
+        /* Fuera las claves sin valor. La columna "value" del servidor no acepta
+           nulos, y el upsert es todo-o-nada: una sola clave nula hacía que se
+           rechazaran TODAS las demás. Un backup con "catalog": null bastaba para
+           que no se guardara absolutamente nada, sin más aviso que un 400. */
+        const rows = Object.entries(_dgCache)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .map(([key, value]) => ({ key, value }));
         let ok = false;
         try {
             const { error } = await _sb.from('data').upsert(rows, { onConflict: 'key' });

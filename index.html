@@ -1539,6 +1539,66 @@
                     </div>
                 </div>
 
+                <!-- COMISIONES DE LOS DOCTORES -->
+                <div class="form-section">
+                    <div class="fsh">
+                        <span class="fsh-icon">🤝</span>
+                        <div><h3>Comisiones de los doctores</h3><p>Lo acordado con cada especialista — se puede cambiar cuando se renegocie</p></div>
+                    </div>
+                    <div class="fsb">
+                        <div class="alert alert-info" style="margin-bottom:18px">
+                            💡 Si cambia un porcentaje, <strong>los cobros ya registrados no se tocan.</strong> Cada cobro
+                            guardó su comisión el día que se registró, así que lo de los meses pasados sigue igual.
+                            El porcentaje nuevo empieza a contar desde el próximo cobro que registre.
+                        </div>
+                        <div class="form-grid">
+                            <div class="fg">
+                                <label>Diana Valencia — Odontología General</label>
+                                <div class="inp-suf"><span class="suf-lbl">%</span>
+                                    <input type="number" class="fc" id="cfg-cm-diana_v" min="0" max="100" step="0.5"
+                                        placeholder="35"></div>
+                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
+                            </div>
+                            <div class="fg">
+                                <label>Rafael Díaz — Cirugía Maxilofacial</label>
+                                <div class="inp-suf"><span class="suf-lbl">%</span>
+                                    <input type="number" class="fc" id="cfg-cm-rafael" min="0" max="100" step="0.5"
+                                        placeholder="50"></div>
+                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
+                            </div>
+                            <div class="fg">
+                                <label>Nay Jiménez — Ortodoncia</label>
+                                <div class="inp-suf"><span class="suf-lbl">%</span>
+                                    <input type="number" class="fc" id="cfg-cm-nay" min="0" max="100" step="0.5"
+                                        placeholder="55"></div>
+                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
+                            </div>
+                            <div class="fg">
+                                <label>Nay Jiménez — solo retenedores</label>
+                                <div class="inp-suf"><span class="suf-lbl">%</span>
+                                    <input type="number" class="fc" id="cfg-cm-nay_retenedor" min="0" max="100" step="0.5"
+                                        placeholder="50"></div>
+                                <span class="hint">Los retenedores van aparte porque se acordaron distinto</span>
+                            </div>
+                            <div class="fg">
+                                <label>Diana Cabeza — Rehabilitación Oral</label>
+                                <div class="inp-suf"><span class="suf-lbl">%</span>
+                                    <input type="number" class="fc" id="cfg-cm-cabeza" min="0" max="100" step="0.5"
+                                        placeholder="50"></div>
+                                <span class="hint">Si el caso lleva laboratorio, se le paga al terminar el caso</span>
+                            </div>
+                        </div>
+                        <div style="margin-top:6px;padding:12px 14px;background:var(--bg);border-radius:10px;
+                             font-size:12px;color:var(--muted);line-height:1.6">
+                            <strong style="color:var(--dark)">Los otros tres no van por porcentaje:</strong><br>
+                            • <strong>Dr. Mendoza</strong> cobra tarifa fija por trabajo. Esa tarifa está en la nota de
+                            cada endodoncia, en <em>Catálogo</em> → ✎ Editar.<br>
+                            • <strong>Mayda Escandón</strong> se acuerda a mano en cada registro.<br>
+                            • <strong>Usted y Sandry</strong> no llevan comisión.
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SEGURIDAD -->
                 <div class="form-section">
                     <div class="fsh">
@@ -3791,6 +3851,12 @@ function loadConfig(){
     sv('cfg-avgtrats', c.avgTrats||0);
     sv('cfg-ps',  '');
     sv('cfg-psa', '');
+
+    /* Comisiones: se enseñan en número entendible (35, no 0.35). Si nadie las
+       ha tocado sale el acuerdo original, no una casilla vacía. */
+    Object.keys(COMISION_BASE).forEach(quien => {
+        sv('cfg-cm-' + quien, +(pctComision(quien) * 100).toFixed(2));
+    });
 }
 
 /* ── Configuración: guardar ── */
@@ -3800,6 +3866,30 @@ function saveConfig(){
     const psa=gv('cfg-psa').trim();
     if(ps  && !/^\d{4}$/.test(ps)){ toast('PIN de Silvia: debe tener exactamente 4 dígitos','error'); return; }
     if(psa && !/^\d{4}$/.test(psa)){ toast('PIN de Sandry: debe tener exactamente 4 dígitos','error'); return; }
+
+    /* ── Comisiones ──
+       Se revisan ANTES de guardar nada: si hay una mal escrita se avisa y no
+       se guarda nada, para no dejar la configuración a medias.
+       Una casilla vacía es un error a propósito, no un cero: borrarla sin
+       querer no puede terminar en "este doctor no gana comisión". */
+    const NOMBRE_COM = {
+        diana_v:'Diana Valencia', rafael:'Rafael Díaz', nay:'Nay Jiménez',
+        nay_retenedor:'Nay Jiménez (retenedores)', cabeza:'Diana Cabeza',
+    };
+    const comisiones = {};
+    for (const quien of Object.keys(COMISION_BASE)) {
+        const crudo = gv('cfg-cm-' + quien).trim();
+        if (crudo === '') {
+            toast(`Falta la comisión de ${NOMBRE_COM[quien]}. Si no lleva comisión, escriba 0.`, 'error');
+            return;
+        }
+        const n = parseFloat(crudo);
+        if (!isFinite(n) || n < 0 || n > 100) {
+            toast(`La comisión de ${NOMBRE_COM[quien]} debe ser un número entre 0 y 100.`, 'error');
+            return;
+        }
+        comisiones[quien] = n / 100;
+    }
 
     const cfg={
         nombre: gv('cfg-nombre')||DEFAULTS.nombre,
@@ -3837,14 +3927,25 @@ function saveConfig(){
         psa:    psa ||prev.psa ||DEFAULTS.psa,
     };
 
+    // Ojo: esto se pregunta ANTES de guardar, para comparar contra lo que había.
+    const cambiadas = Object.keys(comisiones).filter(k => pctComision(k) !== comisiones[k]);
+
     DB.set('config', cfg);
+    DB.set('comisiones', comisiones);
     DB.set('initialized', true);
     g('sbClinic').textContent=cfg.nombre;
-    toast('✅ Configuración guardada correctamente','success');
+
+    /* Si tocó una comisión conviene repetirle qué alcanza y qué no, porque es
+       justo la duda que da miedo: "¿esto me daña lo de agosto?". */
+    if (cambiadas.length) {
+        toast('✅ Guardado. Las comisiones nuevas cuentan desde el próximo cobro — lo ya registrado no cambió.', 'success', 8000);
+    } else {
+        toast('✅ Configuración guardada correctamente','success');
+    }
 }
 
 // ── Backup / Restauración ─────────────────────────────────────────────────────
-const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','nomina','retiro',
+const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','nomina','retiro',
                      'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual','initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
@@ -3970,6 +4071,53 @@ const DOCTORS = {
     silvia:  { name:'Dra. Silvia López', short:'Dra. Silvia',    spec:'Titular',              color:'#564753', comm:'Sin comisión — es la titular' },
     sandry:  { name:'Sandry Flórez',     short:'Sandry',         spec:'Auxiliar Odontología', color:'#8A7878', comm:'Sin comisión — va por nómina quincenal' },
 };
+
+/* ── Lo que se lleva cada doctor ────────────────────────────────────────────
+   Los porcentajes acordados con cada especialista. Antes estaban escritos a
+   mano dentro del programa; ahora se cambian desde Configuración, porque los
+   acuerdos se renegocian y eso no tiene por qué depender de nadie más.
+
+   OJO CON ESTO, que es lo importante: cambiar un porcentaje NO reescribe la
+   historia. Cada cobro guarda SU comisión en el momento de registrarse (ver
+   comisionDe y quienes la llaman), así que lo ya registrado sigue diciendo
+   lo mismo y el porcentaje nuevo cuenta del próximo cobro en adelante. Eso
+   es lo correcto: si en septiembre se acuerda otro trato, no por eso cambia
+   lo que se le debía en agosto.
+
+   Se guarda en la base y no en el equipo, para que los dos computadores vean
+   el mismo acuerdo. */
+const COMISION_BASE = {
+    diana_v:       0.35,
+    rafael:        0.50,
+    nay:           0.55,
+    nay_retenedor: 0.50,
+    cabeza:        0.50,
+};
+
+/* Porcentaje vigente. Si nadie lo ha tocado —o quedó un valor absurdo— se
+   usa el acuerdo original. */
+function pctComision(quien) {
+    const guardados = DB.get('comisiones') || {};
+    const v = guardados[quien];
+    return (typeof v === 'number' && isFinite(v) && v >= 0 && v <= 1)
+        ? v
+        : COMISION_BASE[quien];
+}
+const _pc = quien => Math.round(pctComision(quien) * 100);   // 0.35 → 35, para mostrar
+
+/* La frasecita que sale en el Catálogo al lado del nombre del doctor. Se
+   arma con el porcentaje de ahora, no con uno escrito a mano, para que no
+   diga una cosa mientras la app calcula otra. */
+function textoComision(docId) {
+    switch (docId) {
+        case 'diana_v': return `${_pc('diana_v')}% después de descontar el laboratorio · Corte semanal`;
+        case 'nay':     return `${_pc('nay')}% después de laboratorio (${_pc('nay_retenedor')}% en retenedores) · De una vez`;
+        case 'rafael':  return `${_pc('rafael')}% después de laboratorio · De una vez`;
+        case 'cabeza':  return `${_pc('cabeza')}% después de laboratorio · Al terminar el caso`;
+        default:        return (DOCTORS[docId] || {}).comm || '';
+    }
+}
+
 // Helper: nombre corto del doctor por docId o por docName
 function docShort(docId, docName) {
     if (docId && DOCTORS[docId]) return DOCTORS[docId].short;
@@ -4264,7 +4412,7 @@ function renderCatalog() {
                         <div class="cat-doc-spec">${doc.spec}</div>
                     </div>
                 </div>
-                <div class="cat-comm-badge">${doc.comm}</div>
+                <div class="cat-comm-badge">${textoComision(docId)}</div>
                 <div class="cat-count">${items.length} trat.</div>
             </div>
             <table class="cat-table">
@@ -4750,11 +4898,11 @@ function comisionDe({ docId, price = 0, lab = 0, treatId = null, manual = 0, con
     });
 
     switch (docId) {
-        case 'diana_v': return conLab(0.35, 'Diana Valencia');
-        case 'rafael':  return conLab(0.50, 'Rafael Díaz');
+        case 'diana_v': return conLab(pctComision('diana_v'), 'Diana Valencia');
+        case 'rafael':  return conLab(pctComision('rafael'),  'Rafael Díaz');
         case 'nay': {
             const esRetenedor = treat?.note?.includes('50% después de lab');
-            const c = conLab(esRetenedor ? 0.50 : 0.55, 'Nay Jiménez');
+            const c = conLab(pctComision(esRetenedor ? 'nay_retenedor' : 'nay'), 'Nay Jiménez');
             if (esRetenedor) c.label += ' (retenedor)';
             return c;
         }
@@ -4783,19 +4931,21 @@ function comisionDe({ docId, price = 0, lab = 0, treatId = null, manual = 0, con
             const hayLab = conLaboratorio !== undefined
                 ? conLaboratorio
                 : (treat?.lab === true || lab > 0);
+            const pctCab = pctComision('cabeza');
+            const nCab   = Math.round(pctCab * 100);
             if (esValoracion || !hayLab) {
                 // Valoración y trabajos sin laboratorio: se causan y se pagan de una vez
                 return {
-                    amount: Math.round(price * 0.50),
-                    label: esValoracion ? '50% de lo cobrado (valoración)' : '50% de lo cobrado',
+                    amount: Math.round(price * pctCab),
+                    label: esValoracion ? `${nCab}% de lo cobrado (valoración)` : `${nCab}% de lo cobrado`,
                     status: COMISION_ESTADO.pendiente,
                     quien: 'Diana Cabeza',
                 };
             }
             // Con laboratorio: se le paga al terminar el caso
             return {
-                amount: Math.round(postLab * 0.50),
-                label:  `50% de ${fmt(price)} − ${fmt(lab)} de laboratorio — al terminar el caso`,
+                amount: Math.round(postLab * pctCab),
+                label:  `${nCab}% de ${fmt(price)} − ${fmt(lab)} de laboratorio — al terminar el caso`,
                 status: COMISION_ESTADO.diferida,
                 quien: 'Diana Cabeza',
             };

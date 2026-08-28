@@ -383,6 +383,41 @@
         .fsh h3 { font-size:14px; font-weight:800; color:var(--dark); }
         .fsh p { font-size:12px; color:var(--muted); margin-top:2px; }
         .fsb { padding:22px 24px; }
+        /* Configuración plegable: la barra de arriba de cada sección se vuelve
+           un botón, y el cuerpo se esconde. Así la página cabe en la pantalla
+           en vez de ser un rollo de tres metros. */
+        .fsh-plegable { cursor:pointer; user-select:none; }
+        .fsh-plegable:hover { background:var(--bg-soft,#F7F2F0); }
+        /* La flechita es lo único que dice «esto se abre». Va en una fichita
+           redonda y con buen contraste: de 13px y gris pálido no se veía. */
+        .fsh-chev { margin-left:auto; flex-shrink:0; display:flex; align-items:center;
+                    justify-content:center; width:28px; height:28px; border-radius:50%;
+                    background:var(--bg,#F7F2F0); border:1px solid var(--border);
+                    font-size:15px; line-height:1; color:var(--bronze,#8C6B4F);
+                    transition:transform .18s ease, background .18s ease, border-color .18s ease; }
+        .fsh-plegable:hover .fsh-chev { background:var(--white); border-color:var(--bronze); }
+        .form-section.cfg-cerrada .fsh { border-bottom:none; }
+        .form-section.cfg-cerrada .fsb { display:none; }
+        .form-section.cfg-cerrada .fsh-chev { transform:rotate(-90deg); }
+        /* Un atajo ya escogido, en Configuración. */
+        .at-fila { display:flex; align-items:center; gap:10px; background:var(--white);
+                   border:1px solid var(--border); border-radius:11px; padding:9px 12px; margin-bottom:7px; }
+        .at-num  { width:22px; height:22px; border-radius:50%; flex-shrink:0; background:var(--bg);
+                   color:var(--muted); font-size:11px; font-weight:800; display:flex;
+                   align-items:center; justify-content:center; }
+        .at-txt  { flex:1; min-width:0; }
+        .at-n    { font-size:13px; font-weight:700; color:var(--dark); line-height:1.3; }
+        .at-d    { font-size:11px; color:var(--muted); margin-top:1px; }
+        .at-acc  { display:flex; gap:4px; flex-shrink:0; }
+        .at-acc button { border:1.5px solid var(--border); background:var(--white); color:var(--muted);
+                   border-radius:8px; width:28px; height:28px; font-size:13px; cursor:pointer; line-height:1; }
+        .at-acc button:hover:not(:disabled) { border-color:var(--bronze); color:var(--bronze); }
+        .at-acc button:disabled { opacity:.3; cursor:default; }
+        .at-acc button.at-x:hover { border-color:var(--danger); color:var(--danger); }
+        .cfg-barra { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+        .cfg-barra button { border:1.5px solid var(--border); background:var(--white); color:var(--muted);
+                    border-radius:9px; padding:7px 13px; font-size:12px; font-weight:700; cursor:pointer; }
+        .cfg-barra button:hover { border-color:var(--bronze); color:var(--bronze); }
         .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
         .form-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
         .fg { display:flex; flex-direction:column; gap:5px; }
@@ -991,6 +1026,14 @@
         .eq-body label { display:block; font-size:10px; font-weight:700; text-transform:uppercase;
                      letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
         .eq-body .fc { font-size:13px; padding:8px 10px; }
+        /* Ojo: la línea de arriba pisaba el hueco que .inp-pre le deja al «$»,
+           y el signo quedaba encima del primer dígito — un sueldo de 1.600.000
+           se leía «$600000». Aquí se le devuelve el espacio. */
+        .eq-body .inp-pre .fc { padding-left:26px; }
+        .eq-body .inp-suf .fc { padding-right:26px; }
+        .eq-body .pre-lbl, .eq-body .suf-lbl { font-size:12px; }
+        .eq-body .inp-pre .pre-lbl { left:10px; }
+        .eq-body .inp-suf .suf-lbl { right:10px; }
         .eq-wide   { grid-column:1 / -1; }
         .eq-note   { grid-column:1 / -1; font-size:11.5px; color:var(--muted); line-height:1.55; }
         .eq-side   { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
@@ -1299,8 +1342,13 @@
             </div>
             <div class="page-content">
 
-                <div class="alert alert-info" style="margin-bottom:22px">
-                    💡 Ingresa los datos reales del consultorio. Los puedes editar en cualquier momento. Los saldos iniciales son el punto de partida de la caja.
+                <div class="alert alert-info" style="margin-bottom:14px">
+                    💡 Toque el título de una sección para abrirla. Todo lo de aquí se puede cambiar
+                    cuando quiera — el equipo, las empleadas, los precios base y los atajos.
+                </div>
+                <div class="cfg-barra">
+                    <button type="button" onclick="abrirTodaLaConfig()">⊕ Abrir todo</button>
+                    <button type="button" onclick="cerrarTodaLaConfig()">⊖ Cerrar todo</button>
                 </div>
 
                 <!-- DATOS DEL CONSULTORIO -->
@@ -1469,84 +1517,22 @@
                             </div>
                         </div>
                         <div class="divider"></div>
-                        <div class="sub-label">Sandry Karina Flórez Plata</div>
-                        <div class="form-grid" style="margin-bottom:12px">
-                            <div class="fg">
-                                <label>Sueldo base</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-ss" placeholder="1453600">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Auxilio de transporte</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-st" placeholder="250000">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-grid-3" style="margin-bottom:4px">
-                            <div class="fg">
-                                <label>Quincena bruta exacta</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-s-brutoQ" placeholder="auto">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Desc. salud quincena</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-s-salud" placeholder="auto">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Desc. pensión quincena</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-s-pension" placeholder="auto">
-                                </div>
-                            </div>
-                        </div>
-                        <p class="hint" style="margin-bottom:20px">Opcional — si tu contadora usa valores exactos, ingrésalos aquí. Vacío = cálculo automático (sueldo ÷ 2 · 4%).</p>
-                        <div class="divider"></div>
-                        <div class="sub-label">Zury Saray Peinado Hernández</div>
-                        <div class="form-grid" style="margin-bottom:12px">
-                            <div class="fg">
-                                <label>Sueldo base</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-zs" placeholder="1250000">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Auxilio de transporte</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-zt" placeholder="250000">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-grid-3" style="margin-bottom:4px">
-                            <div class="fg">
-                                <label>Quincena bruta exacta</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-z-brutoQ" placeholder="auto">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Desc. salud quincena</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-z-salud" placeholder="auto">
-                                </div>
-                            </div>
-                            <div class="fg">
-                                <label>Desc. pensión quincena</label>
-                                <div class="inp-pre"><span class="pre-lbl">$</span>
-                                    <input type="number" class="fc" id="cfg-z-pension" placeholder="auto">
-                                </div>
-                            </div>
-                        </div>
-                        <p class="hint" style="margin-bottom:20px">Opcional — si tu contadora usa valores exactos, ingrésalos aquí. Vacío = cálculo automático (sueldo ÷ 2 · 4%).</p>
-                        <div class="alert alert-info">
+                        <div id="cfg-empleadas"></div>
+                        <div id="cfg-empleadas-retiradas"></div>
+                        <button type="button" class="eq-add" onclick="abrirEmpleadaNueva()">+ Agregar una empleada</button>
+                        <div class="alert alert-info" style="margin-top:16px">
                             <strong>ARL Clase I</strong> (0.522%) · <strong>EPS empleador</strong> 8.5% · <strong>Pensión empleador</strong> 12% · <strong>Caja Compensación</strong> 4% — aplicados automáticamente en nómina. Auxilio de transporte no entra en la base de cotización.
                         </div>
-                        <div class="divider"></div>
-                        <div class="sub-label">Dra. Silvia Patricia López — Dueña</div>
+                    </div>
+                </div>
+
+                <!-- LA DUEÑA -->
+                <div class="form-section">
+                    <div class="fsh">
+                        <span class="fsh-icon">👩‍⚕️</span>
+                        <div><h3>Dra. Silvia Patricia López — Dueña</h3><p>Lo que se paga a sí misma y su seguridad social</p></div>
+                    </div>
+                    <div class="fsb">
                         <div class="form-grid" style="margin-bottom:8px">
                             <div class="fg">
                                 <label>Retiro mensual objetivo</label>
@@ -1588,6 +1574,31 @@
                         <div id="cfg-equipo"></div>
                         <div id="cfg-equipo-retirados"></div>
                         <button type="button" class="eq-add" onclick="abrirDoctorNuevo()">+ Agregar alguien al equipo</button>
+                    </div>
+                </div>
+
+                <!-- ATAJOS -->
+                <div class="form-section">
+                    <div class="fsh">
+                        <span class="fsh-icon">⚡</span>
+                        <div><h3>Atajos de registro</h3><p>Los tratamientos que más cobra, como botones en la pantalla de Registro</p></div>
+                    </div>
+                    <div class="fsb">
+                        <div class="alert alert-info" style="margin-bottom:16px">
+                            💡 Escoja hasta <strong>10</strong>. Aparecen arriba en Registro y con un toque
+                            ponen el doctor, el tratamiento y el precio. Si no escoge ninguno, la app pone
+                            sola los 4 que más ha registrado en los últimos dos meses.
+                        </div>
+                        <div id="cfg-atajos-lista"></div>
+                        <div class="fg" style="margin-top:14px">
+                            <label>Agregar un atajo</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <select class="fc" id="cfg-atajo-nuevo" style="flex:1;min-width:220px"></select>
+                                <button type="button" class="btn btn-ghost" onclick="agregarAtajo()">+ Agregar</button>
+                            </div>
+                        </div>
+                        <button type="button" class="eq-add" style="margin-top:14px" onclick="volverAtajosAutomaticos()">
+                            ↺ Quitar todos y dejar que la app los escoja sola</button>
                     </div>
                 </div>
 
@@ -2483,30 +2494,24 @@
 
         <div id="page-nomina" class="hidden">
             <div class="page-header">
-                <div class="ph-left"><h1>👥 Nómina</h1><p>Quincenas, provisiones e historial — Sandry, Zury y Dra. Silvia</p></div>
+                <div class="ph-left"><h1>👥 Nómina</h1><p>Quincenas, provisiones e historial del equipo</p></div>
             </div>
             <div class="page-content">
                 <!-- Período nav — compartido para Sandry y Zury -->
                 <div id="nom-periodo-hdr" style="margin-bottom:16px"></div>
 
+                <!-- Las pestañas de las empleadas se arman solas, una por cada
+                     una que esté trabajando: antes Sandry y Zury estaban
+                     escritas aquí y no había forma de agregar a nadie. -->
                 <div class="comm-filter-tabs" style="margin-bottom:20px">
-                    <button class="comm-tab active" id="ntab-sandry" onclick="setNominaTab('sandry')">💵 Sandry</button>
-                    <button class="comm-tab"        id="ntab-zury"   onclick="setNominaTab('zury')">💵 Zury</button>
+                    <span id="nom-tabs-emp"></span>
                     <button class="comm-tab"        id="ntab-silvia" onclick="setNominaTab('silvia')">👩‍⚕️ Dra. Silvia</button>
                     <button class="comm-tab"        id="ntab-prov"   onclick="setNominaTab('prov')">🏛️ Provisiones</button>
                     <button class="comm-tab"        id="ntab-hist"   onclick="setNominaTab('hist')">📋 Historial</button>
                 </div>
 
-                <!-- SANDRY -->
-                <div id="nom-sandry">
-                    <div id="nom-card-sandry"></div>
-                    <div id="nom-pila-section" style="margin-top:20px"></div>
-                </div>
-
-                <!-- ZURY -->
-                <div id="nom-zury" class="hidden">
-                    <div id="nom-card-zury"></div>
-                </div>
+                <!-- Un panel por empleada, también armado solo -->
+                <div id="nom-emp-panes"></div>
 
                 <!-- DRA. SILVIA -->
                 <div id="nom-silvia" class="hidden">
@@ -3270,6 +3275,7 @@ async function _dgArrancarConSesion() {
     const ok = await _dgLoadFromServer();
     if (!ok) return;               // sesión rechazada: ya se mostró la pantalla de cuenta
     ponerAlDiaElCatalogo();
+    ponerAlDiaLasEmpleadas();
     if (caja) caja.style.opacity = '1';
     loadConfig();
 
@@ -3754,16 +3760,6 @@ function loadConfig(){
     sv('cfg-ester',  c.ester ||DEFAULTS.ester);
     sv('cfg-smlmv',  c.smlmv ||DEFAULTS.smlmv);
     sv('cfg-arl',    c.arl   ? (c.arl*100).toFixed(3) : '0.522');
-    sv('cfg-ss',     c.ss    ||DEFAULTS.ss);
-    sv('cfg-st',     c.st    ||DEFAULTS.st);
-    sv('cfg-s-brutoQ',  c.sBrutoQ  ||'');
-    sv('cfg-s-salud',   c.sSalud   ||'');
-    sv('cfg-s-pension', c.sPension ||'');
-    sv('cfg-zs',     c.zs    ||DEFAULTS.zs);
-    sv('cfg-zt',     c.zt    ||DEFAULTS.zt);
-    sv('cfg-z-brutoQ',  c.zBrutoQ  ||'');
-    sv('cfg-z-salud',   c.zSalud   ||'');
-    sv('cfg-z-pension', c.zPension ||'');
     sv('cfg-retiro',   c.retiro  ||0);
     sv('cfg-ssi',      c.ssi     ||0);
     sv('cfg-avgtrats', c.avgTrats||0);
@@ -3774,6 +3770,81 @@ function loadConfig(){
        entendible (35, no 0.35) y, si nadie los ha tocado, sale el acuerdo
        original y no una casilla vacía. */
     renderEquipoCfg();
+    renderEmpleadasCfg();
+    renderAtajosCfg();
+    montarAcordeonCfg();
+}
+
+/* ══ Configuración plegable ════════════════════════════════════════════════
+   La página tenía siete secciones una debajo de otra y había que bajar mucho
+   para llegar a la última. Ahora cada una se abre y se cierra tocando su
+   título, y el computador se acuerda de cuáles dejó abiertas.
+
+   La memoria va en una clave SIN el prefijo dg_ a propósito: es un gusto de
+   este computador, no un dato de la clínica. Si fuera dg_ se sincronizaría, y
+   lo que ella abra aquí le movería la pantalla a Sandry allá.               */
+const CFG_ABIERTAS = 'dentalgest_cfg_abiertas';
+
+function _cfgSeccionesAbiertas() {
+    try { return new Set(JSON.parse(localStorage.getItem(CFG_ABIERTAS) || '[]')); }
+    catch (e) { return new Set(); }
+}
+function _cfgRecordar() {
+    const abiertas = [...document.querySelectorAll('#page-config .form-section[data-cfg-sec]')]
+        .filter(s => !s.classList.contains('cfg-cerrada'))
+        .map(s => s.dataset.cfgSec);
+    try { localStorage.setItem(CFG_ABIERTAS, JSON.stringify(abiertas)); } catch (e) {}
+}
+
+let _cfgAcordeonListo = false;
+function montarAcordeonCfg() {
+    if (_cfgAcordeonListo) return;
+    const secciones = [...document.querySelectorAll('#page-config .form-section')];
+    if (!secciones.length) return;
+    const abiertas = _cfgSeccionesAbiertas();
+    secciones.forEach((sec, i) => {
+        const hdr = sec.querySelector('.fsh');
+        if (!hdr) return;
+        const slug = 'sec' + i;
+        sec.dataset.cfgSec = slug;
+        hdr.classList.add('fsh-plegable');
+        hdr.setAttribute('role', 'button');
+        hdr.setAttribute('tabindex', '0');
+        if (!hdr.querySelector('.fsh-chev'))
+            hdr.insertAdjacentHTML('beforeend', '<span class="fsh-chev">▾</span>');
+        hdr.addEventListener('click', () => plegarCfgSeccion(sec));
+        hdr.addEventListener('keydown', ev => {
+            if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); plegarCfgSeccion(sec); }
+        });
+        sec.classList.toggle('cfg-cerrada', !abiertas.has(slug));
+    });
+    _cfgAcordeonListo = true;
+}
+
+function plegarCfgSeccion(sec) {
+    sec.classList.toggle('cfg-cerrada');
+    _cfgRecordar();
+}
+function abrirTodaLaConfig() {
+    document.querySelectorAll('#page-config .form-section').forEach(s => s.classList.remove('cfg-cerrada'));
+    _cfgRecordar();
+}
+function cerrarTodaLaConfig() {
+    document.querySelectorAll('#page-config .form-section').forEach(s => s.classList.add('cfg-cerrada'));
+    _cfgRecordar();
+}
+
+/* Un aviso de error no sirve de nada si la casilla que lo causó está escondida
+   dentro de una sección cerrada. Antes de avisar, se abre y se lleva a la
+   vista. */
+function abrirSeccionDe(elemento) {
+    if (!elemento) return;
+    const sec = elemento.closest('.form-section');
+    if (!sec) return;
+    sec.classList.remove('cfg-cerrada');
+    _cfgRecordar();
+    try { elemento.scrollIntoView({ behavior:'smooth', block:'center' }); } catch (e) {}
+    if (typeof elemento.focus === 'function') { try { elemento.focus({ preventScroll:true }); } catch (e) {} }
 }
 
 /* ── Configuración: guardar ── */
@@ -3781,8 +3852,8 @@ function saveConfig(){
     const prev=DB.get('config')||DEFAULTS;
     const ps =gv('cfg-ps').trim();
     const psa=gv('cfg-psa').trim();
-    if(ps  && !/^\d{4}$/.test(ps)){ toast('PIN de Silvia: debe tener exactamente 4 dígitos','error'); return; }
-    if(psa && !/^\d{4}$/.test(psa)){ toast('PIN de Sandry: debe tener exactamente 4 dígitos','error'); return; }
+    if(ps  && !/^\d{4}$/.test(ps)){ abrirSeccionDe(g('cfg-ps'));  toast('PIN de Silvia: debe tener exactamente 4 dígitos','error'); return; }
+    if(psa && !/^\d{4}$/.test(psa)){ abrirSeccionDe(g('cfg-psa')); toast('PIN de Sandry: debe tener exactamente 4 dígitos','error'); return; }
 
     /* ── El equipo ──
        Se revisa ANTES de guardar nada: si hay algo mal escrito se avisa y no
@@ -3791,6 +3862,12 @@ function saveConfig(){
     const eq = leerEquipoDeLaPantalla();
     if (!eq) return;
     const comisiones = eq.comisiones || {};
+
+    /* Lo mismo con las empleadas: se revisa antes, y si algo está mal no se
+       guarda nada. Si la sección todavía no se ha dibujado (null) se deja como
+       estaba, que no es lo mismo que borrarlas. */
+    const empleadas = leerEmpleadasDeLaPantalla();
+    if (empleadas === null && document.querySelector('#page-config [data-emp-id]')) return;
 
     const cfg={
         nombre: gv('cfg-nombre')||DEFAULTS.nombre,
@@ -3811,16 +3888,11 @@ function saveConfig(){
         ester:  parseFloat(gv('cfg-ester')) ||DEFAULTS.ester,
         smlmv:  parseFloat(gv('cfg-smlmv'))  ||DEFAULTS.smlmv,
         arl:    (parseFloat(gv('cfg-arl')) ||0.522) / 100,
-        ss:     parseFloat(gv('cfg-ss'))    ||DEFAULTS.ss,
-        st:     parseFloat(gv('cfg-st'))    ||DEFAULTS.st,
-        sBrutoQ:  parseFloat(gv('cfg-s-brutoQ'))  ||0,
-        sSalud:   parseFloat(gv('cfg-s-salud'))   ||0,
-        sPension: parseFloat(gv('cfg-s-pension')) ||0,
-        zs:     parseFloat(gv('cfg-zs'))    ||DEFAULTS.zs,
-        zt:     parseFloat(gv('cfg-zt'))    ||DEFAULTS.zt,
-        zBrutoQ:  parseFloat(gv('cfg-z-brutoQ'))  ||0,
-        zSalud:   parseFloat(gv('cfg-z-salud'))   ||0,
-        zPension: parseFloat(gv('cfg-z-pension')) ||0,
+        /* Los sueldos ya no viven aquí: son de cada empleada, en su tarjeta.
+           Se dejan pasar tal cual venían para que un respaldo viejo, que
+           todavía los trae, siga sirviendo de semilla al restaurarlo. */
+        ss: prev.ss, st: prev.st, sBrutoQ: prev.sBrutoQ, sSalud: prev.sSalud, sPension: prev.sPension,
+        zs: prev.zs, zt: prev.zt, zBrutoQ: prev.zBrutoQ, zSalud: prev.zSalud, zPension: prev.zPension,
         retiro:    parseFloat(gv('cfg-retiro'))  ||0,
         ssi:       parseFloat(gv('cfg-ssi'))     ||0,
         avgTrats:  parseInt(gv('cfg-avgtrats'))  ||0,
@@ -3833,9 +3905,13 @@ function saveConfig(){
     const cambiadas = Object.keys(comisiones).filter(k => pctComision(k) !== comisiones[k]);
     const nuevos    = eq.equipo ? Object.keys(eq.equipo).filter(id => !antes[id]) : [];
 
+    const empAntes  = getEmployees();
+    const empNuevas = empleadas ? Object.keys(empleadas).filter(id => !empAntes[id]) : [];
+
     DB.set('config', cfg);
     DB.set('comisiones', comisiones);
     if (eq.equipo) DB.set('equipo', eq.equipo);
+    if (empleadas) DB.set('empleadas', empleadas);
     DB.set('initialized', true);
     g('sbClinic').textContent=cfg.nombre;
 
@@ -3844,10 +3920,13 @@ function saveConfig(){
     (eq.copiar || []).forEach(c => { copiados += copiarTratamientos(c.id, c.desde); });
 
     renderEquipoCfg();   // las tarjetas nuevas dejan de serlo
+    renderEmpleadasCfg();
 
     /* Si tocó una comisión conviene repetirle qué alcanza y qué no, porque es
        justo la duda que da miedo: "¿esto me daña lo de agosto?". */
-    if (nuevos.length) {
+    if (empNuevas.length) {
+        toast(`✅ ${empleadas[empNuevas[0]].name} ya está en nómina. Le aparece su pestaña de quincenas.`, 'success', 8000);
+    } else if (nuevos.length) {
         const quien = eq.equipo[nuevos[0]].name;
         toast(nuevos.length === 1
             ? `✅ ${quien} ya está en el equipo${copiados ? ` — con ${copiados} tratamientos copiados` : ''}. Ya sale en las listas.`
@@ -3861,7 +3940,7 @@ function saveConfig(){
 }
 
 // ── Backup / Restauración ─────────────────────────────────────────────────────
-const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','equipo','nomina','retiro',
+const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','equipo','empleadas','atajos','nomina','retiro',
                      'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual','initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
@@ -4338,6 +4417,7 @@ function leerEquipoDeLaPantalla() {
         const esNuevo = t.dataset.eqNuevo === '1';
         const nombre  = (gv('eq-name-' + id) || '').trim();
         if (!nombre) {
+            abrirSeccionDe(g('eq-name-' + id));
             toast(esNuevo ? 'A la persona nueva le falta el nombre.' : 'Nadie del equipo se puede quedar sin nombre.', 'error', 5000);
             return null;
         }
@@ -4354,11 +4434,13 @@ function leerEquipoDeLaPantalla() {
                querer no puede terminar en "este doctor no gana comisión". */
             const crudo = (gv('eq-pct-' + id) || '').trim();
             if (crudo === '') {
+                abrirSeccionDe(g('eq-pct-' + id));
                 toast(`Falta el porcentaje de ${nombre}. Si de verdad no lleva, escoja «No lleva comisión».`, 'error', 6000);
                 return null;
             }
             const n = parseFloat(crudo);
             if (!isFinite(n) || n < 0 || n > 100) {
+                abrirSeccionDe(g('eq-pct-' + id));
                 toast(`El porcentaje de ${nombre} debe ser un número entre 0 y 100.`, 'error', 6000);
                 return null;
             }
@@ -4438,6 +4520,195 @@ function _guardarEquipo(retoque, mensaje) {
     if (leido.comisiones && Object.keys(leido.comisiones).length) DB.set('comisiones', leido.comisiones);
     DB.set('equipo', equipo);
     renderEquipoCfg();
+    if (mensaje) toast('✅ ' + mensaje, 'success', 6000);
+}
+
+/* ══ Las empleadas de nómina ═══════════════════════════════════════════════
+   Mismas tarjetas que el equipo, pero lo que se edita es otra cosa: aquí no
+   hay comisión, hay sueldo. Y una regla que no se puede romper: retirar sólo
+   esconde. Las prestaciones de los meses que alcanzó a trabajar se siguen
+   debiendo, y el histórico de quincenas pagadas no se toca nunca.          */
+
+function _empTarjeta(id, e, esNueva) {
+    const off = e.activo === false;
+    const v   = n => (n === undefined || n === null || n === 0) ? '' : n;
+    return `
+    <div class="eq-card${off ? ' eq-off' : ''}" data-emp-id="${id}"${esNueva ? ' data-emp-nueva="1"' : ''}>
+        <div class="eq-av" style="background:${e.color || '#997771'}">${_eqIniciales(e.name)}</div>
+        <div class="eq-body">
+            <div class="fg">
+                <label>Nombre completo</label>
+                <input type="text" class="fc" id="emp-name-${id}" value="${_eqEsc(e.name)}" placeholder="Nombre y apellidos">
+            </div>
+            <div class="fg">
+                <label>Como aparece en las listas</label>
+                <input type="text" class="fc" id="emp-short-${id}" value="${_eqEsc(e.shortName)}" placeholder="Ej: Sandry">
+            </div>
+            <div class="fg">
+                <label>Sueldo base al mes</label>
+                <div class="inp-pre"><span class="pre-lbl">$</span>
+                    <input type="number" class="fc" id="emp-salary-${id}" value="${v(e.salary)}" placeholder="1600000"></div>
+            </div>
+            <div class="fg">
+                <label>Auxilio de transporte</label>
+                <div class="inp-pre"><span class="pre-lbl">$</span>
+                    <input type="number" class="fc" id="emp-trans-${id}" value="${v(e.transport)}" placeholder="250000"></div>
+            </div>
+            <div class="fg">
+                <label>Desde cuándo trabaja aquí</label>
+                <input type="date" class="fc" id="emp-desde-${id}" value="${_eqEsc(e.cesStart || e.startDate || '')}">
+                <span class="hint">Desde esta fecha se le cuentan cesantías, prima y vacaciones.</span>
+            </div>
+            ${off ? `
+            <div class="fg">
+                <label>Último día que trabajó</label>
+                <input type="date" class="fc" id="emp-salio-${id}" value="${_eqEsc(e.salioEl || '')}">
+                <span class="hint">Desde el mes siguiente ya no se le provisiona nada.</span>
+            </div>` : ''}
+            <details class="eq-wide" style="margin-top:4px">
+                <summary style="cursor:pointer;font-size:12px;color:var(--muted);font-weight:600">
+                    Valores exactos de la contadora (opcional)</summary>
+                <div class="form-grid-3" style="margin-top:10px">
+                    <div class="fg">
+                        <label>Quincena bruta exacta</label>
+                        <div class="inp-pre"><span class="pre-lbl">$</span>
+                            <input type="number" class="fc" id="emp-bruto-${id}" value="${v(e.brutoQ)}" placeholder="auto"></div>
+                    </div>
+                    <div class="fg">
+                        <label>Desc. salud quincena</label>
+                        <div class="inp-pre"><span class="pre-lbl">$</span>
+                            <input type="number" class="fc" id="emp-salud-${id}" value="${v(e.descSalud)}" placeholder="auto"></div>
+                    </div>
+                    <div class="fg">
+                        <label>Desc. pensión quincena</label>
+                        <div class="inp-pre"><span class="pre-lbl">$</span>
+                            <input type="number" class="fc" id="emp-pension-${id}" value="${v(e.descPension)}" placeholder="auto"></div>
+                    </div>
+                </div>
+                <span class="hint">Vacío = se calcula solo (sueldo ÷ 2, menos 4% y 4%).</span>
+            </details>
+        </div>
+        <div class="eq-side">
+            ${off
+                ? `<button type="button" class="eq-btn eq-back" onclick="reactivarEmpleada('${id}')">Volvió</button>`
+                : `<button type="button" class="eq-btn" onclick="retirarEmpleada('${id}')">Ya no trabaja aquí</button>`}
+        </div>
+    </div>`;
+}
+
+function renderEmpleadasCfg() {
+    const caja = g('cfg-empleadas');
+    if (!caja) return;
+    const act = [], off = [];
+    Object.entries(getEmployees()).forEach(([id, e]) => (e.activo === false ? off : act).push([id, e]));
+    caja.innerHTML = act.map(([id, e]) => _empTarjeta(id, e, false)).join('')
+        || `<p class="hint" style="margin-bottom:10px">Todavía no hay ninguna empleada en nómina.</p>`;
+    g('cfg-empleadas-retiradas').innerHTML = !off.length ? '' :
+        `<div class="eq-hdr-off">Ya no trabajan aquí (${off.length}) — sus quincenas pagadas y sus prestaciones siguen intactas</div>` +
+        off.map(([id, e]) => _empTarjeta(id, e, false)).join('');
+}
+
+function abrirEmpleadaNueva() {
+    const usadas = Object.keys(getEmployees());
+    const id = 'emp' + Date.now().toString(36);
+    const color = EMP_COLORES[usadas.length % EMP_COLORES.length];
+    g('cfg-empleadas').insertAdjacentHTML('beforeend',
+        _empTarjeta(id, { name:'', shortName:'', color, salary:0, transport:0, cesStart: todayISO() }, true));
+    const casilla = g('emp-name-' + id);
+    if (casilla) { casilla.scrollIntoView({ behavior:'smooth', block:'center' }); casilla.focus(); }
+}
+
+/* Igual que con el equipo: si algo está mal, devuelve null y NO se guarda
+   nada, para no dejar la nómina a medias. */
+function leerEmpleadasDeLaPantalla() {
+    const base = getEmployees();
+    const tarjetas = [...document.querySelectorAll('#page-config [data-emp-id]')];
+    if (!tarjetas.length) return null;
+
+    const yr = new Date().getFullYear();
+    const out = {};
+    for (const t of tarjetas) {
+        const id     = t.dataset.empId;
+        const nueva  = t.dataset.empNueva === '1';
+        const nombre = (gv('emp-name-' + id) || '').trim();
+        if (!nombre) {
+            abrirSeccionDe(g('emp-name-' + id));
+            toast(nueva ? 'A la empleada nueva le falta el nombre.' : 'Ninguna empleada se puede quedar sin nombre.', 'error', 5000);
+            return null;
+        }
+        const num = (campo) => {
+            const crudo = (gv(campo) || '').trim();
+            if (crudo === '') return 0;
+            const n = parseFloat(crudo);
+            return (isFinite(n) && n >= 0) ? Math.round(n) : null;
+        };
+        const salary = num('emp-salary-' + id);
+        const trans  = num('emp-trans-'  + id);
+        if (salary === null || trans === null) {
+            abrirSeccionDe(g('emp-salary-' + id));
+            toast(`El sueldo y el auxilio de ${nombre} tienen que ser números, y no negativos.`, 'error', 6000);
+            return null;
+        }
+        if (!salary) {
+            abrirSeccionDe(g('emp-salary-' + id));
+            toast(`Falta el sueldo de ${nombre}.`, 'error', 6000);
+            return null;
+        }
+        const desde = (gv('emp-desde-' + id) || '').trim() || (base[id] && base[id].cesStart) || `${yr}-01-01`;
+        const salio = (gv('emp-salio-' + id) || '').trim();
+        if (salio && salio < desde) {
+            abrirSeccionDe(g('emp-salio-' + id));
+            toast(`${nombre} no puede haber salido antes de entrar.`, 'error', 6000);
+            return null;
+        }
+        const e = {
+            ...(base[id] || {}),
+            id, name: nombre,
+            shortName: (gv('emp-short-' + id) || '').trim() || nombre.split(' ')[0],
+            color: (base[id] && base[id].color) || EMP_COLORES[Object.keys(out).length % EMP_COLORES.length],
+            salary, transport: trans,
+            brutoQ:      num('emp-bruto-'   + id) || 0,
+            descSalud:   num('emp-salud-'   + id) || 0,
+            descPension: num('emp-pension-' + id) || 0,
+            cesStart: desde, startDate: desde,
+            activo: base[id] ? base[id].activo !== false : true,
+        };
+        if (salio) e.salioEl = salio; else delete e.salioEl;
+        out[id] = e;
+    }
+    return out;
+}
+
+function retirarEmpleada(id) {
+    const e = getEmployees()[id];
+    if (!e) return;
+    if (!confirm(
+        `${e.name} sale de la nómina: ya no aparece su pestaña de quincenas\n` +
+        `ni se le calcula PILA del mes que viene.\n\n` +
+        `NO se borra nada: las quincenas que ya se le pagaron, sus prestaciones\n` +
+        `acumuladas y los meses pasados siguen exactamente igual.\n` +
+        `Si vuelve, se reactiva con un botón.\n\n` +
+        `¿Retirar a ${e.name}?`
+    )) return;
+    _guardarEmpleadas({ [id]: { activo:false, salioEl: e.salioEl || todayISO() } },
+        `${e.name} salió de la nómina. Lo que ya se le pagó no cambió.`);
+}
+
+function reactivarEmpleada(id) {
+    const e = getEmployees()[id];
+    if (!e) return;
+    _guardarEmpleadas({ [id]: { activo:true, salioEl:null } }, `${e.name} vuelve a estar en nómina.`);
+}
+
+function _guardarEmpleadas(retoque, mensaje) {
+    const leidas = leerEmpleadasDeLaPantalla();
+    if (!leidas) return;
+    Object.entries(retoque || {}).forEach(([id, campos]) => {
+        leidas[id] = { ...(getEmployees()[id] || {}), ...(leidas[id] || {}), ...campos };
+        if (leidas[id].salioEl === null) delete leidas[id].salioEl;
+    });
+    DB.set('empleadas', leidas);
+    renderEmpleadasCfg();
     if (mensaje) toast('✅ ' + mensaje, 'success', 6000);
 }
 
@@ -5178,15 +5449,26 @@ function hideRxPacDrop(dropId) {
 }
 
 /* ── Atajos de registro ─────────────────────────────────────────────────────
-   Los cuatro tratamientos que más se cobraron en los últimos dos meses, como
-   botones. Un toque pone el doctor y el precio, y deja el cursor en el nombre
-   del paciente: de cuatro pasos a uno.
+   Tratamientos convertidos en botones. Un toque pone el doctor, el tratamiento
+   y el precio, y deja el cursor en el nombre del paciente: de cuatro pasos a
+   uno.
 
-   Se calculan de lo ya registrado, no de una lista fija, para que la app siga
-   el ritmo del consultorio sin que nadie la configure. */
-function pintarAtajos() {
-    const caja = g('rx-atajos'); if (!caja) return;
-    const cat = getCatalog();
+   Manda ella. En Configuración → Atajos escoge hasta diez y en el orden que
+   quiera, porque quien sabe cuáles se repiten en su día es ella, no una
+   cuenta. Si no escoge ninguno, la app sigue haciendo lo de antes: los cuatro
+   más registrados en los últimos dos meses. Así nunca queda la franja vacía.
+
+   Un atajo escogido que después se borre del catálogo simplemente deja de
+   salir; no rompe nada ni hay que ir a limpiarlo.                          */
+const MAX_ATAJOS = 10;
+
+function getAtajos() {
+    const guardados = DB.get('atajos');
+    return Array.isArray(guardados) ? guardados : [];
+}
+
+/* Los más registrados, para cuando ella no ha escogido nada. */
+function _atajosAutomaticos(cat) {
     const desde = new Date(Date.now() - 60*86400000).toISOString().slice(0,10);
     const cuenta = {};
     (DB.get('tx')||[]).filter(t => t.date >= desde).forEach(t => {
@@ -5195,15 +5477,118 @@ function pintarAtajos() {
         const c = (t.treatId && cat.find(i=>i.id===t.treatId)) || _buscarEnCatalogo(t.treatName, cat);
         if (c) cuenta[c.id] = (cuenta[c.id]||0) + 1;
     });
-    const top = Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,4);
-    if (!top.length) { caja.innerHTML = ''; return; }   // mes nuevo, sin historia: nada que ofrecer
-    caja.innerHTML = '<div class="rx-atajos-lbl">⚡ Lo que más registras — un toque y queda listo</div><div class="rx-atajos-fila">' +
-        top.map(([id,n]) => { const t = cat.find(i=>i.id===id);
-            return `<button type="button" class="rx-atajo" onclick="usarAtajo('${eh(id)}')">
-                <span class="rx-atajo-n">${eh(t.name)}</span>
-                <span class="rx-atajo-p">${fmt(t.price)}</span>
-                <span class="rx-atajo-v">${n} ${n===1?'vez':'veces'} en 2 meses</span></button>`;
-        }).join('') + '</div>';
+    return Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,4)
+        .map(([id, n]) => ({ id, nota: `${n} ${n===1?'vez':'veces'} en 2 meses` }));
+}
+
+function pintarAtajos() {
+    const caja = g('rx-atajos'); if (!caja) return;
+    const cat  = getCatalog();
+    const suyos = getAtajos();
+    const escogidos = suyos.length;
+
+    const lista = (escogidos ? suyos.map(id => ({ id, nota:'' })) : _atajosAutomaticos(cat))
+        .map(a => ({ ...a, t: cat.find(i => i.id === a.id) }))
+        .filter(a => a.t);                       // borrado del catálogo: deja de salir, y ya
+
+    if (!lista.length) { caja.innerHTML = ''; return; }   // mes nuevo, sin historia: nada que ofrecer
+
+    const titulo = escogidos
+        ? '⚡ Sus atajos — un toque y queda listo'
+        : '⚡ Lo que más registras — un toque y queda listo';
+    caja.innerHTML = `<div class="rx-atajos-lbl">${titulo}</div><div class="rx-atajos-fila">` +
+        lista.map(a => `<button type="button" class="rx-atajo" onclick="usarAtajo('${eh(a.id)}')">
+                <span class="rx-atajo-n">${eh(a.t.name)}</span>
+                <span class="rx-atajo-p">${fmt(a.t.price)}</span>
+                <span class="rx-atajo-v">${eh(a.nota || docShort(a.t.docId) || '')}</span></button>`
+        ).join('') + '</div>';
+}
+
+/* ── Atajos: escogerlos en Configuración ── */
+function renderAtajosCfg() {
+    const caja = g('cfg-atajos-lista');
+    const sel  = g('cfg-atajo-nuevo');
+    if (!caja || !sel) return;
+    const cat   = getCatalog();
+    const suyos = getAtajos().filter(id => cat.find(t => t.id === id));
+
+    if (!suyos.length) {
+        caja.innerHTML = `<p class="hint">Ahora mismo la app los escoge sola: pone los 4 que más ha
+            registrado. Agregue abajo los que quiera fijar usted.</p>`;
+    } else {
+        caja.innerHTML =
+            `<p class="hint" style="margin-bottom:10px">${suyos.length} de ${MAX_ATAJOS} escogidos ·
+             salen en Registro en este mismo orden</p>` +
+            suyos.map((id, i) => {
+                const t = cat.find(x => x.id === id);
+                return `<div class="at-fila">
+                    <span class="at-num">${i+1}</span>
+                    <div class="at-txt">
+                        <div class="at-n">${eh(t.name)}</div>
+                        <div class="at-d">${eh(docShort(t.docId) || '')} · ${fmt(t.price)}</div>
+                    </div>
+                    <div class="at-acc">
+                        <button type="button" onclick="moverAtajo('${eh(id)}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
+                        <button type="button" onclick="moverAtajo('${eh(id)}',1)" ${i===suyos.length-1?'disabled':''} title="Bajar">↓</button>
+                        <button type="button" class="at-x" onclick="quitarAtajo('${eh(id)}')" title="Quitar">✕</button>
+                    </div>
+                </div>`;
+            }).join('');
+    }
+
+    /* En la lista de escoger sólo van los que todavía no están puestos, y
+       agrupados por doctor para poder encontrarlos entre ochenta y pico. */
+    const porDoc = {};
+    cat.filter(t => !suyos.includes(t.id)).forEach(t => {
+        (porDoc[t.docId] = porDoc[t.docId] || []).push(t);
+    });
+    sel.innerHTML = '<option value="">— Escoja un tratamiento —</option>' +
+        Object.keys(porDoc).map(docId =>
+            `<option value="" disabled>── ${eh(docShort(docId) || docId)} ──</option>` +
+            porDoc[docId].map(t => `<option value="${eh(t.id)}">${eh(t.name)} — ${fmt(t.price)}</option>`).join('')
+        ).join('');
+    sel.disabled = suyos.length >= MAX_ATAJOS;
+}
+
+function _guardarAtajos(lista, mensaje) {
+    DB.set('atajos', lista);
+    renderAtajosCfg();
+    pintarAtajos();                 // la franja de Registro se actualiza de una
+    if (mensaje) toast(mensaje, 'success', 5000);
+}
+
+function agregarAtajo() {
+    const id = gv('cfg-atajo-nuevo');
+    if (!id) { toast('Escoja primero un tratamiento de la lista.', 'error'); return; }
+    const suyos = getAtajos();
+    if (suyos.includes(id)) { toast('Ese ya está entre sus atajos.', 'error'); return; }
+    if (suyos.length >= MAX_ATAJOS) {
+        toast(`Ya tiene los ${MAX_ATAJOS}. Quite uno con la ✕ para poder agregar otro.`, 'error', 6000);
+        return;
+    }
+    const t = getCatalog().find(x => x.id === id);
+    _guardarAtajos([...suyos, id], `✅ «${t ? t.name : 'Atajo'}» agregado. Ya sale en Registro.`);
+}
+
+function quitarAtajo(id) {
+    _guardarAtajos(getAtajos().filter(x => x !== id), '✅ Atajo quitado.');
+}
+
+function moverAtajo(id, paso) {
+    const suyos = getAtajos();
+    const i = suyos.indexOf(id);
+    const j = i + paso;
+    if (i < 0 || j < 0 || j >= suyos.length) return;
+    [suyos[i], suyos[j]] = [suyos[j], suyos[i]];
+    _guardarAtajos(suyos, null);
+}
+
+function volverAtajosAutomaticos() {
+    if (!getAtajos().length) { toast('Ya los está escogiendo la app sola.', 'error'); return; }
+    if (!confirm('Se quitan los atajos que escogió y la app vuelve a poner sola\n' +
+                 'los 4 que más ha registrado en los últimos dos meses.\n\n' +
+                 'No se borra ningún tratamiento ni ningún cobro.\n\n¿Seguir?')) return;
+    _guardarAtajos([], '✅ Listo. La app vuelve a escoger los atajos sola.');
 }
 
 function usarAtajo(treatId) {
@@ -6855,7 +7240,7 @@ function renderRepTrat(mes, allTx) {
 
 function renderRepRenta(mes, allTx, allGx, allNom) {
     const cfg      = DB.get('config') || DEFAULTS;
-    const emps     = getEmployees();
+    const emps     = getEmpleadasActivas();
     const retiro   = parseFloat(cfg.retiro)||0;
     const ssi      = parseFloat(cfg.ssi)||0;
     const mesLbl   = (() => {
@@ -6879,8 +7264,8 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
     const _pilaBase1 = parseFloat((DB.get('config')||{}).smlmv) || 1750905;
     const _arlRate1  = parseFloat((DB.get('config')||{}).arl)   || ARL;
     let paraFiscales = 0;
-    if(emps.sandry){ paraFiscales+=Math.round(_pilaBase1*(EPS_EMP+PEN_EMP+_arlRate1+CAJA)); }
-    if(emps.zury)  { paraFiscales+=Math.round(_pilaBase1*(EPS_EMP+PEN_EMP+_arlRate1+CAJA)); }
+    // Una vez por cada empleada que siga trabajando, sean dos o sean cinco.
+    Object.keys(emps).forEach(() => { paraFiscales+=Math.round(_pilaBase1*(EPS_EMP+PEN_EMP+_arlRate1+CAJA)); });
     const costosFijos = gastos + nomPagada + paraFiscales + ssi;
     const utilidadAntesRetiro = margenBruto - costosFijos;
     const excedente  = utilidadAntesRetiro - retiro;
@@ -7074,7 +7459,7 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
 
 function renderRepEquil(mes, allTx, allGx, allNom) {
     const cfg   = DB.get('config') || DEFAULTS;
-    const emps  = getEmployees ? getEmployees() : {};
+    const emps  = getEmpleadasActivas ? getEmpleadasActivas() : {};
 
     const prod      = allTx.filter(t=>!t.pagoPrevio).reduce((s,t)=>s+t.price,0);
     const gastos    = allGx.reduce((s,gx)=>s+gx.amount,0);
@@ -7088,8 +7473,7 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
     const _pilaBase2 = parseFloat(cfg.smlmv) || 1750905;
     const _arlRate2  = parseFloat(cfg.arl)   || ARL;
     let paraFiscales = 0;
-    if (emps.sandry) { paraFiscales += Math.round(_pilaBase2*(EPS_EMP+PEN_EMP+_arlRate2+CAJA)); }
-    if (emps.zury)   { paraFiscales += Math.round(_pilaBase2*(EPS_EMP+PEN_EMP+_arlRate2+CAJA)); }
+    Object.keys(emps).forEach(() => { paraFiscales += Math.round(_pilaBase2*(EPS_EMP+PEN_EMP+_arlRate2+CAJA)); });
 
     const totalEgresos = gastos + comisiones + nomPagada + paraFiscales + ssi + retiro;
     const balance      = prod - gastos - comisiones - nomPagada - paraFiscales - ssi - retiroPagado;
@@ -7183,25 +7567,100 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
 /* ── Nómina ── */
 const ARL = 0.00522, EPS_EMP = 0.085, PEN_EMP = 0.12, CAJA = 0.04;
 
+/* ── Las empleadas ──────────────────────────────────────────────────────────
+   Antes estaban escritas aquí adentro, con nombre y sueldo fijos: Sandry y
+   Zury y nadie más. Si entraba alguien había que tocar el programa. Ahora
+   viven en la base bajo `empleadas` y se editan en Configuración.
+
+   La semilla de abajo es sólo el punto de partida. La primera vez que abre,
+   `ponerAlDiaLasEmpleadas` las escribe con los sueldos que YA estaban en
+   Configuración (cfg.ss, cfg.zs…), para que no se pierda nada de lo que
+   ella tenía puesto. De ahí en adelante manda lo guardado.
+
+   Igual que con los doctores: retirar a alguien no la borra. Sale de las
+   pestañas de Nómina y de las provisiones del mes, pero sus quincenas
+   pagadas y su historial siguen intactos. */
+const EMPLEADAS_SEMILLA = {
+    sandry: { id:'sandry', name:'Sandry Karina Flórez Plata', shortName:'Sandry', color:'#C0959F',
+              cfgSueldo:'ss', cfgTrans:'st', cfgBruto:'sBrutoQ', cfgSalud:'sSalud', cfgPension:'sPension',
+              sueldoBase:1600000, transBase:250000, desde:null },
+    zury:   { id:'zury', name:'Zury Saray Peinado Hernández', shortName:'Zury', color:'#997771',
+              cfgSueldo:'zs', cfgTrans:'zt', cfgBruto:'zBrutoQ', cfgSalud:'zSalud', cfgPension:'zPension',
+              // Zury entró el 2 de mayo de 2026 y esa fecha es la suya de verdad:
+              // de ahí salen sus cesantías proporcionales.
+              sueldoBase:1400000, transBase:250000, desde:'2026-05-02' },
+};
+
+const EMP_COLORES = ['#C0959F','#997771','#9B6EA0','#5E8C6A','#3A6EA0','#B08968','#7A5A9C','#8A7878'];
+
+function _empleadaDeLaSemilla(base, cfg, yr) {
+    // Sandry venía de antes del sistema, así que se le cuenta desde el 1 de
+    // enero del año en curso; sus prestaciones estaban al día.
+    const desde = base.desde || `${yr}-01-01`;
+    return {
+        id: base.id, name: base.name, shortName: base.shortName, color: base.color,
+        salary:      parseFloat(cfg[base.cfgSueldo])  || base.sueldoBase,
+        transport:   parseFloat(cfg[base.cfgTrans])   || base.transBase,
+        brutoQ:      parseFloat(cfg[base.cfgBruto])   || 0,
+        descSalud:   parseFloat(cfg[base.cfgSalud])   || 0,
+        descPension: parseFloat(cfg[base.cfgPension]) || 0,
+        cesStart: desde, startDate: desde, activo: true,
+    };
+}
+
 function getEmployees() {
     const cfg = DB.get('config') || DEFAULTS;
     const yr  = new Date().getFullYear();
-    return {
-        sandry: { id:'sandry', name:'Sandry Karina Flórez Plata', shortName:'Sandry', color:'#C0959F',
-                  salary:parseFloat(cfg.ss)||1600000, transport:parseFloat(cfg.st)||250000,
-                  brutoQ:   parseFloat(cfg.sBrutoQ)  ||0,
-                  descSalud:parseFloat(cfg.sSalud)   ||0,
-                  descPension:parseFloat(cfg.sPension)||0,
-                  // cesStart = 1 ene del año en curso (cesantías y prestaciones al día, solo se liquida el año actual)
-                  cesStart:`${yr}-01-01`, startDate:`${yr}-01-01` },
-        zury:   { id:'zury', name:'Zury Saray Peinado Hernández',  shortName:'Zury',   color:'#997771',
-                  salary:parseFloat(cfg.zs)||1400000, transport:parseFloat(cfg.zt)||250000,
-                  brutoQ:   parseFloat(cfg.zBrutoQ)  ||0,
-                  descSalud:parseFloat(cfg.zSalud)   ||0,
-                  descPension:parseFloat(cfg.zPension)||0,
-                  // cesStart = fecha de ingreso real (contrato 2 mayo 2026)
-                  cesStart:'2026-05-02', startDate:'2026-05-02' }
-    };
+    const guardadas = DB.get('empleadas');
+    const out = {};
+    if (guardadas && Object.keys(guardadas).length) {
+        Object.entries(guardadas).forEach(([id, e]) => {
+            const desde = e.cesStart || e.startDate || `${yr}-01-01`;
+            out[id] = {
+                id,
+                name:        e.name || id,
+                shortName:   e.shortName || String(e.name || id).split(' ')[0],
+                color:       e.color || '#997771',
+                salary:      parseFloat(e.salary)      || 0,
+                transport:   parseFloat(e.transport)   || 0,
+                brutoQ:      parseFloat(e.brutoQ)      || 0,
+                descSalud:   parseFloat(e.descSalud)   || 0,
+                descPension: parseFloat(e.descPension) || 0,
+                cesStart: desde, startDate: e.startDate || desde,
+                activo: e.activo !== false,
+                /* El último día que trabajó tiene que pasar de largo: es lo que
+                   usan las provisiones para saber hasta qué mes se le debe. Si
+                   se quedara por fuera, a alguien que salió en junio se le
+                   seguiría provisionando en diciembre. */
+                ...(e.salioEl ? { salioEl: e.salioEl } : {}),
+            };
+        });
+        return out;
+    }
+    Object.values(EMPLEADAS_SEMILLA).forEach(b => { out[b.id] = _empleadaDeLaSemilla(b, cfg, yr); });
+    return out;
+}
+
+/* Las que siguen trabajando: para las pestañas de Nómina y para lo que se
+   provisiona este mes. Las retiradas siguen saliendo en getEmployees(),
+   porque su historial no se puede esconder. */
+function getEmpleadasActivas() {
+    const out = {};
+    Object.entries(getEmployees()).forEach(([id, e]) => { if (e.activo !== false) out[id] = e; });
+    return out;
+}
+
+/* Pasa las dos de siempre a la base la primera vez, con los sueldos que ya
+   estaban puestos. Se hace una sola vez; después no vuelve a tocar nada. */
+function ponerAlDiaLasEmpleadas() {
+    const guardadas = DB.get('empleadas');
+    if (guardadas && Object.keys(guardadas).length) return;
+    const cfg = DB.get('config') || DEFAULTS;
+    const yr  = new Date().getFullYear();
+    const out = {};
+    Object.values(EMPLEADAS_SEMILLA).forEach(b => { out[b.id] = _empleadaDeLaSemilla(b, cfg, yr); });
+    DB.set('empleadas', out);
+    console.log('Nómina: las empleadas pasaron a ser editables, con sus sueldos de siempre');
 }
 
 function calcQuincena(emp) {
@@ -7266,9 +7725,37 @@ function calcPrestaciones(emp) {
     return { cesDays, todayDays, cesantias, intCes, primaJun, vacas, cesBase };
 }
 
-let nominaTab = 'sandry';
-const NOM_TABS = ['sandry','zury','silvia','prov','hist'];
+/* Las pestañas de Nómina eran una lista fija de cinco. Ahora las de las
+   empleadas se arman de getEmpleadasActivas(), y las tres fijas —Dra.
+   Silvia, Provisiones e Historial— van al final. */
+let nominaTab = null;
 let _nomPeriodo = null; // null = período actual
+
+const NOM_TABS_FIJAS = ['silvia','prov','hist'];
+function nomTabsEmpleadas() { return Object.keys(getEmpleadasActivas()); }
+function nomTabs()          { return [...nomTabsEmpleadas(), ...NOM_TABS_FIJAS]; }
+function esTabDeEmpleada(t) { return !!getEmployees()[t]; }
+
+/* Arma los botones y los paneles, uno por empleada. El bloque de PILA va
+   en la primera, que es donde ha estado siempre. */
+function renderNominaTabs() {
+    const cajaTabs  = g('nom-tabs-emp');
+    const cajaPanes = g('nom-emp-panes');
+    if (!cajaTabs || !cajaPanes) return;
+    const emps = getEmpleadasActivas();
+    const ids  = Object.keys(emps);
+    cajaTabs.innerHTML = ids.map(id =>
+        `<button class="comm-tab" id="ntab-${eh(id)}" onclick="setNominaTab('${eh(id)}')">💵 ${eh(emps[id].shortName || emps[id].name)}</button>`
+    ).join('');
+    cajaPanes.innerHTML = ids.map((id, i) =>
+        `<div id="nom-${eh(id)}" class="hidden">
+             <div id="nom-card-${eh(id)}"></div>
+             ${i === 0 ? '<div id="nom-pila-section" style="margin-top:20px"></div>' : ''}
+         </div>`
+    ).join('');
+    // Si la pestaña abierta era de alguien que ya se retiró, se cae a la primera.
+    if (!nominaTab || !nomTabs().includes(nominaTab)) nominaTab = ids[0] || 'silvia';
+}
 
 function getNomPeriodo() {
     if (_nomPeriodo) return _nomPeriodo;
@@ -7298,27 +7785,28 @@ function nomNavPeriodo(dir) {
 function nomGoToday() { _nomPeriodo = null; renderNominaQuinc(); }
 
 function initNomina() {
-    nominaTab = 'sandry';
+    nominaTab = null;
     _nomPeriodo = null;
-    NOM_TABS.forEach(t => {
-        g('ntab-'+t)?.classList.toggle('active', t===nominaTab);
-        g('nom-'+t)?.classList.toggle('hidden', t!==nominaTab);
-    });
-    g('nom-periodo-hdr')?.classList.remove('hidden');
-    renderNominaQuinc();
-    renderNominaPILA();
+    renderNominaTabs();          // deja nominaTab en la primera empleada
+    setNominaTab(nominaTab);
 }
 
 function setNominaTab(tab) {
+    if (!g('ntab-'+tab)) renderNominaTabs();     // pestaña nueva o recién retirada
     nominaTab = tab;
-    NOM_TABS.forEach(t => {
+    nomTabs().forEach(t => {
         g('ntab-'+t)?.classList.toggle('active', t===tab);
         g('nom-'+t)?.classList.toggle('hidden', t!==tab);
     });
-    // Período nav solo visible en tabs Sandry / Zury
+    // La barra de período sólo tiene sentido en la pestaña de una empleada.
+    const esEmpleada = esTabDeEmpleada(tab);
     const ph = g('nom-periodo-hdr');
-    if (ph) ph.classList.toggle('hidden', !['sandry','zury'].includes(tab));
-    if (tab==='sandry' || tab==='zury') { renderNominaQuinc(); if (tab==='sandry') renderNominaPILA(); }
+    if (ph) ph.classList.toggle('hidden', !esEmpleada);
+    if (esEmpleada) {
+        renderNominaQuinc();
+        // El bloque de PILA vive en la primera pestaña; sólo se pinta ahí.
+        if (tab === nomTabsEmpleadas()[0]) renderNominaPILA();
+    }
     if (tab==='silvia') renderNomSilvia();
     if (tab==='prov')   renderNominaProv();
     if (tab==='hist')   renderNominaHist();
@@ -7366,8 +7854,12 @@ function renderNominaQuinc() {
     const fSep = () => '<div style="height:6px"></div>';
 
     // ── Tarjetas de empleadas ─────────────────────────────────────
-    const emps = getEmployees();
+    // Sólo las que trabajan: a una retirada no se le liquida quincena. Su
+    // historial de pagos sigue en la pestaña Historial.
+    const emps = getEmpleadasActivas();
     Object.values(emps).forEach(emp => {
+        const caja = g('nom-card-'+emp.id);
+        if (!caja) return;              // panel aún no armado
         const q              = calcQuincena(emp);
         const pagados        = (DB.get('nomina')||[]).filter(p=>p.empId===emp.id && p.period===period);
         const totalAbonado   = pagados.reduce((s,p)=>s+p.amount,0);
@@ -7390,7 +7882,7 @@ function renderNominaQuinc() {
                    💳 ${hasAbonos ? 'Abonar' : 'Registrar pago'}
                </button>`;
 
-        g('nom-card-'+emp.id).innerHTML = `
+        caja.innerHTML = `
             <div class="db-section" style="border-top:4px solid ${emp.color};height:100%">
                 <div class="db-sec-hdr">
                     <h3>${emp.shortName}</h3>
@@ -7454,6 +7946,10 @@ function payQuincena(empId, period, amount) {
     const emp  = emps[empId] || {};
     const record = {
         id:'nom'+Date.now(), type:'quincena', empId, period, amount,
+        /* El nombre se copia al pago, igual que la comisión al cobro: el
+           recibo de agosto tiene que seguir diciendo a quién se le pagó
+           aunque después le cambien el nombre o la saquen de la lista. */
+        empName: emp.shortName || emp.name || empId,
         payMethod:pm, date:todayISO(), createdAt:new Date().toISOString()
     };
     const list = DB.get('nomina') || [];
@@ -7474,6 +7970,7 @@ function payQuincenaAbono(empId, period) {
     const emp  = emps[empId] || {};
     const record = {
         id:'nom'+Date.now(), type:'quincena', empId, period, amount,
+        empName: emp.shortName || emp.name || empId,
         payMethod:pm, date:todayISO(), createdAt:new Date().toISOString()
     };
     const list = DB.get('nomina') || [];
@@ -7610,10 +8107,14 @@ function openNomPayModal(empId, period, pendiente, type) {
     _npmState = { empId, period, pendiente, type };
     _npmPM    = null;
 
-    // Título y subtítulo
-    const names = { sandry:'Sandry Karina Flórez', zury:'Zury Saray Peinado', silvia:'Dra. Silvia López' };
+    /* El nombre sale de la ficha de la empleada, no de una lista escrita aquí:
+       antes decía «Sandry» porque el código interno se llamaba así, y a
+       cualquiera que entrara después le habría salido el código en la cara. */
+    const quien = getEmployees()[empId];
+    const nombre = empId === 'silvia' ? 'Dra. Silvia López'
+                 : (quien ? (quien.name || quien.shortName) : empId);
     const typeLabel = type==='retiro' ? 'Retiro mensual' : 'Quincena';
-    g('npm-title').textContent = `💳 ${typeLabel} — ${names[empId]||empId}`;
+    g('npm-title').textContent = `💳 ${typeLabel} — ${nombre}`;
 
     let subLbl = '';
     if (type==='quincena') {
@@ -7776,7 +8277,7 @@ function payRetiroAbono(forcedAmount) {
     const mes    = fecha.slice(0,7);
     const mesLbl = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     const record = {
-        id:'ret'+Date.now(), type:'retiro', empId:'silvia',
+        id:'ret'+Date.now(), type:'retiro', empId:'silvia', empName:'Dra. Silvia',
         period:mes, amount, payMethod:pm,
         date:fecha, createdAt:new Date().toISOString()
     };
@@ -7834,7 +8335,7 @@ function renderNominaHist() {
             : (GX_PM_LBL[p.payMethod]||p.payMethod);
         return `<tr>
             <td style="color:var(--muted);white-space:nowrap">${d}</td>
-            <td style="font-weight:600">${eh(emp.shortName||p.empId)}</td>
+            <td style="font-weight:600">${eh(emp.shortName || p.empName || (p.empId==='silvia'?'Dra. Silvia':p.empId))}</td>
             <td style="font-size:11px;color:var(--muted)">${typeLabel} · ${perLabel}</td>
             <td style="font-size:11px"><span class="pm-badge ${GX_PM_CLS[p.payMethod]||'pm-ef'}">${pmLabel}</span></td>
             <td style="font-weight:700;color:var(--success);font-variant-numeric:tabular-nums">${fmt(p.amount)}</td>
@@ -7876,9 +8377,10 @@ function deleteNomina(id) {
 
 /* ── Nómina: Provisiones laborales ── */
 function renderNominaProv() {
-    const emps   = getEmployees();
-    const sandry = emps.sandry;
-    const zury   = emps.zury;
+    // Todas, no sólo las activas: si alguien se retiró en junio, sus
+    // provisiones de enero a junio siguen debiéndose y tienen que salir en
+    // el calendario. Quien decide mes a mes es monthlyBreakdown.
+    const lista  = Object.values(getEmployees());
     const allAj  = DB.get('aj')       || [];
     const provReg= DB.get('prov_reg') || [];
     const today  = new Date();
@@ -7890,6 +8392,12 @@ function renderNominaProv() {
         const monthEnd   = new Date(y, m, 0);           // last day of month
         const startDate  = new Date(emp.cesStart + 'T00:00:00');
         if (startDate > monthEnd) return { ces:0, int:0, prim:0, vac:0, active:false };
+        // Si ya se fue, desde el mes siguiente al que salió no se provisiona.
+        if (emp.salioEl) {
+            const salida = new Date(emp.salioEl + 'T00:00:00');
+            const monthStart = new Date(y, m-1, 1);
+            if (salida < monthStart) return { ces:0, int:0, prim:0, vac:0, active:false };
+        }
         const cesBase    = emp.salary + emp.transport;
         let ces  = Math.round(cesBase / 12);
         let int_ = Math.round(cesBase / 100);
@@ -7908,12 +8416,13 @@ function renderNominaProv() {
         return { ces, int:int_, prim, vac, active:true, partial, daysWorked, daysInMonth };
     }
 
-    // Summary for current month
-    const sMon = monthlyBreakdown(sandry, todayISO().slice(0,7));
-    const zMon = monthlyBreakdown(zury,   todayISO().slice(0,7));
-    const sTot = sMon.ces + sMon.int + sMon.prim + sMon.vac;
-    const zTot = zMon.ces + zMon.int + zMon.prim + zMon.vac;
-    const totalMes = sTot + zTot;
+    // Resumen del mes en curso — una tarjeta por empleada que provisione
+    const suma = b => b.ces + b.int + b.prim + b.vac;
+    const esteMes = lista.map(e => {
+        const b = monthlyBreakdown(e, todayISO().slice(0,7));
+        return { emp: e, b, total: suma(b) };
+    }).filter(x => x.b.active);
+    const totalMes = esteMes.reduce((a, x) => a + x.total, 0);
 
     // Provisiones bolsillo saldo
     const provSaldo = allAj.filter(aj=>aj.bucket==='prov').reduce((s,aj)=>s+(aj.type==='in'?aj.amount:-aj.amount),0);
@@ -7925,13 +8434,12 @@ function renderNominaProv() {
 
     for (let mo = 0; mo <= 11; mo++) {
         const monthKey  = `${yr}-${String(mo+1).padStart(2,'0')}`;
-        const sB        = monthlyBreakdown(sandry, monthKey);
-        const zB        = monthlyBreakdown(zury,   monthKey);
-        if (!sB.active && !zB.active) continue;
+        const delMes    = lista.map(e => ({ emp:e, b:monthlyBreakdown(e, monthKey) }))
+                               .filter(x => x.b.active)
+                               .map(x => ({ ...x, t: suma(x.b) }));
+        if (!delMes.length) continue;
 
-        const sT = sB.ces + sB.int + sB.prim + sB.vac;
-        const zT = zB.ces + zB.int + zB.prim + zB.vac;
-        const mvTotal = sT + zT;
+        const mvTotal = delMes.reduce((a, x) => a + x.t, 0);
 
         const isFuture = mo > currentMonth;
         const reg      = provReg.find(r => r.month === monthKey);
@@ -7951,16 +8459,13 @@ function renderNominaProv() {
             ? `<button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="saveProvision('${monthKey}')">Registrar</button>`
             : `<button style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit" onclick="deleteProvision('${monthKey}')">↩ Revertir</button>`;
 
-        const zuryRow = zB.active
-            ? `<div style="font-size:11px;color:var(--muted)">Zury: ${fmt(zT)}${zB.partial?' ('+zB.daysWorked+'d)':''}</div>`
-            : '';
+        const desglose = delMes.map(x =>
+            `<div style="font-size:12px">${eh(x.emp.shortName || x.emp.name)}: ${fmt(x.t)}${x.b.partial?' ('+x.b.daysWorked+'d)':''}</div>`
+        ).join('');
 
         monthRows += `<tr>
             <td style="font-weight:600;white-space:nowrap">${mesDisp}</td>
-            <td>
-                <div style="font-size:12px">Sandry: ${fmt(sT)}</div>
-                ${zuryRow}
-            </td>
+            <td>${desglose}</td>
             <td style="font-weight:700;font-variant-numeric:tabular-nums;text-align:right">${fmt(mvTotal)}</td>
             <td style="text-align:center">${statusBadge}</td>
             <td style="text-align:right">${btnReg}</td>
@@ -7980,20 +8485,14 @@ function renderNominaProv() {
                     Cuando llegue el momento de pagar (cesantías en feb, prima en jun/dic), el dinero ya estará separado.
                 </p>
                 <div class="db-grid db-grid-3" style="gap:14px;margin-bottom:16px">
+                    ${esteMes.map(x => `
                     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
-                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Sandry / mes</div>
-                        <div style="font-size:18px;font-weight:800;color:var(--dark)">${fmt(sTot)}</div>
+                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${eh(x.emp.shortName || x.emp.name)} / mes</div>
+                        <div style="font-size:18px;font-weight:800;color:var(--dark)">${fmt(x.total)}</div>
                         <div style="font-size:10px;color:var(--muted);margin-top:6px">
-                            Ces. ${fmt(sMon.ces)} · Int. ${fmt(sMon.int)}<br>Prima ${fmt(sMon.prim)} · Vac. ${fmt(sMon.vac)}
+                            Ces. ${fmt(x.b.ces)} · Int. ${fmt(x.b.int)}<br>Prima ${fmt(x.b.prim)} · Vac. ${fmt(x.b.vac)}
                         </div>
-                    </div>
-                    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
-                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Zury / mes</div>
-                        <div style="font-size:18px;font-weight:800;color:var(--dark)">${fmt(zTot)}</div>
-                        <div style="font-size:10px;color:var(--muted);margin-top:6px">
-                            Ces. ${fmt(zMon.ces)} · Int. ${fmt(zMon.int)}<br>Prima ${fmt(zMon.prim)} · Vac. ${fmt(zMon.vac)}
-                        </div>
-                    </div>
+                    </div>`).join('')}
                     <div style="background:var(--purp);border-radius:var(--radius-sm);padding:14px;text-align:center">
                         <div style="font-size:10px;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Total / mes</div>
                         <div style="font-size:22px;font-weight:800;color:white">${fmt(totalMes)}</div>
@@ -8085,9 +8584,10 @@ function renderNominaProv() {
 }
 
 function saveProvision(monthKey) {
-    const emps   = getEmployees();
-    const sandry = emps.sandry;
-    const zury   = emps.zury;
+    // TODAS, no sólo las activas: si alguien se retiró a mitad de año, los
+    // meses que alcanzó a trabajar siguen debiéndose. Quien decide mes a mes
+    // es totalForEmp, igual que en el calendario de arriba.
+    const lista   = Object.values(getEmployees());
     const provReg = DB.get('prov_reg') || [];
 
     if (provReg.find(r => r.month === monthKey)) {
@@ -8099,6 +8599,10 @@ function saveProvision(monthKey) {
         const monthEnd  = new Date(y, m, 0);
         const startDate = new Date(emp.cesStart + 'T00:00:00');
         if (startDate > monthEnd) return 0;
+        if (emp.salioEl) {
+            const salida = new Date(emp.salioEl + 'T00:00:00');
+            if (salida < new Date(y, m-1, 1)) return 0;
+        }
         const cesBase = emp.salary + emp.transport;
         let ces  = Math.round(cesBase / 12);
         let int_ = Math.round(cesBase / 100);
@@ -8116,13 +8620,17 @@ function saveProvision(monthKey) {
         return ces + int_ + prim + vac;
     }
 
-    const tSandry = totalForEmp(sandry, monthKey);
-    const tZury   = totalForEmp(zury,   monthKey);
-    const total   = tSandry + tZury;
+    const filas = lista
+        .map(emp => ({ id: emp.id, nombre: emp.shortName || emp.name, monto: totalForEmp(emp, monthKey) }))
+        .filter(f => f.monto > 0);
+    const total   = filas.reduce((a, f) => a + f.monto, 0);
     const [y, m]  = monthKey.split('-').map(Number);
     const mesLbl  = new Date(y, m-1, 15).toLocaleDateString('es-CO',{month:'long',year:'numeric'});
 
-    if (!confirm(`Registrar provisión laboral — ${mesLbl}\n\nSandry: ${fmt(tSandry)}\nZury:   ${fmt(tZury)}\nTotal:  ${fmt(total)}\n\n¿Confirmas? Esto anotará:\n  +${fmt(total)} → bolsillo Provisiones\n  −${fmt(total)} → Bancolombia`)) return;
+    if (!filas.length) { toast('Ese mes no tiene provisión que registrar', 'error'); return; }
+
+    const detalle = filas.map(f => `${f.nombre}: ${fmt(f.monto)}`).join('\n');
+    if (!confirm(`Registrar provisión laboral — ${mesLbl}\n\n${detalle}\nTotal:  ${fmt(total)}\n\n¿Confirmas? Esto anotará:\n  +${fmt(total)} → bolsillo Provisiones\n  −${fmt(total)} → Bancolombia`)) return;
 
     const ts    = new Date().toISOString();
     const desc  = `Provisión laboral — ${mesLbl}`;
@@ -8133,7 +8641,7 @@ function saveProvision(monthKey) {
     aj.push({ id:ajOutId, date:todayISO(), bucket:'banco', type:'out', amount:total, desc, createdAt:ts });
     DB.set('aj', aj);
 
-    provReg.push({ id:'pr-'+Date.now(), month:monthKey, sandry:tSandry, zury:tZury, total, ajIds:[ajInId, ajOutId], createdAt:ts });
+    provReg.push({ id:'pr-'+Date.now(), month:monthKey, filas, total, ajIds:[ajInId, ajOutId], createdAt:ts });
     DB.set('prov_reg', provReg);
 
     toast(`✅ Provisión ${mesLbl} registrada — ${fmt(total)}`, 'success');
@@ -11529,19 +12037,21 @@ function renderAnulaciones() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MÓDULO PILA — APORTES PATRONALES SANDRY + ZURY
+   MÓDULO PILA — APORTES PATRONALES DE LAS EMPLEADAS
    ══════════════════════════════════════════════════════════ */
 
+/* Antes esto eran dos casillas fijas, sandryAmt y zuryAmt. Ahora es una
+   lista: sirve igual con dos que con cinco, o con una sola. Sólo cuenta a
+   las que siguen trabajando — por una empleada retirada ya no se aporta. */
 function getPILAMensual() {
-    const emps = getEmployees();
-    const s    = calcQuincena(emps.sandry);
-    const z    = calcQuincena(emps.zury);
+    const emps  = getEmpleadasActivas();
+    const filas = Object.values(emps).map(e => ({
+        id: e.id, nombre: e.shortName || e.name, monto: calcQuincena(e).paraM,
+    }));
     return {
-        sandryAmt : s.paraM,
-        zuryAmt   : z.paraM,
-        total     : s.paraM + z.paraM,
-        sandryNm  : emps.sandry.shortName || 'Sandry',
-        zuryNm    : emps.zury.shortName   || 'Zury',
+        filas,
+        total: filas.reduce((a, f) => a + f.monto, 0),
+        etiqueta: filas.map(f => f.nombre).join(' + ') || 'sin empleadas',
     };
 }
 
@@ -11587,19 +12097,30 @@ function renderNominaPILA() {
         <div class="db-section">
             <div class="db-sec-hdr">
                 <h3>🏛️ PILA Mensual — Aportes Patronales</h3>
-                <span style="font-size:11px;color:var(--muted)">Sandry + Zury · Un solo pago</span>
+                <span style="font-size:11px;color:var(--muted)">${eh(p.etiqueta)} · Un solo pago</span>
             </div>
             <div style="padding:16px 18px">
                 <div style="background:var(--bg);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-                        <div><div style="color:var(--muted)">👩 ${p.sandryNm}</div><div style="font-weight:800;font-size:14px">${fmt(p.sandryAmt)}</div></div>
-                        <div><div style="color:var(--muted)">👩 ${p.zuryNm}</div><div style="font-weight:800;font-size:14px">${fmt(p.zuryAmt)}</div></div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;text-align:center">
+                        ${p.filas.map(f => `<div><div style="color:var(--muted)">👩 ${eh(f.nombre)}</div><div style="font-weight:800;font-size:14px">${fmt(f.monto)}</div></div>`).join('')}
                         <div style="background:rgba(153,119,113,.1);border-radius:8px;padding:4px"><div style="color:var(--bronze);font-weight:700">Total / mes</div><div style="font-weight:800;font-size:16px;color:var(--bronze)">${fmt(p.total)}</div></div>
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
             </div>
         </div>`;
+}
+
+/* El desglose «quién aportó cuánto» de un mes ya pagado.
+   Los registros viejos guardaban dos casillas fijas (sandryAmt / zuryAmt);
+   los nuevos guardan la lista completa. Se leen los dos, porque lo ya
+   pagado no se reescribe. */
+function _pilaDesglose(reg, p) {
+    if (reg && Array.isArray(reg.filas) && reg.filas.length)
+        return reg.filas.map(f => `${eh(f.nombre)}: ${fmt(f.monto)}`).join(' · ');
+    if (reg && (reg.sandryAmt !== undefined || reg.zuryAmt !== undefined))
+        return `Sandry: ${fmt(reg.sandryAmt || 0)} · Zury: ${fmt(reg.zuryAmt || 0)}`;
+    return p.filas.map(f => `${eh(f.nombre)}: ${fmt(f.monto)}`).join(' · ');
 }
 
 let _pilaMonth = null;
@@ -11617,12 +12138,11 @@ function openPILAModal(month) {
                <div>Fecha de pago: <strong>${reg.date}</strong></div>
                <div>Monto: <strong>${fmt(reg.amount)}</strong></div>
                <div>Pagado con: <strong>${reg.payMethod==='banco'?'🏦 Bancolombia':'💵 Efectivo'}</strong></div>
-               <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-size:11px;color:var(--muted)">${p.sandryNm}: ${fmt(reg.sandryAmt||p.sandryAmt)} · ${p.zuryNm}: ${fmt(reg.zuryAmt||p.zuryAmt)}</div>
+               <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.1);font-size:11px;color:var(--muted)">${_pilaDesglose(reg, p)}</div>
            </div>`
         : `<div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px">
-               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:10px">
-                   <div><div style="color:var(--muted)">${p.sandryNm}</div><div style="font-weight:800">${fmt(p.sandryAmt)}</div></div>
-                   <div><div style="color:var(--muted)">${p.zuryNm}</div><div style="font-weight:800">${fmt(p.zuryAmt)}</div></div>
+               <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;text-align:center;margin-bottom:10px">
+                   ${p.filas.map(f => `<div><div style="color:var(--muted)">${eh(f.nombre)}</div><div style="font-weight:800">${fmt(f.monto)}</div></div>`).join('')}
                </div>
                <div style="text-align:center;font-size:15px;font-weight:800;color:var(--bronze)">Total: ${fmt(p.total)}</div>
            </div>
@@ -11654,7 +12174,7 @@ function openPILAModal(month) {
         <div style="background:white;border-radius:20px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:modalIn .2s ease;overflow:hidden">
             <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
                 <div><div style="font-size:15px;font-weight:800;color:var(--dark)">🏛️ PILA — ${mesLbl.charAt(0).toUpperCase()+mesLbl.slice(1)}</div>
-                <div style="font-size:11px;color:var(--muted)">Aportes patronales Sandry + Zury</div></div>
+                <div style="font-size:11px;color:var(--muted)">Aportes patronales — ${eh(p.etiqueta)}</div></div>
                 <button onclick="g('modal-pila').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted)">✕</button>
             </div>
             <div style="padding:18px 22px">${content}</div>
@@ -11674,14 +12194,14 @@ function savePILA() {
     // Guardar registro PILA
     const pilaDB = DB.get('pila') || [];
     pilaDB.push({ id:'pila'+Date.now(), month:_pilaMonth, date:fecha, amount, payMethod:pm,
-                  sandryAmt:p.sandryAmt, zuryAmt:p.zuryAmt, createdAt:Date.now() });
+                  filas:p.filas, createdAt:Date.now() });
     DB.set('pila', pilaDB);
 
     // Registrar como gasto (segsoc)
     const allGx = DB.get('gx') || [];
     const mesLbl = new Date(_pilaMonth+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
-                 provider:'PILA', desc:`PILA ${mesLbl} — ${p.sandryNm} + ${p.zuryNm}`,
+                 provider:'PILA', desc:`PILA ${mesLbl} — ${p.etiqueta}`,
                  amount, paySource:pm, notes:'Aportes patronales', createdAt:Date.now() });
     DB.set('gx', allGx);
 

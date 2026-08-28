@@ -52,7 +52,7 @@
         /* ============================================================
            LOGIN
         ============================================================ */
-        #loginScreen {
+        #loginScreen, #authScreen {
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -121,6 +121,24 @@
         }
         .btn-ingresar:hover { opacity:.9; transform:translateY(-1px); box-shadow: var(--shadow); }
         .btn-ingresar:active { transform:translateY(0); }
+        .btn-ingresar[disabled] { opacity:.55; cursor:default; transform:none; box-shadow:none; }
+
+        /* Pantalla de cuenta (correo + contraseña). Se pide una sola vez por
+           equipo; después la sesión queda guardada y sólo se ve el PIN. */
+        .auth-hint { font-size:12.5px; color:var(--muted); text-align:center; line-height:1.5; margin:-4px 0 18px; }
+        .auth-input {
+            width:100%; padding:14px 15px; margin-bottom:11px;
+            border:2px solid var(--border); border-radius: var(--radius-sm);
+            font-size:15px; font-family:inherit; color:var(--dark);
+            background:var(--white); outline:none; transition:var(--ease);
+        }
+        .auth-input:focus { border-color:var(--bronze); box-shadow:0 0 0 3px rgba(153,119,113,.15); }
+        .auth-salir {
+            display:block; margin:16px auto 0; background:none; border:none;
+            font-family:inherit; font-size:12px; color:var(--muted);
+            text-decoration:underline; cursor:pointer;
+        }
+        .auth-salir:hover { color:var(--dark); }
 
         /* ============================================================
            APP SHELL
@@ -1000,7 +1018,34 @@
 <!-- ================================================================
      PANTALLA DE LOGIN
 ================================================================ -->
-<div id="loginScreen">
+<!-- ================================================================
+     CUENTA — correo y contraseña de verdad.
+     El PIN sólo tapa la pantalla; esto es lo que protege los datos.
+     Sin sesión iniciada el servidor no entrega nada (RLS activo).
+================================================================ -->
+<div id="authScreen" class="hidden">
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="login-icon">🔒</div>
+            <h1>DentalGest</h1>
+            <div class="clinic-sub">Consultorio Dra. Silvia López · Santa Marta</div>
+        </div>
+
+        <div class="login-label">Entrar al consultorio</div>
+        <p class="auth-hint">Esto se pide una sola vez en cada equipo.<br>Después la app abre sola.</p>
+
+        <form id="authForm" onsubmit="doAuthLogin(event)" autocomplete="on">
+            <input type="email" id="authEmail" class="auth-input" placeholder="Correo"
+                   autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
+            <input type="password" id="authPass" class="auth-input" placeholder="Contraseña"
+                   autocomplete="current-password">
+            <div class="login-error" id="authErr"></div>
+            <button type="submit" class="btn-ingresar" id="authBtn">Entrar →</button>
+        </form>
+    </div>
+</div>
+
+<div id="loginScreen" class="hidden">
     <div class="login-card">
         <div class="login-brand">
             <div class="login-icon">🦷</div>
@@ -1031,6 +1076,7 @@
         </div>
         <div class="login-error" id="loginErr"></div>
         <button class="btn-ingresar" onclick="doLogin()">Ingresar →</button>
+        <button type="button" class="auth-salir" onclick="doAuthLogout()">Salir de esta cuenta en este equipo</button>
     </div>
 </div>
 
@@ -2837,7 +2883,12 @@ const _SB_URL = 'https://xrbppoeglcadzxolrfsc.supabase.co';
 const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyYnBwb2VnbGNhZHp4b2xyZnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0Mjg1NjksImV4cCI6MjA5NjAwNDU2OX0.NWN510mAkelRtAlq43MgG8M5rA9Ls1U2LElTmwePMao';
 // ═══════════════════════════════════════════════════════
 
-const _sb = supabase.createClient(_SB_URL, _SB_KEY);
+/* persistSession: la sesión queda guardada en este navegador, así el correo y la
+   contraseña se piden una sola vez por equipo. autoRefreshToken la renueva sola
+   para que no se venza a mitad de la jornada. */
+const _sb = supabase.createClient(_SB_URL, _SB_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, storageKey: 'dg_sesion' }
+});
 let _dgCache = null;
 let _dgSyncing = false;
 
@@ -2912,6 +2963,12 @@ function _dgSyncServer() {
             const { error } = await _sb.from('data').upsert(rows, { onConflict: 'key' });
             ok = !error;
             _dgSetOnline(ok, error);
+            /* Sesión vencida a mitad de la jornada: avisar para volver a entrar,
+               en vez de dejarla creyendo que es falta de internet. Los datos
+               siguen en el equipo, no se borra nada aquí. */
+            if (error && _dgEsErrorDeSesion(error)) {
+                toast('🔒 Tu sesión venció. Vuelve a entrar para seguir guardando.', 'error', 8000);
+            }
         } catch(e) {
             _dgSetOnline(false, e);   // sin internet o proyecto en pausa
         }
@@ -2936,10 +2993,17 @@ async function _dgLoadFromServer() {
             });
             _dgSetOnline(true);
             _dgSetupRealtime();
-            return;
+            return true;
         }
         _dgSetOnline(true);   // servidor accesible pero todavía vacío
     } catch(e) {
+        /* Sin permiso NO es lo mismo que sin internet. Si el servidor está y nos
+           dice que no, caer a la copia local sería enseñar los datos a quien no
+           ha entrado. Se corta el arranque y se pide la cuenta. */
+        if (_dgEsErrorDeSesion(e)) {
+            mostrarPantallaCuenta('Tu sesión venció. Vuelve a entrar.');
+            return false;
+        }
         _dgSetOnline(false, e);
     }
     // Sin conexión → arrancar desde localStorage
@@ -2950,6 +3014,7 @@ async function _dgLoadFromServer() {
     // Primera vez con datos en localStorage → subirlos a Supabase
     if (Object.keys(_dgCache).length > 0) _dgSyncServer();
     _dgSetupRealtime();
+    return true;
 }
 
 function _dgSetupRealtime() {
@@ -3043,6 +3108,109 @@ function selectUser(uid){
 
 function clearPin(){ ['p0','p1','p2','p3'].forEach(id=>g(id).value=''); }
 function getPin(){ return ['p0','p1','p2','p3'].map(id=>g(id).value).join(''); }
+
+/* ═══════════════════════════════════════════════════════════════
+   CUENTA — sesión real contra el servidor.
+
+   El PIN sólo dice cuál de las dos está usando la app. Lo que impide
+   que un desconocido con el enlace vea los datos de las pacientes es
+   esto: sin sesión iniciada, el servidor no entrega ni una fila.
+═══════════════════════════════════════════════════════════════ */
+
+/* ¿El servidor nos rechazó por falta de permiso, o simplemente no hay internet?
+   Son cosas distintas: lo primero se arregla volviendo a entrar, lo segundo no.
+   Confundirlas llevaría a mostrar la copia local a quien no debe verla. */
+function _dgEsErrorDeSesion(e) {
+    if (!e) return false;
+    const cod = String(e.code || e.status || '');
+    const msg = (e.message || String(e)).toLowerCase();
+    return cod === '401' || cod === '403' || cod === 'PGRST301' ||
+           msg.includes('jwt') || msg.includes('not authorized') ||
+           msg.includes('permission denied') || msg.includes('row-level security');
+}
+
+async function _dgSesionActiva() {
+    try {
+        const { data } = await _sb.auth.getSession();
+        return (data && data.session) || null;
+    } catch (e) { return null; }
+}
+
+function mostrarPantallaCuenta(aviso) {
+    g('loginScreen').classList.add('hidden');
+    g('appShell').classList.add('hidden');
+    g('authScreen').classList.remove('hidden');
+    g('authErr').textContent = aviso || '';
+    const c = g('authEmail');
+    if (c) c.focus();
+}
+
+async function doAuthLogin(ev) {
+    if (ev) ev.preventDefault();
+    const correo = (g('authEmail').value || '').trim();
+    const clave  = g('authPass').value || '';
+    const err    = g('authErr');
+    const btn    = g('authBtn');
+    const soltar = () => { btn.disabled = false; btn.textContent = 'Entrar →'; };
+
+    if (!correo || !clave) { err.textContent = 'Escribe el correo y la contraseña.'; return; }
+    btn.disabled = true; btn.textContent = 'Entrando…'; err.textContent = '';
+
+    let error = null;
+    try {
+        ({ error } = await _sb.auth.signInWithPassword({ email: correo, password: clave }));
+    } catch (e) {
+        err.textContent = 'No hay conexión con el servidor. Revisa el internet.';
+        soltar(); return;
+    }
+    if (error) {
+        // El mensaje de Supabase viene en inglés; aquí se traduce a lo que pasó.
+        const m = (error.message || '').toLowerCase();
+        err.textContent = m.includes('invalid login')  ? 'Correo o contraseña incorrectos.'
+                        : m.includes('not confirmed')  ? 'Ese correo está sin confirmar en el panel de Supabase.'
+                        : 'No se pudo entrar: ' + error.message;
+        soltar(); return;
+    }
+
+    g('authPass').value = '';   // no dejarla escrita en la pantalla
+    await _dgArrancarConSesion();
+    soltar();
+}
+
+async function doAuthLogout() {
+    /* Si hay cambios sin subir, borrar la copia local los perdería. Avisar. */
+    const aviso = _dgOnline === false
+        ? '⚠️ Ahora mismo NO hay conexión con el servidor, así que puede haber cambios de este equipo sin guardar arriba.\n\n' +
+          'Si cierras la sesión ahora, esos cambios se pierden.\n\n¿Cerrar de todas formas?'
+        : '¿Cerrar la sesión en este equipo?\n\nSe borra la copia local. Todo queda guardado en el servidor y vuelve cuando entres de nuevo.';
+    if (!confirm(aviso)) return;
+    try { await _sb.auth.signOut(); } catch (e) {}
+    /* También la copia local: si se quedara, cualquiera que abra la app en este
+       equipo podría leerla sin haber puesto la contraseña. */
+    Object.keys(localStorage).filter(k => k.startsWith('dg_')).forEach(k => localStorage.removeItem(k));
+    location.reload();
+}
+
+/* Arranque normal, ya con sesión: baja del servidor y muestra el PIN. */
+async function _dgArrancarConSesion() {
+    g('authScreen').classList.add('hidden');
+    g('loginScreen').classList.remove('hidden');
+    /* Con el candado puesto, el canal de tiempo real también tiene que ir
+       identificado; si no, los cambios de la otra persona no llegarían solos.
+       supabase-js suele hacerlo por su cuenta, pero aquí no se deja al azar. */
+    try {
+        const s = await _dgSesionActiva();
+        if (s && _sb.realtime && _sb.realtime.setAuth) _sb.realtime.setAuth(s.access_token);
+    } catch (e) {}
+    const caja = g('login-box');
+    if (caja) caja.style.opacity = '0.4';
+    const ok = await _dgLoadFromServer();
+    if (!ok) return;               // sesión rechazada: ya se mostró la pantalla de cuenta
+    ponerAlDiaElCatalogo();
+    if (caja) caja.style.opacity = '1';
+    loadConfig();
+    g('p0').focus();
+}
 
 function doLogin(){
     const pin=getPin();
@@ -3675,14 +3843,12 @@ function importBackup(file) {
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Muestra indicador de carga mientras trae datos del servidor
-    const loginBox = g('login-box');
-    if (loginBox) loginBox.style.opacity = '0.4';
-    await _dgLoadFromServer();
-    ponerAlDiaElCatalogo();
-    if (loginBox) loginBox.style.opacity = '1';
-    loadConfig();
-    g('p0').focus();
+    /* Nada de datos antes de saber quién es. Si no hay sesión guardada en este
+       equipo, sólo se ve la pantalla de correo y contraseña: ni el PIN, ni la
+       copia local, ni una consulta al servidor. */
+    const sesion = await _dgSesionActiva();
+    if (!sesion) { mostrarPantallaCuenta(); return; }
+    await _dgArrancarConSesion();
 });
 
 /* ═══════════════════════════════════════════════════════════════

@@ -198,6 +198,61 @@
         }
         .btn-logout:hover { color:var(--pink); }
 
+
+        /* ── MAQUETA: controles del mes ── */
+        .ctr-resumen { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:12px; margin-bottom:20px; }
+        .ctr-kpi { background:var(--white); border:1.5px solid var(--border); border-radius:14px;
+            padding:14px 16px; border-top:3px solid var(--bronze); }
+        .ctr-kpi.falta { border-top-color:#e57c00; }
+        .ctr-kpi.listo { border-top-color:#5E8C6A; }
+        .ctr-kpi-lbl { font-size:10px; font-weight:800; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+        .ctr-kpi-val { font-size:24px; font-weight:800; color:var(--dark); letter-spacing:-.5px; }
+        .ctr-kpi-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+        .ctr-add { background:var(--white); border:1.5px solid var(--bronze); border-radius:14px;
+            padding:16px 18px; margin-bottom:14px; }
+        .ctr-add-tit { font-size:12.5px; font-weight:800; color:var(--dark); margin-bottom:12px; }
+        .ctr-add-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+        .ctr-add-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+        .ctr-btn-ok { background:var(--bronze); color:white; border-color:var(--bronze); }
+        .ctr-btn-ok:hover { background:var(--dark); border-color:var(--dark); color:white; }
+        .ctr-add textarea.fc { resize:vertical; font-family:inherit; }
+        .ctr-buscar { width:100%; max-width:100%; padding:11px 14px; margin-bottom:6px;
+            border:1.5px solid var(--border); border-radius:12px; font-family:inherit;
+            font-size:13px; color:var(--text); background:var(--white); outline:none;
+            transition:var(--ease); }
+        .ctr-buscar:focus { border-color:var(--bronze); box-shadow:0 0 0 3px rgba(153,119,113,.12); }
+        .ctr-grupo-tit { font-size:12px; font-weight:800; color:var(--dark); text-transform:uppercase;
+            letter-spacing:.5px; margin:22px 0 10px; display:flex; align-items:center; gap:8px; }
+        .ctr-fila { display:flex; align-items:center; gap:12px; padding:11px 14px;
+            background:var(--white); border:1.5px solid var(--border); border-radius:12px;
+            margin-bottom:7px; }
+        .ctr-fila.hecho { opacity:.55; }
+        .ctr-nom { flex:1; min-width:0; }
+        .ctr-nom b { display:block; font-size:13.5px; color:var(--dark); font-weight:700;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ctr-nom span { font-size:11px; color:var(--muted); }
+        .ctr-precio { font-size:13px; font-weight:800; color:var(--bronze); white-space:nowrap; }
+        .ctr-btns { display:flex; gap:6px; }
+        .ctr-btn { padding:7px 11px; border-radius:9px; border:1.5px solid var(--border);
+            background:var(--white); cursor:pointer; font-family:inherit; font-size:12px;
+            font-weight:700; color:var(--dark); white-space:nowrap; transition:var(--ease); }
+        .ctr-btn:hover { border-color:var(--bronze); background:#FFF8F5; }
+        .ctr-check { font-size:17px; }
+        .ctr-btn.fin { border-style:dashed; color:var(--muted); }
+        .ctr-btn.fin:hover { border-color:#e57c00; color:#e57c00; background:#fff8f0; }
+        .ctr-nota { font-size:11.5px; color:var(--muted); margin:-4px 0 9px; }
+        .ctr-vacio { padding:26px; text-align:center; color:var(--muted); font-size:13px;
+            background:var(--white); border:1.5px dashed var(--border); border-radius:14px; }
+        @media (max-width:900px) {
+            .ctr-fila { flex-wrap:wrap; gap:8px; }
+            .ctr-nom { flex:1 1 100%; }
+            .ctr-precio { flex:1; }
+            .ctr-kpi-val { font-size:20px; }
+        }
+
         /* MAIN CONTENT */
         #mainContent { margin-left:var(--sidebar); flex:1; min-height:100vh; display:flex; flex-direction:column; }
         .page-header {
@@ -211,6 +266,10 @@
         .ph-left p { font-size:12px; color:var(--muted); margin-top:2px; }
         .ph-right { display:flex; align-items:center; gap:10px; }
         .page-content { padding:28px 32px; flex:1; }
+
+        /* Caja que envuelve cada tabla: si no cabe, se desliza con el dedo
+           dentro de su tarjeta en vez de ensanchar toda la página. */
+        .table-wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
         /* ============================================================
            BUTTONS
@@ -262,6 +321,27 @@
             text-transform:uppercase; letter-spacing:.6px;
         }
         .fg .hint { font-size:11px; color:var(--muted); }
+
+        /* Estos tres nombres se usan en 26 formularios de la app pero nunca
+           tuvieron estilo: los campos salían con la pinta gris de fábrica del
+           navegador y el título quedaba pegado al lado del campo en vez de
+           encima, saliéndose del recuadro. Se igualan a .fg/.fc, que es como
+           se ve el resto de la app. */
+        .form-group { display:flex; flex-direction:column; gap:5px; min-width:0; }
+        .form-label {
+            font-size:11px; font-weight:800; color:var(--dark);
+            text-transform:uppercase; letter-spacing:.6px;
+        }
+        .form-input {
+            padding:10px 13px;
+            border:1.5px solid var(--border);
+            border-radius:var(--radius-sm);
+            font-size:13px; font-family:inherit;
+            color:var(--text); background:var(--white);
+            outline:none; transition:var(--ease);
+            width:100%; max-width:100%;
+        }
+        .form-input:focus { border-color:var(--bronze); box-shadow:0 0 0 3px rgba(153,119,113,.12); }
         .fc {
             padding:10px 13px;
             border:1.5px solid var(--border);
@@ -393,9 +473,25 @@
             .page-body { padding:14px 14px; }
             .form-grid, .form-grid-3 { grid-template-columns:1fr; }
 
-            /* Tablas horizontalmente scrollables en móvil */
-            .cat-table-wrap, .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+            /* Nada estira la pantalla a lo ancho.
+               Antes una tabla de ocho columnas ensanchaba la página entera:
+               el título y los botones se iban para la derecha y tocaba
+               arrastrar toda la pantalla para poder leer. */
+            #mainContent { min-width:0; max-width:100%; overflow-x:hidden; }
+            .page-header, .page-content, .page-body { min-width:0; max-width:100%; }
+            .form-section, .db-section, .cat-section, .db-grid > * { min-width:0; max-width:100%; }
+
+            /* Cada tabla ancha se desliza sola dentro de su tarjeta */
             .cat-table { font-size:12px; min-width:500px; }
+            .db-compact-table, .today-table, .comm-tx-table { font-size:12px; }
+
+            /* Aviso, si no se ve completa: sin esto parece que faltaran datos */
+            .table-wrap.tw-desliza::before {
+                content:'⇢ desliza la tabla para ver el resto';
+                position:sticky; left:0; display:block;
+                padding:7px 14px 1px; font-size:10px; font-weight:600;
+                color:var(--muted); letter-spacing:.2px;
+            }
 
             /* Tabs de filtros: wrap */
             .comm-filter-tabs, .rep-tabs, .nom-tabs { flex-wrap:wrap; gap:4px; }
@@ -409,8 +505,12 @@
             .btn { min-height:38px; font-size:13px; }
             .btn-sm { min-height:32px; font-size:12px; padding:4px 12px; }
 
-            /* Modales: full width en móvil */
-            .modal-box { width:95vw !important; max-width:95vw !important; margin:0; border-radius:14px; }
+            /* Modales: que aprovechen el ancho del teléfono.
+               Esta regla apuntaba a «.modal-box», una clase que no existe en
+               la app —la buena es «.modal-card»—, así que nunca hizo nada. */
+            .modal-card { max-width:100%; border-radius:14px; }
+            .modal-hdr  { padding:16px 18px 13px; }
+            .modal-body { padding:18px; }
 
             /* Filtros en historial, etc. */
             .hst-filters, .gx-filters { flex-direction:column; gap:8px; }
@@ -423,8 +523,17 @@
         }
 
         @media (max-width:480px) {
-            .db-grid-4 { grid-template-columns:1fr !important; }
-            .caja-bolsillos { grid-template-columns:1fr !important; }
+            /* Las tarjetas de cifras van de a dos. Una sola por renglón
+               obligaba a bajar media pantalla para ver cuatro números. */
+            .db-grid-4 { grid-template-columns:repeat(2,1fr) !important; }
+            .db-grid { gap:10px; }
+            .metric-card  { padding:12px 12px 11px; border-top-width:3px; }
+            .metric-icon  { font-size:18px; margin-bottom:4px; }
+            .metric-label { font-size:9.5px; letter-spacing:.4px; margin-bottom:3px; }
+            .metric-val   { font-size:19px; letter-spacing:-.4px; }
+            .metric-sub   { font-size:10px; }
+
+            .caja-bolsillos { grid-template-columns:1fr 1fr !important; }
             .page-header { padding:10px 12px 10px 56px; }
             .ph-left p { display:none; }
         }
@@ -943,6 +1052,11 @@
                 <h2>DentalGest</h2>
             </div>
             <div class="sb-clinic" id="sbClinic">Consultorio Dra. Silvia López</div>
+            <div id="sb-offline" onclick="navigate('config')" title="Ir a Configuración"
+                 style="display:none;margin-top:8px;padding:6px 8px;border-radius:6px;cursor:pointer;
+                        background:rgba(160,57,62,.15);color:#E8B4B7;font-size:11px;line-height:1.35">
+                🔴 <strong>Sólo este equipo</strong><br>Sin servidor — haz copia de seguridad
+            </div>
         </div>
 
         <div class="sb-user-bar">
@@ -962,6 +1076,9 @@
             <div class="nav-sec">Registro</div>
             <div class="nav-item" data-page="registro" onclick="navigate('registro')">
                 <span class="ni-icon">➕</span><span class="ni-lbl">Nuevo registro</span>
+            </div>
+            <div class="nav-item" data-page="controles" onclick="navigate('controles')">
+                <span class="ni-icon">🦷</span><span class="ni-lbl">Controles del mes</span>
             </div>
             <div class="nav-item" data-page="historial" onclick="navigate('historial')">
                 <span class="ni-icon">🔍</span><span class="ni-lbl">Historial pacientes</span>
@@ -1351,6 +1468,8 @@
                         <div><h3>Backup y restauración</h3><p>Exporta todos tus datos (pacientes, pagos, gastos, planes) a un archivo en tu computador</p></div>
                     </div>
                     <div class="fsb">
+                        <div id="sync-badge" style="margin-bottom:14px;padding:10px 12px;border-radius:10px;
+                             background:var(--bg-soft,#F7F2F0);font-size:12px;line-height:1.5"></div>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
                             <div style="flex:1;min-width:220px">
                                 <button onclick="exportBackup()" style="width:100%;padding:13px 16px;border-radius:12px;border:none;background:var(--bronze);color:white;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -2034,7 +2153,7 @@
                 <div class="ph-left"><h1>🏦 Caja</h1><p>Efectivo · Bancolombia · Datáfono Bold · Provisiones laborales</p></div>
             </div>
             <div class="page-content">
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+                <div class="db-grid db-grid-4 caja-bolsillos" style="margin-bottom:20px">
                     <div class="saldo-card sc-ef">
                         <div class="sc-icon">💵</div>
                         <div class="sc-label">Efectivo</div>
@@ -2132,7 +2251,7 @@
             <div class="page-content">
 
                 <!-- Stats -->
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+                <div class="db-grid db-grid-4" style="gap:12px;margin-bottom:20px">
                     <div class="gf-stat-card" style="border-top-color:var(--bronze)">
                         <div class="gf-stat-icon">💸</div>
                         <div><div class="gf-stat-val" id="gf-s-total">$0</div><div class="gf-stat-lbl">Total mensual</div></div>
@@ -2443,7 +2562,7 @@
                         <button onclick="repSetRango('mes')"       style="padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:11px;font-weight:600;cursor:pointer">Este mes</button>
                         <button onclick="repSetRango('mesant')"    style="padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);background:white;font-size:11px;font-weight:600;cursor:pointer">Mes anterior</button>
                     </div>
-                    <div style="display:flex;align-items:center;gap:6px">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                         <label style="font-size:11px;color:var(--muted);font-weight:600">Desde</label>
                         <input type="date" id="rep-desde" class="form-input" style="padding:5px 8px;font-size:12px;width:auto" onchange="renderReportes()">
                         <label style="font-size:11px;color:var(--muted);font-weight:600">Hasta</label>
@@ -2468,7 +2587,132 @@
         </div>
 
         <!-- ══ RECORDATORIOS ══ -->
+            <div id="page-controles" class="hidden">
+            <div class="page-header">
+                <div class="ph-left">
+                    <h1>🦷 Controles del mes</h1>
+                    <p>Quién tuvo control el mes pasado y todavía no viene este mes</p>
+                </div>
+                <div class="ph-right">
+                    <button onclick="abrirAgregarCtr()" style="padding:9px 18px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Agregar pacientes</button>
+                </div>
+            </div>
+            <div class="page-content">
+                <div id="ctr-resumen" class="ctr-resumen"></div>
+                <div id="ctr-add" class="ctr-add" style="display:none">
+                    <div class="ctr-add-tit">➕ Agregar pacientes de ortodoncia que ya vienes atendiendo</div>
+                    <div class="ctr-add-grid">
+                        <div class="fg">
+                            <label>Tratamiento</label>
+                            <select class="fc" id="ctr-add-treat" onchange="ctrAddPrecio()"></select>
+                        </div>
+                        <div class="fg">
+                            <label>Precio que cobras</label>
+                            <div class="inp-pre"><span class="pre-lbl">$</span>
+                                <input type="number" class="fc" id="ctr-add-precio" placeholder="0"></div>
+                        </div>
+                        <div class="fg">
+                            <label>Último control (si lo sabes)</label>
+                            <input type="date" class="fc" id="ctr-add-fecha">
+                        </div>
+                    </div>
+                    <div class="fg" style="margin-top:12px">
+                        <label>Nombres — uno por renglón</label>
+                        <textarea class="fc" id="ctr-add-noms" rows="5" placeholder="María Pérez&#10;Juan Rodríguez&#10;Ana Gómez"></textarea>
+                        <span class="hint">Puedes pegar varios de una vez. Si alguno cobra distinto, lo agregas aparte.</span>
+                    </div>
+                    <div class="ctr-add-btns">
+                        <button class="ctr-btn" onclick="cerrarAgregarCtr()">Cancelar</button>
+                        <button class="ctr-btn ctr-btn-ok" onclick="guardarAgregarCtr()">Agregar a la lista</button>
+                    </div>
+                </div>
+                <input type="text" id="ctr-buscar" class="ctr-buscar" placeholder="🔍 Buscar paciente — si llegó antes de su cita"
+                       autocomplete="off" oninput="renderControles()">
+                <div id="ctr-lista"></div>
+            </div>
+        </div>
+
         <div id="page-recordatorios" class="hidden">
+            <div class="page-header">
+                <div class="ph-left">
+                    <h1>📞 Recordatorios</h1>
+                    <p>Llamadas a pacientes antes de sus citas · Historial de gestión</p>
+                </div>
+                <div class="ph-right">
+                    <button onclick="openNewRemModal()" style="padding:9px 18px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Nuevo recordatorio</button>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="comm-filter-tabs" style="margin-bottom:20px">
+                    <button class="comm-tab active" id="remtab-hoy"       onclick="setRemTab('hoy')">📞 Llamar hoy <span id="rem-hoy-cnt"></span></button>
+                    <button class="comm-tab"         id="remtab-proximos"  onclick="setRemTab('proximos')">📅 Próximos</button>
+                    <button class="comm-tab"         id="remtab-historial" onclick="setRemTab('historial')">📋 Historial</button>
+                </div>
+                <div id="rem-tab-hoy"></div>
+                <div id="rem-tab-proximos"  class="hidden"></div>
+                <div id="rem-tab-historial" class="hidden">
+                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                        <input type="text"  class="fc" id="rem-fil-pac"   placeholder="🔍 Buscar paciente"
+                            style="flex:1;min-width:160px;font-size:13px" oninput="renderRemHistorial()">
+                        <input type="date"  class="fc" id="rem-fil-desde" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
+                        <input type="date"  class="fc" id="rem-fil-hasta" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
+                        <button onclick="clearRemFil()" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:12px;cursor:pointer;font-family:inherit">Limpiar</button>
+                    </div>
+                    <div id="rem-historial-list"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal: Agregar tratamiento -->
+<div id="catModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <div class="modal-hdr">
+            <h3>Agregar tratamiento</h3>
+            <button class="modal-x" onclick="closeCatModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="fg">
+                <label>Doctor / Especialista</label>
+                <select class="fc" id="mod-doc"></select>
+            </div>
+            <div class="fg">
+                <label>Nombre del tratamiento</label>
+                <input type="text" class="fc" id="mod-name" placeholder="Ej: Carilla de resina">
+            </div>
+            <div class="fg">
+                <label>Precio base</label>
+                <div class="inp-pre">
+                    <span class="pre-lbl">$</span>
+                    <input type="number" class="fc" id="mod-price" placeholder="0">
+                </div>
+            </div>
+            <div class="fg">
+                <label>Costo de materiales estimado <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+                <div class="inp-pre">
+                    <span class="pre-lbl">$</span>
+                    <input type="number" class="fc" id="mod-matcost" placeholder="0" min="0">
+                </div>
+                <span class="hint" style="font-size:10px">Resina, guantes, anestesia, algodón… promedio por este tratamiento</span>
+            </div>
+            <div class="fg">
+                <label>Nota / regla especial <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+                <input type="text" class="fc" id="mod-note" placeholder="Ej: Comisión a acordar con el especialista">
+            </div>
+            <label class="check-row">
+                <input type="checkbox" id="mod-lab">
+                Incluye costo de laboratorio
+            </label>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" onclick="closeCatModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveNewTreatment()">Guardar tratamiento</button>
+        </div>
+    </div>
+
+    <div id="page-recordatorios" class="hidden">
             <div class="page-header">
                 <div class="ph-left">
                     <h1>📞 Recordatorios</h1>
@@ -2597,6 +2841,36 @@ const _sb = supabase.createClient(_SB_URL, _SB_KEY);
 let _dgCache = null;
 let _dgSyncing = false;
 
+/* Estado real de la conexión con el servidor.
+   Antes los errores se tragaban en silencio y la app parecía estar guardando en
+   el servidor cuando en realidad sólo escribía en este navegador: los cambios
+   nunca le llegaban a la otra persona y nadie se enteraba. */
+let _dgOnline    = null;   // null = sin comprobar · true = servidor · false = sólo local
+let _dgLastError = '';
+
+function _dgSetOnline(ok, err) {
+    const cambio = _dgOnline !== ok;
+    _dgOnline = ok;
+    _dgLastError = err ? (err.message || String(err)) : '';
+    renderSyncBadge();
+    if (cambio && ok === false && document.getElementById('toastArea')) {
+        toast('⚠️ Sin conexión con el servidor — los datos se guardan sólo en este equipo', 'error');
+    }
+}
+
+function renderSyncBadge() {
+    const off = document.getElementById('sb-offline');
+    if (off) off.style.display = (_dgOnline === false) ? 'block' : 'none';
+    const el = document.getElementById('sync-badge');
+    if (!el) return;
+    const modo = _dgOnline === true  ? { t:'🟢 Sincronizado',    c:'var(--success,#5E8C6A)', d:'Los cambios se comparten entre equipos.' }
+               : _dgOnline === false ? { t:'🔴 Sólo este equipo', c:'var(--danger,#A0393E)',  d:'Sin servidor: los datos NO se comparten. Haz copias de seguridad.' }
+               :                       { t:'⏳ Comprobando…',     c:'var(--muted,#8A7878)',   d:'' };
+    el.innerHTML = `<span style="color:${modo.c};font-weight:600">${modo.t}</span>`
+                 + (modo.d ? `<span style="color:var(--muted,#8A7878);margin-left:8px">${modo.d}</span>` : '');
+    el.title = _dgLastError || '';
+}
+
 const DB = {
     get(k) {
         if (_dgCache) return (_dgCache[k] !== undefined ? _dgCache[k] : null);
@@ -2617,25 +2891,33 @@ function _dgSyncServer() {
     _dgSyncServer._t = setTimeout(async () => {
         const rows = Object.entries(_dgCache).map(([key, value]) => ({ key, value }));
         try {
-            await _sb.from('data').upsert(rows, { onConflict: 'key' });
-        } catch(e) {} // silencioso sin internet
+            const { error } = await _sb.from('data').upsert(rows, { onConflict: 'key' });
+            _dgSetOnline(!error, error);
+        } catch(e) {
+            _dgSetOnline(false, e);   // sin internet o proyecto en pausa
+        }
     }, 300);
 }
 
 async function _dgLoadFromServer() {
     try {
         const { data, error } = await _sb.from('data').select('key, value');
-        if (!error && data && data.length > 0) {
+        if (error) throw error;
+        if (data && data.length > 0) {
             _dgCache = {};
             data.forEach(row => { _dgCache[row.key] = row.value; });
             // Actualiza localStorage como respaldo offline
             Object.entries(_dgCache).forEach(([k,v]) => {
                 localStorage.setItem('dg_'+k, JSON.stringify(v));
             });
+            _dgSetOnline(true);
             _dgSetupRealtime();
             return;
         }
-    } catch(e) {}
+        _dgSetOnline(true);   // servidor accesible pero todavía vacío
+    } catch(e) {
+        _dgSetOnline(false, e);
+    }
     // Sin conexión → arrancar desde localStorage
     _dgCache = {};
     Object.keys(localStorage).filter(k => k.startsWith('dg_')).forEach(k => {
@@ -2781,6 +3063,8 @@ function enterApp(){
     g('sbAvatar').textContent=currentUser.emoji;
     const cfg=DB.get('config')||DEFAULTS;
     g('sbClinic').textContent=cfg.nombre||DEFAULTS.nombre;
+    renderSyncBadge();   // pinta el estado de la conexión al entrar
+    _vigilarTablas();    // vigila las tablas nuevas para que no estiren la pantalla
     const init=DB.get('initialized');
     navigate(init?'dashboard':'config');
     if(!init) toast('👋 Bienvenida. Completa la configuración inicial antes de empezar.','',6000);
@@ -2802,6 +3086,344 @@ function closeSidebar() {
     const ov = g('sb-overlay');
     if (sb) sb.classList.remove('open');
     if (ov) ov.classList.remove('visible');
+}
+
+/* ── Que las tablas anchas no estiren la pantalla ──────────────────────────
+   En el celular una tabla de ocho columnas no cabe. Antes eso ensanchaba la
+   página entera: el título y los botones se iban para la derecha y había que
+   arrastrar toda la pantalla para leer un renglón. Ahora cada tabla se mete
+   en su propia cajita que se desliza con el dedo, y el resto queda quieto.
+   Se aplica sola cada vez que se dibuja una tabla nueva. */
+function envolverTablasAnchas(raiz) {
+    const zona = raiz || document;
+    zona.querySelectorAll('table').forEach(t => {
+        let caja = t.parentElement;
+        if (!caja || !caja.classList.contains('table-wrap')) {
+            if (t.closest('.table-wrap')) return;
+            caja = document.createElement('div');
+            caja.className = 'table-wrap';
+            t.parentNode.insertBefore(caja, t);
+            caja.appendChild(t);
+        }
+        // Avisar cuando quedan columnas escondidas a la derecha
+        caja.classList.toggle('tw-desliza', t.scrollWidth > caja.clientWidth + 4);
+    });
+}
+addEventListener('resize', () => envolverTablasAnchas(document.getElementById('mainContent')));
+
+let _envolverPendiente = false;
+function _vigilarTablas() {
+    const zona = document.getElementById('mainContent');
+    if (!zona || !window.MutationObserver) return;
+    new MutationObserver(muts => {
+        if (_envolverPendiente) return;
+        const hayTabla = muts.some(m => [...m.addedNodes].some(n =>
+            n.nodeType === 1 && (n.tagName === 'TABLE' || n.querySelector?.('table'))));
+        if (!hayTabla) return;
+        _envolverPendiente = true;
+        requestAnimationFrame(() => { _envolverPendiente = false; envolverTablasAnchas(zona); });
+    }).observe(zona, { childList: true, subtree: true });
+    envolverTablasAnchas(zona);
+}
+
+/* Ayudantes compartidos: los usa «Controles del mes» para reconocer, entre
+   los cobros escritos a mano, cuáles son controles de ortodoncia. */
+function _norm(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9 ]/g,' ').split(/\s+/)
+    .filter(w=>w.length>2 && !['del','los','las','con','por','para','dientes','diente'].includes(w)); }
+
+/* Busca en la lista de precios el tratamiento que corresponde a un nombre
+   escrito a mano. Exige que TODAS las palabras escritas aparezcan en el
+   nombre del catálogo: así "Control de Ortodoncia Reparación" ya no se
+   confunde con "Control mensual ortodoncia", que es otro tratamiento y
+   otro precio. Entre varios que sirvan, gana el de nombre más parecido. */
+function _buscarEnCatalogo(nombre, cat){
+    const A = _norm(nombre); if (!A.length) return null;
+    let mejor = null, sobranMenos = 1e9;
+    cat.forEach(i => {
+        const B = _norm(i.name); if (!B.length) return;
+        const cubre = A.filter(w => B.includes(w)).length / A.length;
+        if (cubre < 0.9) return;
+        const sobran = B.filter(w => !A.includes(w)).length;
+        if (sobran < sobranMenos) { sobranMenos = sobran; mejor = i; }
+    });
+    return mejor;
+}
+
+/* ── MAQUETA: Controles del mes ─────────────────────────────────────────────
+   La ortodoncia es un control cada ~30 días, no "una vez por mes calendario".
+   Por eso se cuenta por días transcurridos y no por mes: así el 31 de agosto
+   no se le borra la lista y vuelve a empezar.
+
+   De cada paciente se recuerda el precio que pagó la última vez, porque no
+   todos pagan igual: normal $65.000, autoligado $120.000, mixto $100.000,
+   mini $70.000. La lista trae el suyo, no un precio fijo.
+
+   Quién sale de la lista, y cómo:
+     · A MANO      → el botón «Ya terminó». Manda siempre y se puede deshacer.
+     · AUTOMÁTICO  → a los 90 días sin venir la app deja de insistir y lo pasa
+                     a «¿siguen en tratamiento?», para preguntar en vez de
+                     seguir cobrando algo que quizá ya se acabó. */
+
+const CTR_TOCA    = 30;   // días para que toque el siguiente control
+const CTR_PERDIDO = 90;   // días sin venir para preguntar si ya terminó
+
+function _esControlOrtodoncia(t, cat) {
+    const c = (t.treatId && cat.find(i => i.id === t.treatId)) || _buscarEnCatalogo(t.treatName, cat);
+    if (!c) return null;
+    return /control/i.test(c.name) && /ortodoncia/i.test(c.name) ? c : null;
+}
+
+function _diasDesde(iso) { return Math.round((new Date(todayISO()) - new Date(iso)) / 86400000); }
+function _masDias(iso, n) { const d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); }
+function _fechaCorta(iso) {
+    const m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return parseInt(iso.slice(8,10),10) + ' ' + m[parseInt(iso.slice(5,7),10)-1];
+}
+
+/* Los que la Dra. marcó como terminados. Se guarda con DB.set, así que viaja
+   solo al servidor y aparece igual en el computador de Sandry. */
+function ortoTerminados() { return DB.get('orto_fin') || []; }
+function _estaTerminado(nom) { return ortoTerminados().some(x => x.nom === nom); }
+
+function marcarTerminado(nom) {
+    const l = ortoTerminados();
+    if (!l.some(x => x.nom === nom)) l.push({ nom, desde: todayISO() });
+    DB.set('orto_fin', l);
+    toast(nom + ' salió de la lista de controles', 'success');
+    renderControles();
+}
+function reactivarPaciente(nom) {
+    DB.set('orto_fin', ortoTerminados().filter(x => x.nom !== nom));
+    toast(nom + ' vuelve a la lista', 'success');
+    renderControles();
+}
+
+function pacientesEnControl(soloReales) {
+    const cat = getCatalog();
+    const ultimo = {};
+
+    // Primero los anotados a mano; si luego aparece un control registrado
+    // con ese nombre, lo pisa, porque el dato real vale más.
+    if (!soloReales) (DB.get('orto_manual') || []).forEach(m => {
+        const t = cat.find(i => i.id === m.treatId);
+        if (!t) return;
+        ultimo[m.nom] = { nom: m.nom, date: m.date, treat: t, precio: m.precio,
+                          manual: true, sinHistoria: m.sinHistoria };
+    });
+    (DB.get('tx') || []).forEach(t => {
+        const c = _esControlOrtodoncia(t, cat);
+        if (!c) return;
+        const nom = (t.patient || '').trim();
+        if (!nom || /^sin nombre$/i.test(nom)) return;
+        if (!ultimo[nom] || ultimo[nom].manual || t.date > ultimo[nom].date) {
+            ultimo[nom] = { nom, date: t.date, treat: c, precio: t.price || c.price };
+        }
+    });
+    /* Si la Dra. le agendó cita al paciente (la casilla «Agendar próxima cita»
+       de la confirmación, que alimenta Recordatorios), esa fecha manda: puede
+       habérsela adelantado o corrido. Los 30 días son solo la estimación para
+       cuando no hay cita puesta. */
+    const citas = {};
+    (DB.get('reminders') || []).forEach(r => {
+        if (r.status !== 'pending' || !r.citaDate) return;
+        const n = (r.patient || '').trim();
+        if (!n) return;
+        if (!citas[n] || r.citaDate > citas[n]) citas[n] = r.citaDate;
+    });
+
+    return Object.values(ultimo)
+        .map(p => {
+            const cita = citas[p.nom] && citas[p.nom] >= p.date ? citas[p.nom] : null;
+            // Recién anotado a mano y sin fecha de último control: se agregó
+            // porque el paciente está ahí. Va arriba, listo para registrar.
+            const prox = cita || (p.sinHistoria ? todayISO() : _masDias(p.date, CTR_TOCA));
+            return { ...p, dias: p.sinHistoria ? 0 : _diasDesde(p.date),
+                     proxima: prox, agendada: !!cita };
+        })
+        .sort((a, b) => a.proxima.localeCompare(b.proxima));
+}
+
+
+/* ── Pacientes puestos a mano ──────────────────────────────────────────────
+   Los que ya venían en tratamiento antes de usar la app: no tienen ningún
+   control registrado, así que la lista no los conoce. Se anotan aquí para
+   que aparezcan. En cuanto se les registre el primer control, mandan los
+   datos reales y esta anotación deja de usarse. */
+function ortoManual() { return DB.get('orto_manual') || []; }
+
+function ctrTratamientosControl() {
+    return getCatalog().filter(t => /control/i.test(t.name) && /ortodoncia/i.test(t.name));
+}
+
+function abrirAgregarCtr() {
+    const sel = g('ctr-add-treat');
+    sel.innerHTML = ctrTratamientosControl()
+        .map(t => `<option value="${t.id}">${t.name} — ${fmt(t.price)}</option>`).join('');
+    ctrAddPrecio();
+    sv('ctr-add-fecha', '');
+    sv('ctr-add-noms', '');
+    g('ctr-add').style.display = '';
+    g('ctr-add-noms').focus();
+}
+function cerrarAgregarCtr() { g('ctr-add').style.display = 'none'; }
+function ctrAddPrecio() {
+    const t = getCatalog().find(i => i.id === gv('ctr-add-treat'));
+    if (t) sv('ctr-add-precio', t.price);
+}
+
+function guardarAgregarCtr() {
+    const treatId = gv('ctr-add-treat');
+    const precio  = parseFloat(gv('ctr-add-precio')) || 0;
+    const fecha   = gv('ctr-add-fecha') || '';
+    const nombres = gv('ctr-add-noms').split('\n').map(n => n.trim()).filter(Boolean);
+
+    if (!treatId)        { toast('Escoge el tratamiento', 'error'); return; }
+    if (!precio)         { toast('Ponle el precio', 'error'); return; }
+    if (!nombres.length) { toast('Escribe al menos un nombre', 'error'); return; }
+    if (fecha && fecha > todayISO()) { toast('El último control no puede ser en el futuro', 'error'); return; }
+
+    const lista = ortoManual();
+    const yaEstaban = [];
+    nombres.forEach(nom => {
+        // No duplicar: ni contra los de la lista a mano, ni contra los que ya
+        // tienen controles registrados.
+        const repetido = lista.some(x => mismoNombre(x.nom) === mismoNombre(nom))
+                      || pacientesEnControl(true).some(p => mismoNombre(p.nom) === mismoNombre(nom));
+        if (repetido) { yaEstaban.push(nom); return; }
+        lista.push({ nom, treatId, precio, date: fecha || todayISO(), sinHistoria: !fecha });
+    });
+    DB.set('orto_manual', lista);
+
+    const nuevos = nombres.length - yaEstaban.length;
+    toast(nuevos
+        ? `${nuevos} paciente${nuevos===1?'':'s'} en la lista${yaEstaban.length ? ' · '+yaEstaban.length+' ya estaban' : ''}`
+        : 'Todos ya estaban en la lista', nuevos ? 'success' : 'error');
+    cerrarAgregarCtr();
+    renderControles();
+}
+
+function quitarManual(nom) {
+    DB.set('orto_manual', ortoManual().filter(x => mismoNombre(x.nom) !== mismoNombre(nom)));
+    toast(nom + ' salió de la lista', 'success');
+    renderControles();
+}
+
+function initControles() { renderControles(); }
+
+function renderControles() {
+    const todos = pacientesEnControl();
+    const fin   = ortoTerminados();
+    // El buscador es para cuando alguien llega adelantado: se escribe el
+    // nombre y sale de una, sin recorrer los treinta.
+    const q = (g('ctr-buscar')?.value || '').trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const coincide = n => !q || n.toLowerCase().normalize('NFD')
+        .replace(/[\u0300-\u036f]/g,'').includes(q);
+    /* Los recuadros de arriba cuentan SIEMPRE a todos los pacientes activos,
+       aunque se esté buscando un nombre: si al escribir «marta» el recuadro
+       dijera «En control: 1», parecería que se perdieron los demás. Buscar
+       filtra la lista de abajo, no las cuentas. */
+    const activos = todos.filter(p => !_estaTerminado(p.nom));
+    const act     = activos.filter(p => coincide(p.nom));
+
+    // «Le toca» = ya pasó su fecha (la agendada, o los 30 días si no hay cita)
+    const vencido  = p => _diasDesde(p.proxima) >= 0;
+    const perdidos = act.filter(p => p.dias >= CTR_PERDIDO);
+    const toca     = act.filter(p => vencido(p) && p.dias < CTR_PERDIDO);
+    const pronto   = act.filter(p => !vencido(p) && _diasDesde(p.proxima) >= -7);
+    const luego    = act.filter(p => !vencido(p) && _diasDesde(p.proxima) <  -7);
+
+    const kToca  = activos.filter(p => vencido(p) && p.dias < CTR_PERDIDO);
+    const plata  = kToca.reduce((s, p) => s + p.precio, 0);
+    const sigue  = activos.filter(p => !vencido(p))
+                          .sort((a,b) => a.proxima.localeCompare(b.proxima))[0];
+
+    g('ctr-resumen').innerHTML = `
+        <div class="ctr-kpi"><div class="ctr-kpi-lbl">En control</div>
+            <div class="ctr-kpi-val">${activos.length}</div>
+            <div class="ctr-kpi-sub">${fin.length ? fin.length + ' ya terminaron' : 'pacientes de ortodoncia'}</div></div>
+        <div class="ctr-kpi ${kToca.length ? 'falta' : 'listo'}"><div class="ctr-kpi-lbl">Les toca ya</div>
+            <div class="ctr-kpi-val">${kToca.length}</div>
+            <!-- No dice «30+ días» porque este grupo también trae a los que se
+                 agregaron a mano (0 días) y a los que tenían cita puesta para
+                 hoy o antes. Lo único cierto de todos es que ya les llegó. -->
+            <div class="ctr-kpi-sub">ya les llegó la fecha</div></div>
+        <div class="ctr-kpi"><div class="ctr-kpi-lbl">Próximo control</div>
+            <div class="ctr-kpi-val" style="font-size:19px">${sigue ? _fechaCorta(sigue.proxima) : '—'}</div>
+            <div class="ctr-kpi-sub">${sigue ? activos.filter(p=>p.proxima===sigue.proxima).length + ' pacientes' : 'nada pendiente'}</div></div>
+        <div class="ctr-kpi ${kToca.length ? 'falta' : ''}"><div class="ctr-kpi-lbl">Por cobrar</div>
+            <div class="ctr-kpi-val">${fmt(plata)}</div>
+            <div class="ctr-kpi-sub">de los que les toca</div></div>`;
+
+    const esc = n => n.replace(/'/g, "\\'");
+    const fila = (p, modo) => `
+        <div class="ctr-fila${modo === 'luego' ? ' hecho' : ''}">
+            <div class="ctr-nom"><b>${p.nom}</b>
+                <span>${p.treat.name} · ${
+                    p.sinHistoria ? '✋ agregado a mano — todavía sin control registrado'
+                  : modo === 'toca' || modo === 'perdido'
+                    ? (p.agendada ? '📅 tenía cita el ' : 'le tocaba el ') + _fechaCorta(p.proxima) + ' — lleva ' + p.dias + ' días'
+                    : (p.agendada ? '📅 cita el ' : 'le toca el ') + _fechaCorta(p.proxima) + ' · último ' + _fechaCorta(p.date)}</span></div>
+            <div class="ctr-precio">${fmt(p.precio)}</div>
+            <div class="ctr-btns">
+                <!-- Los botones salen siempre, aunque no le toque todavía: si el
+                     paciente está ahí en frente, se registra y punto. -->
+                <button class="ctr-btn" onclick="registrarControl('${esc(p.nom)}','${p.treat.id}',${p.precio},'efectivo')">💵 Efectivo</button>
+                <button class="ctr-btn" onclick="registrarControl('${esc(p.nom)}','${p.treat.id}',${p.precio},'banco')">📱 Banco</button>
+                ${p.manual && p.sinHistoria
+                    ? `<button class="ctr-btn fin" onclick="quitarManual('${esc(p.nom)}')" title="Lo agregué por error">✕ Quitar</button>`
+                    : `<button class="ctr-btn fin" onclick="marcarTerminado('${esc(p.nom)}')" title="Sacar de la lista">🏁 Ya terminó</button>`}
+            </div>
+        </div>`;
+
+    const grupo = (icono, titulo, arr, modo, nota) => arr.length
+        ? `<div class="ctr-grupo-tit">${icono} ${titulo} — ${arr.length} paciente${arr.length===1?'':'s'}</div>`
+          + (nota ? `<div class="ctr-nota">${nota}</div>` : '')
+          + arr.map(p => fila(p, modo)).join('')
+        : '';
+
+    g('ctr-lista').innerHTML =
+        grupo('🟠', 'Les toca control', toca, 'toca')
+      + grupo('🔴', '¿Siguen en tratamiento?', perdidos, 'perdido',
+              `Llevan más de ${CTR_PERDIDO} días sin venir. Si ya terminaron, márcalos y salen de la lista.`)
+      + (q && !act.length
+            ? `<div class="ctr-vacio">Ningún paciente de ortodoncia se llama así.</div>`
+            : '')
+      + (!q && !toca.length && !perdidos.length
+            ? `<div class="ctr-vacio">✅ Nadie pendiente hoy.${sigue ? ' Los siguientes te tocan el <b>' + _fechaCorta(sigue.proxima) + '</b>.' : ''}</div>`
+            : '')
+      + grupo('🟡', 'Esta semana', pronto, 'pronto')
+      + grupo('🟢', 'Más adelante', luego, 'luego')
+      + (fin.length
+            ? `<div class="ctr-grupo-tit">🏁 Ya terminaron — ${fin.length}</div>`
+              + fin.map(x => `<div class="ctr-fila hecho">
+                    <div class="ctr-nom"><b>${x.nom}</b><span>fuera de la lista desde el ${_fechaCorta(x.desde)}</span></div>
+                    <div class="ctr-btns"><button class="ctr-btn" onclick="reactivarPaciente('${esc(x.nom)}')">↩️ Volver a la lista</button></div>
+                </div>`).join('')
+            : '');
+}
+
+/* Un toque: llena el formulario de registro completo y abre la confirmación
+   de siempre. Se reusa saveRx() a propósito, para que la comisión, la caja y
+   todo lo demás se calculen igual que si lo hubiera escrito a mano. */
+function registrarControl(nombre, treatId, precio, pm) {
+    const t = getCatalog().find(i => i.id === treatId);
+    if (!t) return;
+    navigate('registro');
+    setTimeout(() => {
+        setRxMode('tto');
+        sv('rx-doc', t.docId);  onRxDocChange();
+        sv('rx-treat', t.id);   onRxTreatChange();
+        sv('rx-patient', nombre);
+        sv('rx-price', precio);
+        sv('rx-date', todayISO());
+        const op = [...g('rxPayGrid').querySelectorAll('.pay-opt')]
+            .find(o => o.querySelector('input').value === pm);
+        if (op) selectPM(op, pm);
+        updateRxPreview();
+        saveRx();
+    }, 60);
 }
 
 async function navigate(page) {
@@ -2830,7 +3452,10 @@ async function navigate(page) {
     if(page==='nomina')       initNomina();
     if(page==='reportes')     initReportes();
     if(page==='anulaciones')    initAnulaciones();
+    if(page==='controles')     initControles();
     if(page==='recordatorios') initRecordatorios();
+
+    if(t) envolverTablasAnchas(t);   // tablas anchas: que se deslicen, no que estiren
 }
 
 /* ── Configuración: cargar ── */
@@ -2923,7 +3548,7 @@ function saveConfig(){
 
 // ── Backup / Restauración ─────────────────────────────────────────────────────
 const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','nomina','retiro',
-                     'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','initialized'];
+                     'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual','initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
 function limpiarDuplicadosTx() {
@@ -3014,6 +3639,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginBox = g('login-box');
     if (loginBox) loginBox.style.opacity = '0.4';
     await _dgLoadFromServer();
+    ponerAlDiaElCatalogo();
     if (loginBox) loginBox.style.opacity = '1';
     loadConfig();
     g('p0').focus();
@@ -3024,14 +3650,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 ═══════════════════════════════════════════════════════════════ */
 
 const DOCTORS = {
-    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', comm:'35% del cobrado · Semanal' },
-    nay:     { name:'Nay Jiménez',       short:'Nay',            spec:'Ortodoncia',           color:'#9B6EA0', comm:'55% (50% retenedores) · Inmediato' },
-    rafael:  { name:'Rafael Díaz',       short:'Dr. Díaz',       spec:'Cirugía Maxilofacial', color:'#A0393E', comm:'50% post-lab · Inmediato' },
-    mendoza: { name:'Enrique Mendoza',   short:'Dr. Mendoza',    spec:'Endodoncia',           color:'#3A6EA0', comm:'Tarifas fijas · Inmediato' },
-    mayda:   { name:'Mayda Escandón',    short:'Mayda',          spec:'Periodoncia',          color:'#5E8C6A', comm:'Comisión manual · Inmediato' },
-    cabeza:  { name:'Diana Cabeza',      short:'Dra. Cabeza',    spec:'Rehabilitación Oral',  color:'#7A5A9C', comm:'50% post-lab · Al terminar' },
-    silvia:  { name:'Dra. Silvia López', short:'Dra. Silvia',    spec:'Titular',              color:'#564753', comm:'Sin comisión (titular)' },
-    sandry:  { name:'Sandry Flórez',     short:'Sandry',         spec:'Auxiliar Odontología', color:'#8A7878', comm:'$25.000 fijo · Semanal' },
+    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', comm:'35% después de descontar el laboratorio · Corte semanal' },
+    nay:     { name:'Nay Jiménez',       short:'Nay',            spec:'Ortodoncia',           color:'#9B6EA0', comm:'55% después de laboratorio (50% en retenedores) · De una vez' },
+    rafael:  { name:'Rafael Díaz',       short:'Dr. Díaz',       spec:'Cirugía Maxilofacial', color:'#A0393E', comm:'50% después de laboratorio · De una vez' },
+    mendoza: { name:'Enrique Mendoza',   short:'Dr. Mendoza',    spec:'Endodoncia',           color:'#3A6EA0', comm:'Tarifa fija, después de descontar el laboratorio · De una vez' },
+    mayda:   { name:'Mayda Escandón',    short:'Mayda',          spec:'Periodoncia',          color:'#5E8C6A', comm:'Comisión acordada a mano · De una vez' },
+    cabeza:  { name:'Diana Cabeza',      short:'Dra. Cabeza',    spec:'Rehabilitación Oral',  color:'#7A5A9C', comm:'50% después de laboratorio · Al terminar el caso' },
+    silvia:  { name:'Dra. Silvia López', short:'Dra. Silvia',    spec:'Titular',              color:'#564753', comm:'Sin comisión — es la titular' },
+    sandry:  { name:'Sandry Flórez',     short:'Sandry',         spec:'Auxiliar Odontología', color:'#8A7878', comm:'Sin comisión — va por nómina quincenal' },
 };
 // Helper: nombre corto del doctor por docId o por docName
 function docShort(docId, docName) {
@@ -3054,17 +3680,20 @@ const CATALOG_DEFAULTS = [
     { id:'og04', docId:'diana_v', name:'Obturación resina — 1 cara',       price:80000,   lab:false, note:'' },
     { id:'og05', docId:'diana_v', name:'Obturación resina — 2 caras',      price:120000,  lab:false, note:'' },
     { id:'og06', docId:'diana_v', name:'Obturación resina — 3 caras',      price:150000,  lab:false, note:'' },
-    { id:'og07', docId:'diana_v', name:'Obturación amalgama — 1 cara',     price:70000,   lab:false, note:'' },
-    { id:'og08', docId:'diana_v', name:'Obturación amalgama — 2 caras',    price:100000,  lab:false, note:'' },
+    /* og07 y og08 eran las obturaciones en amalgama. La Dra. no trabaja
+       amalgama, así que salieron. Ver CATALOGO_RETIRADO más abajo. */
     { id:'og09', docId:'diana_v', name:'Sellante de fosas y fisuras',      price:30000,   lab:false, note:'Precio por diente' },
     { id:'og10', docId:'diana_v', name:'Detartraje / curetaje',            price:80000,   lab:false, note:'' },
     { id:'og11', docId:'diana_v', name:'Fluorización',                     price:30000,   lab:false, note:'' },
     { id:'og12', docId:'diana_v', name:'Blanqueamiento en consultorio',     price:400000,  lab:false, note:'' },
     { id:'og13', docId:'diana_v', name:'Blanqueamiento para casa',          price:300000,  lab:false, note:'Incluye kit y cubetas' },
-    { id:'og14', docId:'diana_v', name:'Radiografía periapical',            price:25000,   lab:false, note:'' },
-    { id:'og15', docId:'diana_v', name:'Radiografía bite-wing',             price:25000,   lab:false, note:'' },
+    /* og14 y og15 eran «Radiografía periapical» y «Radiografía bite-wing».
+       La Dra. no toma radiografías, así que salieron de la lista de precios.
+       Los ids quedan libres a propósito: no se reutilizan, para que ningún
+       registro viejo termine apuntando a otro tratamiento. */
     { id:'og16', docId:'diana_v', name:'Extracción dental simple',          price:80000,   lab:false, note:'' },
     { id:'og17', docId:'diana_v', name:'Extracción dental compleja',        price:150000,  lab:false, note:'' },
+    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',         price:70000,   lab:false, note:'Precio por diente · ajustable si hay descuento' },
     { id:'og18', docId:'diana_v', name:'Pulpotomía (diente temporal)',       price:120000,  lab:false, note:'' },
     { id:'og19', docId:'diana_v', name:'Corona en resina directa',          price:150000,  lab:false, note:'' },
     // ── ORTODONCIA (Nay Jiménez)
@@ -3072,12 +3701,23 @@ const CATALOG_DEFAULTS = [
     { id:'ot02', docId:'nay', name:'Brackets metálicos (instalación)',      price:2000000, lab:false, note:'Incluye 1er control' },
     { id:'ot03', docId:'nay', name:'Brackets estéticos — zafiro',          price:2800000, lab:false, note:'Incluye 1er control' },
     { id:'ot04', docId:'nay', name:'Brackets autoligables',                price:2500000, lab:false, note:'Incluye 1er control' },
-    { id:'ot05', docId:'nay', name:'Control mensual ortodoncia',           price:80000,   lab:false, note:'' },
+    { id:'ot05', docId:'nay', name:'Control mensual ortodoncia',           price:65000,   lab:false, note:'Pacientes antiguos entre 60.000 y 65.000 · nuevos 70.000 — se teclea el del paciente' },
     { id:'ot06', docId:'nay', name:'Retenedor removible Hawley',           price:250000,  lab:true,  note:'Comisión 50% después de lab' },
     { id:'ot07', docId:'nay', name:'Retenedor transparente thermoformed',  price:200000,  lab:true,  note:'Comisión 50% después de lab' },
     { id:'ot08', docId:'nay', name:'Retenedor fijo adherido',              price:150000,  lab:true,  note:'Comisión 50% después de lab' },
     { id:'ot09', docId:'nay', name:'Ortopedia funcional (aparato)',        price:1200000, lab:true,  note:'Incluye aparato de laboratorio' },
     { id:'ot10', docId:'nay', name:'Expansión maxilar',                    price:1500000, lab:true,  note:'Incluye aparato de laboratorio' },
+    // Lo que de verdad se cobró en agosto y no estaba en el catálogo.
+    // La reparación se cobra APARTE del control, en su propio renglón: así
+    // cuadran las once citas de agosto que la traen. Confirmado por Silvia
+    // el 2026-08-22.
+    { id:'ot11', docId:'nay', name:'Control ortodoncia autoligado',        price:120000,  lab:false, note:'Entre 110.000 y 120.000 según el paciente — se teclea el suyo' },
+    { id:'ot12', docId:'nay', name:'Control ortodoncia mini',              price:70000,   lab:false, note:'' },
+    { id:'ot13', docId:'nay', name:'Control ortodoncia mixto',             price:100000,  lab:false, note:'' },
+    { id:'ot14', docId:'nay', name:'Reparación de bracket',                price:20000,   lab:false, note:'Precio por bracket · va en renglón aparte del control' },
+    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado',     price:30000,   lab:false, note:'Precio por bracket · va en renglón aparte del control' },
+    { id:'ot16', docId:'nay', name:'Montaje inferior mini',                price:300000,  lab:false, note:'' },
+    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',           price:185000,  lab:false, note:'' },
     // ── CIRUGÍA MAXILOFACIAL (Rafael Díaz)
     { id:'cj01', docId:'rafael', name:'Valoración cirugía',                price:50000,   lab:false, note:'' },
     { id:'cj02', docId:'rafael', name:'Extracción cordal simple',          price:200000,  lab:false, note:'' },
@@ -3134,9 +3774,9 @@ const CATALOG_DEFAULTS = [
     { id:'sl09', docId:'silvia', name:'Blanqueamiento en consultorio',     price:400000,  lab:false, note:'' },
     { id:'sl10', docId:'silvia', name:'Extracción dental simple',          price:80000,   lab:false, note:'' },
     // ── AUXILIAR (Sandry Flórez — limpiezas)
-    { id:'sa01', docId:'sandry', name:'Profilaxis (limpieza dental)',       price:60000,   lab:false, note:'Comisión fija: $25.000' },
-    { id:'sa02', docId:'sandry', name:'Profilaxis + aplicación de flúor',  price:75000,   lab:false, note:'Comisión fija: $25.000' },
-    { id:'sa03', docId:'sandry', name:'Aplicación de flúor',               price:30000,   lab:false, note:'Comisión fija: $25.000' },
+    { id:'sa01', docId:'sandry', name:'Profilaxis (limpieza dental)',       price:60000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
+    { id:'sa02', docId:'sandry', name:'Profilaxis + aplicación de flúor',  price:75000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
+    { id:'sa03', docId:'sandry', name:'Aplicación de flúor',               price:30000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
 ];
 
 let catFilter = 'all';
@@ -3152,6 +3792,122 @@ function initCatalog() {
 }
 
 function getCatalog() { return DB.get('catalog') || CATALOG_DEFAULTS; }
+
+/* ── Poner al día el catálogo que ya está guardado ──────────────────────────
+   El catálogo vive guardado, así que cambiar CATALOG_DEFAULTS no le llega a
+   quien ya lo tiene. Esto corre al abrir la app y solo agrega lo que falta:
+   no toca precios ni nombres de lo que ya está, porque eso puede haberse
+   corregido a mano. Si no hay nada que hacer, no escribe nada.
+
+   Qué agrega, y de dónde salió: los siete tratamientos de ortodoncia que
+   se cobraron en agosto y no existían en el catálogo. La reparación de
+   bracket va en su propio renglón, aparte del control — así cuadran las
+   once citas de agosto que la traen.
+
+   `mismoQue` es cómo se puede llamar ya en el catálogo de quien lo escribió
+   a mano. Si aparece con cualquiera de esos nombres, NO se agrega: el que
+   ella tecleó manda, porque lleva el precio que de verdad cobra. Comparar
+   por código y no por nombre fue lo que el 2026-08-22 creó tres repetidos.  */
+const CATALOGO_QUE_FALTABA = [
+    { id:'ot11', docId:'nay', name:'Control ortodoncia autoligado',    price:120000, lab:false, note:'Entre 110.000 y 120.000 según el paciente — se teclea el suyo', matCost:10000,
+      mismoQue:['Control mensual de Autoligados','Control autoligado','Control de ortodoncia autoligado','Control de Ortodoncia Autoligado'] },
+    { id:'ot12', docId:'nay', name:'Control ortodoncia mini',          price:70000,  lab:false, note:'', matCost:10000,
+      mismoQue:['Control mini','Control de ortodoncia mini','Control mensual mini'] },
+    { id:'ot13', docId:'nay', name:'Control ortodoncia mixto',         price:100000, lab:false, note:'', matCost:10000,
+      mismoQue:['Control mixto','Control de ortodoncia mixto','Control mensual mixto'] },
+    { id:'ot14', docId:'nay', name:'Reparación de bracket',            price:20000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:0,
+      mismoQue:['Reparacion de Brackets Metalicos','Reparación de brackets metálicos','Reparacion de bracket','Reparación de brackets'] },
+    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado', price:30000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:0,
+      mismoQue:['Reparacion de Autoligado','Reparación de autoligado','Reparacion de bracket autoligado'] },
+    { id:'ot16', docId:'nay', name:'Montaje inferior mini',            price:300000, lab:false, note:'', matCost:0,
+      mismoQue:['Montaje Inferior Mini','Montaje inferior'] },
+    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',       price:185000, lab:false, note:'', matCost:0,
+      mismoQue:['Retiro de Backets y topes','Retiro de brackets','Retiro de brackets y topes'] },
+
+    /* Las seis exodoncias de agosto se escribieron a mano porque el catálogo
+       dice «Extracción» y la Dra. dice «Exodoncia». La de diente temporal
+       además vale menos que la extracción simple de adulto ($80.000), así que
+       va en su propio renglón. El precio es el de referencia: en el formulario
+       se puede cambiar, o usar el botón 🏷️ Descuento. */
+    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',    price:70000,  lab:false, note:'Precio por diente · ajustable si hay descuento', matCost:0,
+      mismoQue:['Exodoncia Diente Temporal','Exodoncia diente temporal','Exodoncia temporal',
+                'Exodoncia Dientes Temporal','Exodoncia dientes temporales','Exodoncia de diente temporal'] },
+];
+
+// Dos nombres son el mismo tratamiento si, quitándoles tildes, mayúsculas
+// y signos, queda lo mismo. «Reparacion de Autoligado» y «Reparación de
+// autoligado» son uno solo.
+function mismoNombre(s) {
+    return (s || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/* Tratamientos que salieron de la lista de precios porque la Dra. no los hace.
+   Quitarlos del catálogo de fábrica no alcanza: quien ya tenga su propia lista
+   guardada los seguiría viendo. Por eso se retiran también aquí.
+   Nunca se borra uno que aparezca en un cobro: la historia manda. */
+const CATALOGO_RETIRADO = [
+    'og14',   // Radiografía periapical         — no toma radiografías
+    'og15',   // Radiografía bite-wing          — no toma radiografías
+    'og07',   // Obturación amalgama — 1 cara   — no trabaja amalgama
+    'og08',   // Obturación amalgama — 2 caras  — no trabaja amalgama
+];
+
+function ponerAlDiaElCatalogo() {
+    const cat = DB.get('catalog');
+    if (!cat || !cat.length) return;          // catálogo nuevo: ya nace bien
+    const codigos = new Set(cat.map(t => t.id));
+    const nombres = new Set(cat.map(t => mismoNombre(t.name)));
+
+    const faltan = CATALOGO_QUE_FALTABA.filter(t =>
+        !codigos.has(t.id) &&
+        !nombres.has(mismoNombre(t.name)) &&
+        !(t.mismoQue || []).some(n => nombres.has(mismoNombre(n)))
+    ).map(({ mismoQue, ...t }) => t);   // el alias no se guarda, era para comparar
+
+    // A Sandry no se le paga comisión: va por nómina. La nota vieja decía
+    // que sí, y ese letrero contradecía la cuenta.
+    let notasCorregidas = 0;
+    cat.forEach(t => {
+        if (t.note === 'Comisión fija: $25.000') {
+            t.note = 'Lo hace Sandry · sin comisión, va por nómina';
+            notasCorregidas++;
+        }
+    });
+
+    // Limpieza de los repetidos que dejó la primera versión de esto, que
+    // comparaba por código y no por nombre. Solo se van los que nadie ha
+    // usado en un cobro y que tienen un gemelo hecho a mano.
+    const usados = new Set((DB.get('tx') || []).map(t => t.treatId));
+    const sobran = [];
+    CATALOGO_QUE_FALTABA.forEach(nuevo => {
+        const mio = cat.find(t => t.id === nuevo.id);
+        if (!mio || usados.has(mio.id)) return;
+        const gemelo = cat.find(t => t.id !== mio.id &&
+            (t.mismoQue || []).length === 0 &&
+            (mismoNombre(t.name) === mismoNombre(mio.name) ||
+             (nuevo.mismoQue || []).some(n => mismoNombre(n) === mismoNombre(t.name))));
+        if (gemelo) sobran.push(mio.id);
+    });
+
+    // Los retirados salen igual que los repetidos, pero solo si nadie los cobró.
+    const retirados = CATALOGO_RETIRADO.filter(id => codigos.has(id) && !usados.has(id));
+
+    if (!faltan.length && !notasCorregidas && !sobran.length && !retirados.length) return;
+
+    const fuera = [...sobran, ...retirados];
+    let lista = fuera.length ? cat.filter(t => !fuera.includes(t.id)) : cat;
+    if (faltan.length) {
+        // Entran junto a los demás de ortodoncia, no al final de todo
+        const ultimoOrto = lista.reduce((p, t, i) => t.id.startsWith('ot') ? i : p, -1);
+        lista.splice(ultimoOrto + 1, 0, ...faltan);
+    }
+    DB.set('catalog', lista);
+    if (faltan.length) console.log('Catálogo: entraron ' + faltan.length + ' tratamientos que faltaban');
+    if (sobran.length) console.log('Catálogo: se quitaron ' + sobran.length + ' repetidos sin usar (' + sobran.join(', ') + ')');
+    if (retirados.length) console.log('Catálogo: se retiraron ' + retirados.length + ' tratamientos que ya no se hacen (' + retirados.join(', ') + ')');
+}
 
 function renderCatalogFilters() {
     const FILTERS = [
@@ -3328,7 +4084,7 @@ function selectSaldoPM(el, pm) {
 }
 
 function saveRxSaldo() {
-    const pac      = (gv('rx-saldo-pac')||'').trim();
+    const pac      = nombreDelPaciente(gv('rx-saldo-pac'));
     const concepto = (gv('rx-saldo-concepto')||'').trim();
     const monto    = parseFloat(gv('rx-saldo-monto'))||0;
     const fecha    = gv('rx-saldo-fecha') || todayISO();
@@ -3372,17 +4128,103 @@ function getRxPatientList() {
     return [...names].sort((a,b) => a.localeCompare(b,'es'));
 }
 
+/* ── Que el mismo paciente no nazca dos veces ───────────────────────────────
+   El paciente se amarra por lo que se teclee, así que «Jennifer Becerra» y
+   «Jenifer Beccera» —las dos están en el Excel de agosto— son dos personas
+   distintas para la app: dos carteras, dos historias, y ninguna completa.
+
+   Lo de fondo sería una ficha por paciente con su documento. Eso es otra
+   obra. Lo que sí se puede hacer hoy es que el repetido no nazca callado:
+   la lista de abajo ya no exige que se escriba igual, y al guardar, si el
+   nombre se parece muchísimo a uno que ya está, se pregunta. Se atrapa
+   donde nace, que es cuando todavía cuesta un clic arreglarlo.            */
+function comoSeEscribe(s) {
+    return (s || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+}
+
+// Cuántas letras hay que cambiar para pasar de una a otra
+function letrasDeDiferencia(a, b) {
+    if (a === b) return 0;
+    const m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let fila = Array.from({length: n + 1}, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+        let previa = fila[0];
+        fila[0] = i;
+        for (let j = 1; j <= n; j++) {
+            const guardar = fila[j];
+            fila[j] = Math.min(
+                fila[j] + 1,                                   // quitar
+                fila[j-1] + 1,                                 // poner
+                previa + (a[i-1] === b[j-1] ? 0 : 1)           // cambiar
+            );
+            previa = guardar;
+        }
+    }
+    return fila[n];
+}
+
+// Se parecen tanto que casi seguro son la misma persona
+function seParecenDemasiado(a, b) {
+    const x = comoSeEscribe(a), y = comoSeEscribe(b);
+    if (!x || !y || x === y) return false;
+    const largo = Math.max(x.length, y.length);
+    if (largo < 6) return false;                 // nombres muy cortos: no se adivina
+    return letrasDeDiferencia(x, y) / largo <= 0.22;
+}
+
+function pacientesParecidosA(nombre) {
+    return getRxPatientList().filter(n => seParecenDemasiado(nombre, n));
+}
+
+/* Se llama justo antes de guardar. Si el nombre tecleado es uno que ya
+   está, lo devuelve tal cual. Si se parece muchísimo a otro, pregunta —y
+   la respuesta la da quien está frente a la pantalla, que es la única que
+   sabe si son dos personas o una mal escrita—. Devuelve el nombre que hay
+   que guardar. */
+function nombreDelPaciente(tecleado) {
+    const nombre = (tecleado || '').trim();
+    if (!nombre || nombre === 'Sin nombre') return nombre;
+    const yaEstan = getRxPatientList();
+    if (yaEstan.some(n => comoSeEscribe(n) === comoSeEscribe(nombre))) {
+        // Ya existe con esa escritura: se usa la que está guardada, para no
+        // dejar «MARIA» y «María» conviviendo como dos.
+        return yaEstan.find(n => comoSeEscribe(n) === comoSeEscribe(nombre));
+    }
+    const parecidos = pacientesParecidosA(nombre);
+    if (!parecidos.length) return nombre;
+    const cual = parecidos[0];
+    const esElMismo = confirm(
+        `«${nombre}» se parece muchísimo a «${cual}», que ya está en la app.\n\n` +
+        `Si son la misma persona y se escribió distinto, quedan dos pacientes ` +
+        `con media historia cada uno.\n\n` +
+        `Aceptar = es ${cual}\nCancelar = es otra persona, guárdalo como ${nombre}`
+    );
+    return esElMismo ? cual : nombre;
+}
+
 function rxPacInput(inputId, dropId) {
-    const val  = (gv(inputId)||'').trim().toLowerCase();
-    const drop = g(dropId);
+    const crudo = (gv(inputId)||'').trim();
+    const val   = comoSeEscribe(crudo);
+    const drop  = g(dropId);
     if (!drop) return;
     if (val.length < 2) { drop.style.display='none'; return; }
-    const matches = getRxPatientList()
-        .filter(n => n.toLowerCase().includes(val))
-        .slice(0, 8);
+    const todos = getRxPatientList();
+    // Primero los que empiezan igual, después los que lo contienen, y de
+    // último los que solo se parecen —esos van marcados, para que se vean.
+    const empiezan  = todos.filter(n => comoSeEscribe(n).startsWith(val));
+    const contienen = todos.filter(n => !empiezan.includes(n) && comoSeEscribe(n).includes(val));
+    const parecidos = todos.filter(n => !empiezan.includes(n) && !contienen.includes(n) && seParecenDemasiado(crudo, n));
+    const matches = [...empiezan, ...contienen, ...parecidos].slice(0, 8);
     if (!matches.length) { drop.style.display='none'; return; }
     drop.innerHTML = matches.map(n =>
-        `<div class="pac-item" onmousedown="selectRxPac('${inputId}','${dropId}','${eh(n)}')">${eh(n)}</div>`
+        `<div class="pac-item" onmousedown="selectRxPac('${inputId}','${dropId}','${eh(n)}')">${eh(n)}` +
+        (parecidos.includes(n) ? ` <span style="color:var(--muted);font-size:11px">— ¿será este?</span>` : '') +
+        `</div>`
     ).join('');
     drop.style.display = 'block';
 }
@@ -3524,6 +4366,100 @@ function toggleCommOverride() {
     updateRxPreview();
 }
 
+/* ── La comisión de cada quien, en un solo sitio ──────────────────────────
+   Confirmado por Silvia el 2026-08-21 y el 2026-08-22. Antes esta regla
+   estaba escrita tres veces (el formulario, el listado y los planes) y las
+   tres decían cosas distintas: el letrero de Diana Valencia decía «del
+   cobrado» cuando la cuenta era post-laboratorio, y a Sandry le salía una
+   comisión fija que no existe. Se dice una sola vez y de aquí la piden los
+   tres.
+
+   CUÁNDO SE CAUSA — no es igual para todos:
+     · Los especialistas y Diana Valencia: el día que se hace el tratamiento.
+       (A Diana Valencia se le paga por corte semanal; a los especialistas,
+        de una vez. Eso es cuándo se PAGA, no cuándo se causa.)
+     · Diana Cabeza: al terminar el caso. Por eso sale 'deferred' cuando hay
+       laboratorio de por medio.
+     · Sandry y Zury: no hay comisión. Van por nómina quincenal.          */
+const COMISION_ESTADO = {
+    pendiente: 'pending',   // causada, esperando pago
+    diferida:  'deferred',  // se causa al terminar el caso
+    sinComision:'owner',    // no lleva comisión: es de la clínica
+};
+
+function comisionDe({ docId, price = 0, lab = 0, treatId = null, manual = 0, conLaboratorio }) {
+    if (!docId) return null;
+    const treat   = treatId ? getCatalog().find(t => t.id === treatId) : null;
+    const postLab = Math.max(0, price - lab);
+    const conLab  = (pct, quien) => ({
+        amount: Math.round(postLab * pct),
+        label:  lab > 0
+            ? `${Math.round(pct*100)}% de ${fmt(price)} − ${fmt(lab)} de laboratorio`
+            : `${Math.round(pct*100)}% de lo cobrado`,
+        status: COMISION_ESTADO.pendiente,
+        quien,
+    });
+
+    switch (docId) {
+        case 'diana_v': return conLab(0.35, 'Diana Valencia');
+        case 'rafael':  return conLab(0.50, 'Rafael Díaz');
+        case 'nay': {
+            const esRetenedor = treat?.note?.includes('50% después de lab');
+            const c = conLab(esRetenedor ? 0.50 : 0.55, 'Nay Jiménez');
+            if (esRetenedor) c.label += ' (retenedor)';
+            return c;
+        }
+        case 'mendoza': {
+            // La nota del catálogo trae "Pago fijo al especialista: $260.000"
+            const enLaNota = treat?.note?.match(/\$\s*([\d.]+)/);
+            const fijo   = enLaNota ? parseInt(enLaNota[1].replace(/\./g, '')) : 0;
+            const amount = Math.max(0, fijo - lab);
+            return {
+                amount,
+                label: lab > 0
+                    ? `Tarifa fija ${fmt(fijo)} − ${fmt(lab)} de laboratorio`
+                    : `Tarifa fija del especialista: ${fmt(fijo)}`,
+                status: COMISION_ESTADO.pendiente,
+                quien: 'Enrique Mendoza',
+            };
+        }
+        case 'mayda':
+            return { amount: manual, label: 'Comisión acordada a mano', status: COMISION_ESTADO.pendiente, quien: 'Mayda Escandón' };
+        case 'cabeza': {
+            const esValoracion = treat?.name?.toLowerCase().includes('valoración');
+            // Si a un caso con laboratorio se le abona por partes, el segundo
+            // abono ya no descuenta laboratorio —se descontó una sola vez— y
+            // sin esto parecería un caso sin laboratorio, o sea pagadero de
+            // una vez. El caso es uno solo: quien lo llama dice si lo tiene.
+            const hayLab = conLaboratorio !== undefined
+                ? conLaboratorio
+                : (treat?.lab === true || lab > 0);
+            if (esValoracion || !hayLab) {
+                // Valoración y trabajos sin laboratorio: se causan y se pagan de una vez
+                return {
+                    amount: Math.round(price * 0.50),
+                    label: esValoracion ? '50% de lo cobrado (valoración)' : '50% de lo cobrado',
+                    status: COMISION_ESTADO.pendiente,
+                    quien: 'Diana Cabeza',
+                };
+            }
+            // Con laboratorio: se le paga al terminar el caso
+            return {
+                amount: Math.round(postLab * 0.50),
+                label:  `50% de ${fmt(price)} − ${fmt(lab)} de laboratorio — al terminar el caso`,
+                status: COMISION_ESTADO.diferida,
+                quien: 'Diana Cabeza',
+            };
+        }
+        case 'silvia':
+            return { amount: 0, label: 'Sin comisión — es la titular', status: COMISION_ESTADO.sinComision, quien: 'Dra. Silvia López' };
+        case 'sandry':
+            return { amount: 0, label: 'Sin comisión — va por nómina', status: COMISION_ESTADO.sinComision, quien: 'Sandry Flórez' };
+        default:
+            return { amount: 0, label: '', status: COMISION_ESTADO.sinComision, quien: '' };
+    }
+}
+
 function getRxCommission() {
     const docId   = gv('rx-doc');
     const treatId = gv('rx-treat');
@@ -3538,57 +4474,7 @@ function getRxCommission() {
         const ov = parseFloat(gv('rx-override-comm')) || 0;
         return { amount:ov, label: ov===0 ? 'Sin comisión (ajustado manualmente)' : `Ajustado manualmente: ${fmt(ov)}`, status: ov===0 ? 'owner' : 'pending' };
     }
-    const treat = getCatalog().find(t=>t.id===treatId);
-    switch(docId) {
-        case 'diana_v': {
-            const base_dv = price - lab;
-            const lbl_dv  = lab > 0 ? '35% post-lab ('+fmt(price)+'−'+fmt(lab)+')' : '35% del cobrado';
-            return { amount:Math.round(base_dv*0.35), label:lbl_dv, status:'pending' };
-        }
-        case 'nay': {
-            const isRet = treat?.note?.includes('50% después de lab');
-            const base_nay = price - lab;
-            if (isRet) {
-                return { amount:Math.round(base_nay*0.50), label:'50% post-lab (retenedor)', status:'pending' };
-            }
-            const lbl_nay = lab > 0 ? '55% post-lab ('+fmt(price)+'−'+fmt(lab)+')' : '55% del cobrado';
-            return { amount:Math.round(base_nay*0.55), label:lbl_nay, status:'pending' };
-        }
-        case 'rafael':
-            return { amount:Math.round((price-lab)*0.50), label:'50% post-lab', status:'pending' };
-        case 'mendoza': {
-            // La nota del catálogo tiene el formato "Pago fijo al especialista: $260.000"
-            const noteMatch = treat?.note?.match(/\$\s*([\d.]+)/);
-            const fijo = noteMatch ? parseInt(noteMatch[1].replace(/\./g,'')) : 0;
-            const amount_m = Math.max(0, fijo - lab);
-            const lbl_m = lab > 0 ? 'Fija '+fmt(fijo)+' − lab '+fmt(lab)+'='+fmt(amount_m) : 'Tarifa fija especialista: '+fmt(fijo);
-            return { amount:amount_m, label:lbl_m, status:'pending' };
-        }
-        case 'mayda':
-            return { amount:manual, label:'Comisión acordada manualmente', status:'pending' };
-        case 'cabeza': {
-            const isVal  = treat?.name?.toLowerCase().includes('valoración');
-            const hasLab = treat?.lab === true || lab > 0;
-            if (isVal) {
-                // Valoraciones: 50% del cobrado, sin descuentos, pago inmediato
-                return { amount: Math.round(price * 0.50), label:'50% del cobrado (valoración)', status:'pending' };
-            }
-            if (!hasLab) {
-                // Trabajos directos sin laboratorio (poste fibra, reparación, etc.): pago inmediato
-                return { amount: Math.round(price * 0.50), label:'50% del cobrado', status:'pending' };
-            }
-            // Trabajos con laboratorio: diferido hasta entrega del trabajo
-            return { amount: Math.round((price - lab) * 0.50), label:'50% post-lab+envíos', status:'deferred' };
-        }
-        case 'silvia':
-            return { amount:0, label:'Sin comisión (titular)', status:'owner' };
-        case 'sandry': {
-            const amount_s = Math.max(0, 25000 - lab);
-            const lbl_s = lab > 0 ? 'Fija 25.000 − lab '+fmt(lab)+'='+fmt(amount_s) : 'Comisión fija por limpieza';
-            return { amount:amount_s, label:lbl_s, status:'pending' };
-        }
-        default: return null;
-    }
+    return comisionDe({ docId, price, lab, treatId, manual });
 }
 
 function boldNet(price, pm) {
@@ -3738,7 +4624,7 @@ function saveRx() {
     const esPrevio = g('rx-previo')?.checked || false;
     const base  = {
         date:gv('rx-date')||todayISO(),
-        patient:gv('rx-patient').trim()||'Sin nombre',
+        patient:nombreDelPaciente(gv('rx-patient'))||'Sin nombre',
         docId, docName:DOCTORS[docId]?.name||docId,
         treatId, treatName:treat?.name||'',
         labCost:parseFloat(gv('rx-lab'))||0,
@@ -3830,14 +4716,70 @@ function confirmSaveRx() {
     if (!_rxPending) return;
     const notaConf = g('rxc-nota').value.trim();
     _rxPending.forEach(tx => { if (notaConf) tx.notes = notaConf; });
-    const existing = DB.get('tx') || [];
-    DB.set('tx', [...existing, ..._rxPending]);
 
-    // Capturar antes de limpiar
-    const savedTx    = { ..._rxPending[0] };
     const crearPlan  = _rxSaldoActive;
     const abonoHoy   = parseFloat(g('rxc-abono').value) || 0;
     const totalTto   = _rxPrecioTotal;
+    const saldo      = crearPlan ? Math.max(0, totalTto - abonoHoy) : 0;
+
+    /* ── Lo que se guarda es lo que entró, no el valor del tratamiento ──────
+       Antes, al marcar «saldo pendiente», la app metía a la caja el valor
+       ENTERO del tratamiento el día uno, y después volvía a contar cada
+       abono. Un tratamiento de un millón con abono de doscientos mil subía
+       la caja un millón, y al terminar de pagarlo se había contado dos
+       veces. Ahora el cobro del día lleva el abono, y el valor acordado
+       vive en el plan, que es de donde sale la deuda del paciente.
+
+       Y la comisión se causa sobre lo que entró, menos el laboratorio.
+       No es un invento: es lo que hace tu propia hoja de contabilidad
+       —comprobado en las tres filas de agosto donde el abono no es igual
+       al valor—. Cuándo se PAGA es otra cosa y no la decide el código:
+       de una vez a los especialistas, por corte semanal a Diana Valencia,
+       al terminar el caso a Diana Cabeza.                                */
+    let recs = _rxPending;
+    // El plan se bautiza antes de guardar los cobros, para que el cobro del
+    // primer día quede amarrado a él igual que los abonos que vengan después.
+    // Sin ese amarre, al cerrar el caso la comisión del primer día se quedaba
+    // esperando para siempre — probado el 2026-08-22 con Diana Cabeza.
+    const planId = 'pl' + Date.now();
+    if (crearPlan && saldo > 0) {
+        const partido = recs.length > 1;
+        const segundo = partido ? (recs[1].price || 0) : 0;
+        if (partido && segundo >= abonoHoy) {
+            toast('El segundo pago tiene que ser menor que el abono de hoy', 'error');
+            return;   // no se guarda nada: se corrige y se vuelve a confirmar
+        }
+        if (abonoHoy <= 0) {
+            // No entró plata: no hay cobro que registrar, solo la deuda.
+            recs = [];
+        } else {
+            const base = recs[0];
+            const comm = comisionDe({
+                docId: base.docId, price: abonoHoy,
+                lab: base.labCost || 0, treatId: base.treatId,
+            }) || { amount:0, label:'', status:'owner' };
+            const nota = `Abono de ${fmt(abonoHoy)} sobre ${fmt(totalTto)}`;
+            if (partido) {
+                recs[0].price = abonoHoy - segundo;
+                recs[0].commission = comm.amount;
+                recs[0].commLabel  = comm.label + ' — ' + nota;
+                recs[0].commStatus = comm.status;
+                recs[1].commLabel  = 'Pago mixto — la comisión va en el registro principal';
+            } else {
+                recs[0].price = abonoHoy;
+                recs[0].commission = comm.amount;
+                recs[0].commLabel  = comm.label + ' — ' + nota;
+                recs[0].commStatus = comm.status;
+            }
+            recs.forEach(r => { r.valorTratamiento = totalTto; r.fromPlan = planId; });
+        }
+    }
+
+    const existing = DB.get('tx') || [];
+    if (recs.length) DB.set('tx', [...existing, ...recs]);
+
+    // Capturar antes de limpiar
+    const savedTx = recs.length ? { ...recs[0] } : { ..._rxPending[0] };
 
     _rxPending = null;
     _rxSaldoActive = false;
@@ -3845,28 +4787,35 @@ function confirmSaveRx() {
 
     // Crear plan de pago si hay saldo
     if (crearPlan) {
-        const saldo = Math.max(0, totalTto - abonoHoy);
         if (saldo > 0) {
             const initAbono = abonoHoy > 0 ? [{
                 id: 'ab' + Date.now(),
                 date: savedTx.date,
                 amount: abonoHoy,
                 payMethod: savedTx.payMethod,
-                notes: 'Abono inicial — ya registrado en caja',
+                notes: 'Abono del primer día — ya quedó registrado en la caja',
                 fromTx: savedTx.id,   // ← marca que ya pasó por caja
                 createdAt: new Date().toISOString()
             }] : [];
             const plan = {
-                id: 'pl' + Date.now(),
+                id: planId,
                 patient:    savedTx.patient,
                 docId:      savedTx.docId,
                 docName:    savedTx.docName,
                 treatDesc:  savedTx.treatName,
+                treatId:    savedTx.treatId || null,
                 totalAgreed: totalTto,
                 labCost:    savedTx.labCost || 0,
+                // El abono de hoy ya absorbió esta parte del laboratorio. Sin
+                // esto, el siguiente abono lo vuelve a descontar y la comisión
+                // del profesional sale corta — probado el 2026-08-22: a Diana
+                // Cabeza le salían $300.000 donde le tocaban $400.000.
+                labDescontado: Math.min(savedTx.labCost || 0, abonoHoy),
                 abonos:     initAbono,
                 status:     'active',
-                noComision: true,   // comisión ya liquidada en el registro diario
+                // Cada abono causa su propia comisión al entrar. Al cerrar el
+                // plan no se vuelve a cobrar nada: eso era la comisión doble.
+                comisionPorAbono: true,
                 fromTxId:   savedTx.id,
                 date:       savedTx.date,
                 notes:      savedTx.notes || '',
@@ -3875,9 +4824,11 @@ function confirmSaveRx() {
             const planes = DB.get('planes') || [];
             planes.push(plan);
             DB.set('planes', planes);
-            toast(`✅ Registrado · 📋 Plan creado — saldo ${fmt(saldo)} pendiente`, 'success');
+            toast(abonoHoy > 0
+                ? `✅ Abono de ${fmt(abonoHoy)} registrado · 📋 Queda debiendo ${fmt(saldo)}`
+                : `📋 Plan creado — el paciente queda debiendo ${fmt(saldo)}, sin abono hoy`, 'success');
         } else {
-            toast('✅ Tratamiento registrado — saldo en cero, sin plan necesario', 'success');
+            toast('✅ Tratamiento registrado — pagó completo, no hace falta plan', 'success');
         }
     } else {
         toast('✅ Tratamiento registrado correctamente', 'success');
@@ -4183,39 +5134,7 @@ function confirmEditRx() {
 }
 
 function getRxCommissionFor(docId, price, lab, treatId) {
-    const treat = getCatalog().find(t => t.id === treatId);
-    switch(docId) {
-        case 'diana_v': {
-            const base_dv = price - lab;
-            const lbl_dv  = lab > 0 ? '35% post-lab ('+fmt(price)+'−'+fmt(lab)+')' : '35% del cobrado';
-            return { amount: Math.round(base_dv*0.35), label: lbl_dv };
-        }
-        case 'nay': {
-            const isRet = treat?.note?.includes('50% después de lab');
-            const base_nay = price - lab;
-            if (isRet) return { amount: Math.round(base_nay*0.50), label:'50% post-lab (retenedor)' };
-            const lbl_nay = lab > 0 ? '55% post-lab ('+fmt(price)+'−'+fmt(lab)+')' : '55% del cobrado';
-            return { amount: Math.round(base_nay*0.55), label: lbl_nay };
-        }
-        case 'rafael': return { amount: Math.round((price-lab)*0.50), label:'50% post-lab' };
-        case 'mendoza': {
-            const nm = treat?.note?.match(/\$\s*([\d.]+)/);
-            const fijo = nm ? parseInt(nm[1].replace(/\./g,'')) : 0;
-            const amt_m = Math.max(0, fijo - lab);
-            return { amount: amt_m, label: lab>0 ? 'Fija '+fmt(fijo)+' − lab '+fmt(lab)+'='+fmt(amt_m) : 'Tarifa fija especialista' };
-        }
-        case 'cabeza': {
-            const isVal = treat?.name?.toLowerCase().includes('valoración');
-            return { amount: Math.round((price-lab)*0.50), label: isVal ? (lab>0?'50% post-lab (valoración)':'50% del cobrado') : '50% post-lab' };
-        }
-        case 'mayda':  return { amount: 0, label:'Comisión manual' };
-        case 'silvia': return { amount: 0, label:'Sin comisión (titular)' };
-        case 'sandry': {
-            const amt_s = Math.max(0, 25000 - lab);
-            return { amount: amt_s, label: lab>0 ? 'Fija 25.000 − lab '+fmt(lab)+'='+fmt(amt_s) : 'Comisión fija' };
-        }
-        default:       return { amount: 0, label:'' };
-    }
+    return comisionDe({ docId, price, lab, treatId }) || { amount: 0, label: '' };
 }
 
 function deleteRx(id) {
@@ -6033,7 +6952,7 @@ function renderNominaProv() {
                     Cada mes, transfiere esta cantidad a tu cuenta de ahorros de provisiones.
                     Cuando llegue el momento de pagar (cesantías en feb, prima en jun/dic), el dinero ya estará separado.
                 </p>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+                <div class="db-grid db-grid-3" style="gap:14px;margin-bottom:16px">
                     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
                         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Sandry / mes</div>
                         <div style="font-size:18px;font-weight:800;color:var(--dark)">${fmt(sTot)}</div>
@@ -6410,21 +7329,92 @@ function savePlan() {
     toast('✅ Plan creado','success');
 }
 
+/* ── Los que ya quedaron repetidos ──────────────────────────────────────────
+   Preguntar al teclear evita los nuevos, pero no arregla los que ya están.
+   Esto los busca y los muestra; unirlos lo decide ella, nunca la app: dos
+   nombres parecidos pueden ser dos hermanas.                              */
+function parejasDePacientesParecidos() {
+    const nombres = getRxPatientList();
+    const parejas = [];
+    for (let i = 0; i < nombres.length; i++)
+        for (let j = i + 1; j < nombres.length; j++)
+            if (seParecenDemasiado(nombres[i], nombres[j])) parejas.push([nombres[i], nombres[j]]);
+    return parejas;
+}
+
+function cuantoTienePaciente(nombre) {
+    const tx = (DB.get('tx')||[]).filter(t => t.patient === nombre);
+    return { citas: tx.length, plata: tx.reduce((s,t)=>s+(t.price||0),0) };
+}
+
+function unirPacientes(de, a) {
+    if (de === a) return;
+    const cual = cuantoTienePaciente(de), otro = cuantoTienePaciente(a);
+    const ok = confirm(
+        `¿«${de}» y «${a}» son la misma persona?\n\n` +
+        `«${de}»: ${cual.citas} cita(s), ${fmt(cual.plata)}\n` +
+        `«${a}»: ${otro.citas} cita(s), ${fmt(otro.plata)}\n\n` +
+        `Todo quedará a nombre de «${a}». Esto no se puede deshacer solo.`
+    );
+    if (!ok) return;
+    const tx = DB.get('tx') || [];
+    let n = 0;
+    tx.forEach(t => { if (t.patient === de) { t.patient = a; n++; } });
+    DB.set('tx', tx);
+    const planes = DB.get('planes') || [];
+    planes.forEach(p => { if (p.patient === de) p.patient = a; });
+    DB.set('planes', planes);
+    const rem = DB.get('reminders') || [];
+    rem.forEach(r => { if (r.patient === de) r.patient = a; });
+    DB.set('reminders', rem);
+    renderPlanes();
+    toast(`✅ ${n} cita(s) quedaron a nombre de ${a}`, 'success');
+}
+
+function bannerDePacientesRepetidos() {
+    const parejas = parejasDePacientesParecidos();
+    if (!parejas.length) return '';
+    const filas = parejas.slice(0, 6).map(([a, b]) => {
+        const ca = cuantoTienePaciente(a), cb = cuantoTienePaciente(b);
+        return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;border-top:1px solid rgba(0,0,0,.06);font-size:12px">
+            <span style="color:var(--dark)"><b>${eh(a)}</b> <span style="color:var(--muted)">(${ca.citas} cita${ca.citas!==1?'s':''})</span>
+            &nbsp;y&nbsp; <b>${eh(b)}</b> <span style="color:var(--muted)">(${cb.citas} cita${cb.citas!==1?'s':''})</span></span>
+            <span style="flex:1"></span>
+            <button onclick="unirPacientes(${JSON.stringify(b).replace(/"/g,'&quot;')},${JSON.stringify(a).replace(/"/g,'&quot;')})"
+                style="padding:5px 11px;border-radius:8px;border:none;background:var(--bronze);color:white;font-size:11px;font-weight:700;cursor:pointer">
+                Es ${eh(a)}</button>
+            <button onclick="unirPacientes(${JSON.stringify(a).replace(/"/g,'&quot;')},${JSON.stringify(b).replace(/"/g,'&quot;')})"
+                style="padding:5px 11px;border-radius:8px;border:none;background:var(--bronze);color:white;font-size:11px;font-weight:700;cursor:pointer">
+                Es ${eh(b)}</button>
+        </div>`;
+    }).join('');
+    return `<div style="grid-column:1/-1;background:rgba(242,209,203,.35);border:1.5px solid var(--pink);border-radius:12px;padding:12px 16px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--dark)">
+            ⚠️ ${parejas.length} nombre${parejas.length>1?'s se parecen':' se parece'} a otro — puede ser el mismo paciente escrito de dos formas
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin:2px 0 6px">
+            Si son la misma persona, su historia y su deuda están partidas en dos. Si son dos personas, no toques nada.
+        </div>
+        ${filas}
+        ${parejas.length > 6 ? `<div style="font-size:11px;color:var(--muted);padding-top:6px">y ${parejas.length-6} pareja(s) más</div>` : ''}
+    </div>`;
+}
+
 function renderPlanes() {
     const all = (DB.get('planes')||[]).filter(p=>p.status===planTab);
     const el  = g('plan-cards');
     g('plan-count').textContent = all.length + ' plan' + (all.length!==1?'es':'');
+    const repetidos = bannerDePacientesRepetidos();
 
     if (!all.length) {
-        el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:56px 24px;color:var(--muted)">
+        el.innerHTML = repetidos + `<div style="grid-column:1/-1;text-align:center;padding:56px 24px;color:var(--muted)">
             <div style="font-size:40px;margin-bottom:12px">${planTab==='complete'?'✅':'📋'}</div>
             <div style="font-size:14px;font-weight:700;color:var(--dark)">Sin planes ${planTab==='complete'?'completados':'activos'}</div>
             <div style="font-size:12px;margin-top:6px">Crea un plan con el botón "Nuevo plan".</div>
         </div>`;
         return;
     }
-
-    el.innerHTML = all.map(p => {
+    el.innerHTML = repetidos + all.map(p => {
         const dc       = DOCTORS[p.docId] || {};
         const color    = dc.color || '#997771';
         const pagado   = p.abonos.reduce((s,a)=>s+a.amount,0);
@@ -6529,19 +7519,55 @@ function saveAbono(planId) {
     const plan = plans[idx];
     const abId = 'ab'+Date.now();
     plan.abonos.push({id:abId, date, amount:amt, payMethod:pm, createdAt:new Date().toISOString()});
+
+    /* ── Un abono es un cobro, no un apunte de caja ─────────────────────────
+       Antes el abono se anotaba solo en la caja y nunca aparecía como
+       producción ni causaba comisión: la comisión se cobraba entera al
+       cerrar el plan, encima de la que ya se había pagado el primer día.
+       Ahora cada abono se guarda como lo que es —plata que entró— y causa
+       su comisión sobre lo que entró.
+
+       El laboratorio se descuenta UNA sola vez, no en cada abono: por eso
+       el plan lleva la cuenta de cuánto se le ha descontado ya.          */
+    const labTotal      = plan.labCost || 0;
+    const labYaDescont  = plan.labDescontado || 0;
+    const labDeEsteAbono = Math.min(Math.max(0, labTotal - labYaDescont), amt);
+    plan.labDescontado  = labYaDescont + labDeEsteAbono;
+
+    const comm = comisionDe({
+        docId: plan.docId, price: amt,
+        lab: labDeEsteAbono, treatId: plan.treatId || null,
+        conLaboratorio: labTotal > 0,
+    }) || { amount:0, label:'', status:'owner' };
+
+    const abonoNo = plan.abonos.length;
+    const txs = DB.get('tx') || [];
+    txs.push({
+        id:        'tx'+Date.now(),
+        date,
+        patient:   plan.patient,
+        docId:     plan.docId,
+        docName:   plan.docName,
+        treatId:   plan.treatId || ('plan_'+plan.id),
+        treatName: plan.treatDesc || 'Plan de tratamiento',
+        price:     amt,
+        labCost:   labDeEsteAbono,
+        matCost:   0,
+        payMethod: pm,
+        commission: comm.amount,
+        commLabel:  comm.label + ` — abono ${abonoNo} de ${plan.patient}`,
+        commStatus: comm.status,
+        notes:      `Abono ${abonoNo} · ${fmt(amt)} sobre ${fmt(plan.totalAgreed)}`,
+        valorTratamiento: plan.totalAgreed,
+        fromPlan:  plan.id,
+        fromAbono: abId,
+        createdAt: Date.now(),
+    });
+    DB.set('tx', txs);
     DB.set('planes', plans);
-    // Registrar en caja según forma de pago
-    const desc = `Abono plan — ${plan.patient}${plan.treatDesc?' ('+plan.treatDesc+')':''}`;
-    if (pm==='efectivo' || pm==='banco') {
-        addCajaMov(pm, 'in', amt, desc, date, abId);
-    } else {
-        // Bold: guardar en aj para que aparezca en movimientos y en saldo Bold
-        const ajList = DB.get('aj')||[];
-        ajList.push({id:'cjmov-'+Date.now(), date, bucket:'bold', type:'in', amount:amt, desc, createdAt:new Date().toISOString(), sourceId:abId});
-        DB.set('aj', ajList);
-    }
+
     renderPlanes();
-    toast('✅ Abono registrado','success');
+    toast(`✅ Abono de ${fmt(amt)} registrado`,'success');
 }
 
 function deletePlan(planId) {
@@ -6550,7 +7576,9 @@ function deletePlan(planId) {
     if (!plan) return;
     const nAbonos = plan.abonos.length;
     const totalAbonado = plan.abonos.reduce((s,a)=>s+a.amount,0);
-    const extra = nAbonos>0 ? `\n⚠️ ${nAbonos} abono(s) por ${fmt(totalAbonado)} se revertirán de la caja.` : '';
+    const extra = nAbonos>0
+        ? `\n⚠️ Se van de la caja ${nAbonos === 1 ? 'el abono' : 'los ' + nAbonos + ' abonos'} por ${fmt(totalAbonado)}, y con ellos la comisión que causaron.`
+        : '';
     showDeleteModal(
         'Anular plan de tratamiento',
         `${plan.patient} — ${plan.treatDesc} — Total: ${fmt(plan.totalAgreed)}${extra}`,
@@ -6558,6 +7586,13 @@ function deletePlan(planId) {
             logAnulacion('plan','Plan de tratamiento',plan,motivo);
             const abonoIds = plan.abonos.map(a=>a.id);
             DB.set('aj', (DB.get('aj')||[]).filter(a=>!abonoIds.includes(a.sourceId)));
+            // Los abonos ahora son cobros: se quitan de ahí, que es donde viven.
+            // Se va también el cobro del primer día —que es un abono como los
+            // otros, solo que entró por el registro diario—. Si no, la
+            // advertencia promete devolver todo y deja ese suelto, sin plan
+            // al que pertenecer.
+            DB.set('tx', (DB.get('tx')||[]).filter(t =>
+                t.fromPlan !== planId && !abonoIds.includes(t.fromAbono)));
             DB.set('planes', plans.filter(p=>p.id!==planId));
             renderPlanes();
             toast('Plan anulado','success');
@@ -6578,28 +7613,21 @@ function deleteAbono(planId, abonoId) {
         (motivo) => {
             logAnulacion('abono','Abono plan',{...abono, patient:plan.patient, treatDesc:plan.treatDesc},motivo);
             plan.abonos = plan.abonos.filter(a=>a.id!==abonoId);
+            // Devolverle al plan el laboratorio que este abono había absorbido,
+            // para que el siguiente abono lo vuelva a descontar y no se pierda
+            const txDelAbono = (DB.get('tx')||[]).find(t => t.fromAbono===abonoId);
+            if (txDelAbono) plan.labDescontado = Math.max(0, (plan.labDescontado||0) - (txDelAbono.labCost||0));
             DB.set('planes', plans);
             DB.set('aj', (DB.get('aj')||[]).filter(a=>a.sourceId!==abonoId));
+            DB.set('tx', (DB.get('tx')||[]).filter(t => t.fromAbono!==abonoId));
             renderPlanes();
             toast('Abono anulado','success');
         }
     );
 }
 
-function getPlanCommission(docId, total, labCost) {
-    const lab  = labCost || 0;
-    const base = Math.max(0, total - lab);
-    switch(docId) {
-        case 'diana_v': return { amount: Math.round(base * 0.35), label: lab > 0 ? '35% post-lab ('+fmt(total)+'−'+fmt(lab)+')' : '35% del total cobrado' };
-        case 'nay':     return { amount: Math.round(base * 0.55),  label: `55% s/lab (base ${fmt(base)})` };
-        case 'rafael':  return { amount: Math.round(base * 0.50),  label: `50% s/lab (base ${fmt(base)})` };
-        case 'cabeza':  return { amount: Math.round(base * 0.50),  label: `50% s/lab (base ${fmt(base)})` };
-        case 'mendoza': return { amount: 0, label: 'Tarifa fija — registrar por tratamiento individual' };
-        case 'mayda':   return { amount: 0, label: 'Comisión manual — acordar con Dra. Mayda' };
-        case 'silvia':  return { amount: 0, label: 'Sin comisión (titular)' };
-        case 'sandry':  return { amount: Math.max(0, 25000-lab), label: lab>0?'Fija 25.000 − lab':'Comisión fija' };
-        default:        return { amount: 0, label: '' };
-    }
+function getPlanCommission(docId, total, labCost, treatId) {
+    return comisionDe({ docId, price: total, lab: labCost || 0, treatId }) || { amount: 0, label: '' };
 }
 
 function completePlan(planId) {
@@ -6608,43 +7636,42 @@ function completePlan(planId) {
     if (idx<0) return;
     const plan  = plans[idx];
     const pagado = plan.abonos.reduce((s,a)=>s+a.amount, 0);
-    const comm   = getPlanCommission(plan.docId, plan.totalAgreed, plan.labCost||0);
+    const saldo  = Math.max(0, (plan.totalAgreed||0) - pagado);
 
-    const msg = `¿Marcar este plan como completado?\n\n` +
+    /* ── Cerrar el plan ya no vuelve a cobrar nada ──────────────────────────
+       Antes, al marcar el plan completado, la app creaba OTRO cobro por el
+       valor entero del tratamiento y le volvía a calcular la comisión al
+       profesional — encima de la que ya se había causado el primer día.
+       La plata se contaba dos veces y la comisión se pagaba dos veces.
+
+       Hoy cada abono ya entró con su comisión, así que aquí no nace ningún
+       cobro nuevo. Lo único que pasa es que la comisión que estaba esperando
+       el final del caso —la de Diana Cabeza con laboratorio— queda lista
+       para pagarse.                                                       */
+    const txs = DB.get('tx') || [];
+    const diferidas = txs.filter(t => t.fromPlan === plan.id && t.commStatus === 'deferred');
+    const totalDiferido = diferidas.reduce((s,t) => s + (t.commission||0), 0);
+
+    const msg = `¿Marcar este plan como terminado?\n\n` +
         `Paciente: ${plan.patient}\n` +
-        `Total acordado: ${fmt(plan.totalAgreed)}\n` +
-        `Total cobrado:  ${fmt(pagado)}\n` +
-        (plan.labCost ? `Costo lab:      ${fmt(plan.labCost)}\n` : '') +
-        (comm.amount > 0
-            ? `\nComisión ${plan.docName}: ${fmt(comm.amount)} (${comm.label})\n→ Quedará pendiente de pago en Comisiones.`
-            : comm.label ? `\nComisión: ${comm.label}` : '');
+        `Valor acordado: ${fmt(plan.totalAgreed)}\n` +
+        `Ya pagó:        ${fmt(pagado)}\n` +
+        (plan.labCost ? `Laboratorio:    ${fmt(plan.labCost)}\n` : '') +
+        (saldo > 0
+            ? `\n⚠️ Todavía debe ${fmt(saldo)}. Si lo cierras, esa deuda deja de aparecer en la cartera.`
+            : '') +
+        (totalDiferido > 0
+            ? `\n\nComisión de ${plan.docName} que estaba esperando el final del caso: ${fmt(totalDiferido)}\n→ Queda lista para pagar en Comisiones.`
+            : `\n\nNo nace ninguna comisión nueva: cada abono ya causó la suya.`);
 
     if (!confirm(msg)) return;
 
-    // Crear registro tx para comisión y producción (payMethod='plan' → no afecta bolsillos)
-    if (comm.amount > 0 || plan.totalAgreed > 0) {
-        const txId = 'tx'+Date.now();
-        const allTx = DB.get('tx') || [];
-        allTx.push({
-            id: txId,
-            date: todayISO(),
-            patient: plan.patient,
-            docId:   plan.docId,
-            docName: plan.docName,
-            treatId: 'plan_'+plan.id,
-            treatName: plan.treatDesc,
-            price:   plan.totalAgreed,
-            labCost: plan.labCost || 0,
-            matCost: 0,
-            payMethod: 'plan',
-            commission: comm.amount,
-            commLabel:  comm.label,
-            commStatus: comm.amount > 0 ? 'pending' : 'owner',
-            notes: `Plan completado · ${plan.abonos.length} abono(s) · Cobrado: ${fmt(pagado)}`,
-            fromPlan: plan.id,
-            createdAt: Date.now()
+    if (diferidas.length) {
+        diferidas.forEach(t => {
+            t.commStatus = 'pending';
+            t.commLabel  = (t.commLabel||'') + ' · caso terminado';
         });
-        DB.set('tx', allTx);
+        DB.set('tx', txs);
     }
 
     plans[idx].status = 'complete';
@@ -6652,10 +7679,9 @@ function completePlan(planId) {
     DB.set('planes', plans);
     setPlanTab('complete');
 
-    const toastMsg = comm.amount > 0
-        ? `✅ Plan completado — Comisión ${fmt(comm.amount)} pendiente en Comisiones`
-        : '✅ Plan completado';
-    toast(toastMsg, 'success');
+    toast(totalDiferido > 0
+        ? `✅ Plan terminado — comisión de ${fmt(totalDiferido)} lista para pagar`
+        : '✅ Plan terminado', 'success');
 }
 
 /* ── Comisiones ── */
@@ -10771,7 +11797,7 @@ function toggleRxProxCita() {
         <!-- Método de pago -->
         <div style="margin-bottom:14px">
             <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:8px">Método de pago</label>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div class="db-grid db-grid-3" style="gap:8px">
                 <button id="npm-btn-ef" onclick="selectNomPayPM('efectivo')"
                     style="padding:11px 6px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:.15s">💵 Efectivo</button>
                 <button id="npm-btn-tr" onclick="selectNomPayPM('transferencia')"

@@ -399,6 +399,41 @@
         .form-section.cfg-cerrada .fsh { border-bottom:none; }
         .form-section.cfg-cerrada .fsb { display:none; }
         .form-section.cfg-cerrada .fsh-chev { transform:rotate(-90deg); }
+        /* Desglose de un doctor en Reportes: picar la fila y ver de dónde
+           sale cada peso, incluida la plata que quedó escrita en las notas. */
+        .rd-fila { cursor:pointer; }
+        .rd-fila:hover { background:var(--bg-soft,#F7F2F0); }
+        .rd-chev { margin-left:auto; padding-left:8px; font-size:12px; color:var(--bronze); flex-shrink:0; }
+        .rd-caja { background:var(--bg); border-top:1px solid var(--border); padding:14px 18px; }
+        .rd-hd   { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px; font-size:13px; }
+        .rd-trato{ font-size:11px; color:var(--muted); font-weight:600; }
+        .rd-aviso{ background:#FDF4E7; border:1px solid #E8C89A; border-radius:10px;
+                   padding:10px 12px; font-size:11.5px; line-height:1.6; margin-bottom:12px; }
+        .rd-lista{ display:flex; flex-direction:column; gap:8px; }
+        .rd-item { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:9px 12px; }
+        .rd-item-hd { display:flex; align-items:baseline; gap:10px; }
+        .rd-fecha{ font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase;
+                   width:52px; flex-shrink:0; }
+        .rd-pac  { font-size:12.5px; font-weight:700; flex:1; min-width:0; }
+        .rd-precio{ font-size:12.5px; font-weight:800; font-variant-numeric:tabular-nums; }
+        .rd-tto  { font-size:11.5px; color:var(--text); margin:2px 0 6px 62px; }
+        .rd-meta { display:flex; flex-wrap:wrap; gap:5px; margin-left:62px; }
+        .rd-tag  { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px;
+                   background:var(--bg); border:1px solid var(--border); color:var(--muted);
+                   border-radius:20px; padding:2px 8px; }
+        .rd-tag-com { background:#F2E8DF; border-color:#DCC3AB; color:var(--bronze); }
+        .rd-tag-imp { background:#EFF1F5; border-color:#D3D9E3; color:#63708A; }
+        .rd-tag-app { background:#E9F4EC; border-color:#BEDCC7; color:#3D7A52; }
+        .rd-ojo  { font-size:11px; line-height:1.55; margin:7px 0 0 62px; padding:7px 10px;
+                   background:#FDF4E7; border-radius:8px; border:1px solid #E8C89A; }
+        /* El aviso de que algo no cuadra tiene que verse distinto del resto,
+           si no se pierde entre los demás recuadros y da igual que esté. */
+        .rd-ojo-mal { background:#FBEDEC; border-color:#E2B4AE; }
+        .rd-nota { font-size:10.5px; line-height:1.5; color:var(--muted); margin:6px 0 0 62px; }
+        @media (max-width:640px) {
+            .rd-tto, .rd-meta, .rd-ojo, .rd-nota { margin-left:0; }
+            .rd-caja { padding:12px; }
+        }
         /* Un atajo ya escogido, en Configuración. */
         .at-fila { display:flex; align-items:center; gap:10px; background:var(--white);
                    border:1px solid var(--border); border-radius:11px; padding:9px 12px; margin-bottom:7px; }
@@ -7087,13 +7122,175 @@ function renderRepResumen(mes, allTx, allGx, allNom) {
     },0);
 }
 
+/* Los cobros del rango que se está mirando, guardados aparte para que al
+   picar un doctor se pueda desglosar sin volver a filtrar nada. */
+let _repDocTx = {};
+
+/* Al importar el Excel de agosto, los honorarios de quien cobra por corte
+   semanal quedaron escritos DENTRO de la nota del cobro, no en el campo de
+   comisión. Es plata que sí se paga, así que el «neto clínica» de esa fila
+   está inflado mientras no se cuente. Esto la saca de la nota para poder
+   avisarlo; no la mueve de sitio, sólo la hace visible. */
+const _RE_HONORARIO_NOTA = /honorario atribuido a este paciente:\s*\$([\d.,]+)/i;
+
+function _honorarioEnNota(t) {
+    const m = _RE_HONORARIO_NOTA.exec((t && t.notes) || '');
+    if (!m) return 0;
+    const n = parseInt(m[1].replace(/[.,]/g, ''), 10);
+    return isFinite(n) ? n : 0;
+}
+function _repHonorariosEnNotas(lista) {
+    return (lista || []).reduce((s, t) => s + _honorarioEnNota(t), 0);
+}
+
+/* La nota, sin el renglón del honorario — que ya está arriba, en su etiqueta y
+   con su porcentaje. Si lo único que decía la nota era eso, no se muestra nada;
+   si traía algo más (una comisión aparte, un aviso del importador), eso sí se
+   respeta. Los renglones vienen separados por «·». */
+function _repNotaExtra(t) {
+    return String((t && t.notes) || '')
+        .split('·')
+        .filter(p => !/honorario atribuido a este paciente/i.test(p))
+        .map(p => p.trim()).filter(Boolean).join(' · ');
+}
+
+/* De dónde salió este cobro, en cristiano. */
+function _repDeDondeViene(t) {
+    if (t.imported) return { txt: 'Importado de su Excel', clase: 'rd-tag-imp' };
+    if (t.treatId)  return { txt: 'Registrado con tratamiento de la lista', clase: 'rd-tag-app' };
+    return { txt: 'Registrado a mano', clase: 'rd-tag-mano' };
+}
+
+function repVerDoctor(docId) {
+    const fila = g('rd-det-' + docId);
+    const chev = g('rd-chev-' + docId);
+    if (!fila) return;
+    if (!fila.hidden) {                       // ya estaba abierto: cerrar
+        fila.hidden = true;
+        if (chev) chev.textContent = '▸';
+        return;
+    }
+    const lista = (_repDocTx[docId] || []).slice()
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const dc    = getDoctores()[docId] || {};
+    /* El porcentaje NO vive en la ficha del doctor: vive aparte, en la clave
+       `comisiones`, y la ficha sólo guarda si es por porcentaje o no. Leerlo
+       de dc.pct daba siempre indefinido y el aviso de abajo nunca salía. */
+    const pctTrato = dc.tipo === 'porcentaje' ? pctComision(docId) : null;
+    const trato = dc.tipo === 'porcentaje' && pctTrato
+                    ? `Trato: ${(pctTrato * 100).toFixed(0)}% de lo cobrado`
+                : dc.tipo === 'tarifa'   ? 'Trato: tarifa fija que pone él por trabajo'
+                : dc.tipo === 'manual'   ? 'Trato: se acuerda a mano en cada registro'
+                : dc.tipo === 'ninguna'  ? 'Trato: no lleva comisión'
+                : 'Trato: sin definir';
+
+    const filas = lista.map(t => {
+        const precio = t.price || 0;
+        const com    = t.commStatus !== 'owner' ? (t.commission || 0) : 0;
+        const oculto = _honorarioEnNota(t);
+        const origen = _repDeDondeViene(t);
+        /* Lo que de verdad se lleva por este cobro. En los importados no está
+           en el campo de comisión sino escrito en la nota, y para sacar el
+           porcentaje da lo mismo de dónde salga: es la misma plata. */
+        const gana = com || oculto;
+        /* El porcentaje que DE VERDAD se aplicó, no el del trato. Cuando no
+           cuadran es porque la base no fue el precio cobrado — un descuento,
+           o un saldo que quedó debiendo. Eso hay que verlo. */
+        const pctReal  = precio > 0 && gana > 0 ? (gana / precio * 100) : null;
+        const esperado = pctTrato ? pctTrato * 100 : null;
+        const baseImp  = pctReal != null && esperado ? Math.round(gana / (esperado / 100)) : 0;
+        /* Aviso por plata, no por decimales. Un 34,3% en vez de 35% es
+           $1.429 — redondeo de la liquidación, no un problema. Avisar de eso
+           enseña a ignorar el aviso, y entonces el de $200.000 tampoco se ve.
+           Se habla sólo cuando el hueco pasa de diez mil pesos. */
+        const hueco     = baseImp ? Math.abs(baseImp - precio) : 0;
+        const descuadra = hueco >= 10000;
+        const baseImplicita = baseImp;
+        /* Cobro en cero que igual paga honorario: plata que sale sin que haya
+           entrado nada. No hay porcentaje que comparar, así que el aviso de
+           arriba no lo agarra; éste sí. */
+        const enCero = precio === 0 && gana > 0;
+        return `<div class="rd-item">
+            <div class="rd-item-hd">
+                <span class="rd-fecha">${eh(_repFechaCorta(t.date))}</span>
+                <span class="rd-pac">${eh(t.patient || '(sin paciente)')}</span>
+                <span class="rd-precio">${fmt(precio)}</span>
+            </div>
+            <div class="rd-tto">${eh(t.treatName || '(sin tratamiento)')}</div>
+            <div class="rd-meta">
+                <span class="rd-tag ${origen.clase}">${eh(origen.txt)}</span>
+                ${t.payMethod ? `<span class="rd-tag">${eh(t.payMethod)}</span>` : ''}
+                ${gana > 0
+                    ? `<span class="rd-tag rd-tag-com">${com > 0 ? 'comisión' : 'honorario en la nota'} ${fmt(gana)}${
+                         /* Sin precio no hay porcentaje que sacar: un abono de un plan
+                            entra en $0 y dividir por cero daba pantalla en blanco. */
+                         pctReal != null ? ` · ${pctReal.toFixed(1)}%` : ''}</span>`
+                    : `<span class="rd-tag">sin comisión en el cobro</span>`}
+                ${t.commLabel && !/^importado/i.test(t.commLabel)
+                    ? `<span class="rd-tag">${eh(t.commLabel)}</span>` : ''}
+            </div>
+            ${enCero ? `<div class="rd-ojo rd-ojo-mal">⚠️ Este cobro entró en <strong>$0</strong> y aun así paga
+                <strong>${fmt(gana)}</strong> de honorario. Es plata que sale sin que haya entrado nada.
+                O al cobro se le olvidó el precio, o el trabajo fue de cortesía y el doctor igual se cobra.
+                Las dos cosas se arreglan, pero hay que saber cuál fue.</div>` : ''}
+            ${descuadra ? `<div class="rd-ojo rd-ojo-mal">⚠️ Ese ${pctReal.toFixed(1)}% no es el ${esperado.toFixed(0)}% del trato.
+                Para que ${com > 0 ? 'la comisión diera' : 'el honorario diera'} ${fmt(gana)} al ${esperado.toFixed(0)}%,
+                el tratamiento tendría que valer <strong>${fmt(baseImplicita)}</strong> y aquí está cobrado en ${fmt(precio)}.
+                ${baseImplicita > precio
+                    ? `Casi siempre quiere decir que el paciente quedó debiendo <strong>${fmt(baseImplicita - precio)}</strong>
+                       y eso no alcanzó a quedar registrado.`
+                    : `Casi siempre quiere decir que se dio un descuento después de liquidar.`}</div>` : ''}
+            ${/* El honorario ya lo dice la etiqueta de arriba con su porcentaje, y la
+                  cabecera explica de qué se trata y cuánto suma. Repetirlo en un recuadro
+                  por cada cobro llenaba la pantalla de trece párrafos iguales, y entonces
+                  el recuadro de Hugo López —el único que importa— no se distinguía de los
+                  otros doce. Se queda sólo el aviso cuando algo no cuadra. */ ''}
+            ${(() => { const n = _repNotaExtra(t);
+                return n ? `<div class="rd-nota">📝 ${eh(n)}</div>` : ''; })()}
+        </div>`;
+    }).join('') || '<div class="rd-item" style="color:var(--muted)">Sin cobros en este rango</div>';
+
+    const prod   = lista.reduce((s, t) => s + (t.pagoPrevio ? 0 : (t.price || 0)), 0);
+    const com    = lista.reduce((s, t) => s + (t.commStatus !== 'owner' ? (t.commission || 0) : 0), 0);
+    const oculto = _repHonorariosEnNotas(lista);
+
+    fila.firstElementChild.innerHTML = `
+        <div class="rd-caja">
+            <div class="rd-hd">
+                <strong>${eh(dc.name || docId)}</strong>
+                <span class="rd-trato">${eh(trato)}</span>
+            </div>
+            ${oculto ? `<div class="rd-aviso">
+                <strong>Ojo con el «neto clínica» de esta fila.</strong>
+                Además de los ${fmt(com)} de comisión, en las notas de estos cobros hay
+                <strong>${fmt(oculto)}</strong> de honorarios que se pagan por Gastos.
+                Contando eso, lo que de verdad le queda a la clínica de ${eh(dc.name || docId)} no es
+                ${fmt(prod - com)} sino <strong>${fmt(prod - com - oculto)}</strong>.
+            </div>` : ''}
+            <div class="rd-lista">${filas}</div>
+        </div>`;
+    fila.hidden = false;
+    if (chev) chev.textContent = '▾';
+}
+
+function _repFechaCorta(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = String(iso).split('-').map(Number);
+    if (!y || !m || !d) return iso;
+    /* es-CO devuelve «5 de ago»; el «de» no cabe en la columna y sobra. */
+    return new Date(y, m - 1, d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })
+             .replace(' de ', ' ').replace('.', '');
+}
+
 function renderRepDoc(mes, allTx) {
     const byDoc = {};
+    _repDocTx = {};
     allTx.forEach(t => {
         if (!byDoc[t.docId]) byDoc[t.docId] = {name:t.docName, docId:t.docId, prod:0, comm:0, cnt:0};
         byDoc[t.docId].prod += t.pagoPrevio ? 0 : t.price;
         byDoc[t.docId].comm += t.commStatus!=='owner' ? t.commission : 0;
         byDoc[t.docId].cnt++;
+        (_repDocTx[t.docId] = _repDocTx[t.docId] || []).push(t);
     });
     const docs   = Object.values(byDoc).sort((a,b)=>b.prod-a.prod);
     const maxProd = Math.max(...docs.map(d=>d.prod), 1);
@@ -7106,14 +7303,20 @@ function renderRepDoc(mes, allTx) {
         const neto    = d.prod - d.comm;
         const pct     = Math.round(d.prod/maxProd*100);
         const initials= d.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-        return `<tr>
+        /* Lo que está escondido en las notas: honorarios de otra persona
+           atribuidos a este cobro. Es plata que sí se paga pero que no está
+           en la columna de comisión, así que el «neto clínica» de al lado
+           está de más mientras eso no se cuente. */
+        const oculto = _repHonorariosEnNotas(_repDocTx[d.docId] || []);
+        return `<tr class="rd-fila" onclick="repVerDoctor('${eh(d.docId)}')" title="Toque para ver de dónde sale cada peso">
             <td>
                 <div style="display:flex;align-items:center;gap:8px">
                     <div style="width:28px;height:28px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${initials}</div>
-                    <div>
+                    <div style="min-width:0">
                         <div style="font-size:12px;font-weight:700">${eh(d.name)}</div>
-                        <div style="font-size:10px;color:var(--muted)">${d.cnt} procedimiento${d.cnt!==1?'s':''}</div>
+                        <div style="font-size:10px;color:var(--muted)">${d.cnt} procedimiento${d.cnt!==1?'s':''} · ver detalle</div>
                     </div>
+                    <span class="rd-chev" id="rd-chev-${eh(d.docId)}">▸</span>
                 </div>
             </td>
             <td>
@@ -7122,9 +7325,12 @@ function renderRepDoc(mes, allTx) {
                     <span style="font-weight:700;font-variant-numeric:tabular-nums">${fmt(d.prod)}</span>
                 </div>
             </td>
-            <td style="color:var(--bronze);font-weight:700;font-variant-numeric:tabular-nums">${fmt(d.comm)}</td>
-            <td style="color:var(--success);font-weight:700;font-variant-numeric:tabular-nums">${fmt(neto)}</td>
-        </tr>`;
+            <td style="color:var(--bronze);font-weight:700;font-variant-numeric:tabular-nums">${fmt(d.comm)}${
+                oculto ? `<div style="font-size:9.5px;font-weight:600;color:var(--danger);letter-spacing:0">+ ${fmt(oculto)} en notas</div>` : ''}</td>
+            <td style="color:var(--success);font-weight:700;font-variant-numeric:tabular-nums">${fmt(neto)}${
+                oculto ? `<div style="font-size:9.5px;font-weight:600;color:var(--muted);letter-spacing:0">real ${fmt(neto-oculto)}</div>` : ''}</td>
+        </tr>
+        <tr class="rd-det" id="rd-det-${eh(d.docId)}" hidden><td colspan="4" style="padding:0"></td></tr>`;
     }).join('');
     const totProd = docs.reduce((s,d)=>s+d.prod,0);
     const totComm = docs.reduce((s,d)=>s+d.comm,0);

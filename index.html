@@ -2884,19 +2884,37 @@ const DB = {
     }
 };
 
+/* Devuelve una promesa que se cumple (true/false) cuando el envío al servidor
+   termina de verdad. Quien necesite recargar la página DEBE esperarla primero:
+   si se recarga con el envío a medio camino, la app vuelve a bajar los datos
+   VIEJOS del servidor y pisa lo que se acababa de guardar. Así se perdía una
+   restauración de backup completa sin avisar. */
 function _dgSyncServer() {
-    if (!_dgCache) return;
+    if (!_dgCache) return Promise.resolve(true);
     // Debounce: agrupa escrituras rápidas en una sola llamada
     clearTimeout(_dgSyncServer._t);
+    // Una sola promesa mientras haya envío pendiente. Los DB.set seguidos sólo
+    // corren el temporizador; si cada uno creara su promesa, las anteriores
+    // quedarían colgadas sin cumplirse nunca y el await no volvería jamás.
+    if (!_dgSyncServer._p) {
+        _dgSyncServer._p = new Promise(res => { _dgSyncServer._res = res; });
+    }
     _dgSyncServer._t = setTimeout(async () => {
         const rows = Object.entries(_dgCache).map(([key, value]) => ({ key, value }));
+        let ok = false;
         try {
             const { error } = await _sb.from('data').upsert(rows, { onConflict: 'key' });
-            _dgSetOnline(!error, error);
+            ok = !error;
+            _dgSetOnline(ok, error);
         } catch(e) {
             _dgSetOnline(false, e);   // sin internet o proyecto en pausa
         }
+        const avisar = _dgSyncServer._res;
+        _dgSyncServer._p = null;
+        _dgSyncServer._res = null;
+        if (avisar) avisar(ok);
     }, 300);
+    return _dgSyncServer._p;
 }
 
 async function _dgLoadFromServer() {
@@ -3605,7 +3623,7 @@ function exportBackup() {
 function importBackup(file) {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
         try {
             const raw     = JSON.parse(e.target.result);
             const payload = raw.data ? raw : { data: raw };   // compatibilidad v1
@@ -3624,8 +3642,24 @@ function importBackup(file) {
                 'TODOS los datos actuales serán reemplazados.\n¿Continuar?';
             if (!confirm(msg)) return;
             Object.entries(snap).forEach(([k, v]) => DB.set(k, v));
-            toast('✅ Backup restaurado — recargando...', 'success');
-            setTimeout(() => location.reload(), 1800);
+
+            /* Hay que ESPERAR a que el servidor confirme antes de recargar.
+               Recargar antes hacía que la app bajara de nuevo los datos viejos
+               y borrara la restauración sin decir nada. */
+            toast('⏳ Restaurando y guardando en el servidor…', 'success');
+            const guardado = await _dgSyncServer();
+
+            if (!guardado) {
+                /* No se recarga a propósito: si se recarga ahora, el servidor
+                   (que todavía tiene lo viejo) pisaría lo recién restaurado. */
+                alert('⚠️ Se restauró en ESTE equipo, pero no se pudo guardar en el servidor.\n\n' +
+                      'NO cierres ni recargues la página todavía: si recargas ahora, se pierde.\n\n' +
+                      'Revisa la conexión y vuelve a intentar la restauración.');
+                toast('⚠️ Restaurado sólo en este equipo — no recargues', 'error');
+                return;
+            }
+            toast('✅ Backup restaurado y guardado en el servidor — recargando...', 'success');
+            setTimeout(() => location.reload(), 1200);
         } catch (err) {
             toast('❌ Archivo inválido o corrupto', 'error');
         }

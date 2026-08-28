@@ -864,23 +864,6 @@
         .cs-deferred { background:rgba(122,90,156,.1); color:#7A5A9C; }
         .cs-paid     { background:rgba(94,140,106,.1);  color:var(--success); }
         .today-empty { padding:40px 20px; text-align:center; color:var(--muted); font-size:13px; }
-        /* ── Recordatorios ── */
-        .rem-card { background:#fff; border-radius:12px; border:1.5px solid var(--border); padding:14px 16px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; }
-        .rem-card.rem-hoy { border-left:4px solid #e57c00; }
-        .rem-card.rem-done { opacity:.6; }
-        .rem-card.rem-overdue { border-left:4px solid var(--danger); }
-        .rem-avatar { width:38px; height:38px; border-radius:50%; background:var(--pink-gold); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:var(--bronze); flex-shrink:0; }
-        .rem-body { flex:1; min-width:0; }
-        .rem-patient { font-weight:700; font-size:14px; color:var(--dark); }
-        .rem-meta { font-size:11px; color:var(--muted); margin-top:2px; }
-        .rem-motivo { font-size:12px; color:var(--dark); margin-top:5px; background:var(--bg); padding:5px 9px; border-radius:7px; }
-        .rem-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-        .call-st-btn { padding:5px 11px; border-radius:20px; border:1.5px solid var(--border); background:white; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; transition:all .15s; }
-        .call-st-btn.sel-confirmed { background:#e8f5e9; border-color:#2e7d32; color:#2e7d32; }
-        .call-st-btn.sel-no_answer { background:#fff3e0; border-color:#e57c00; color:#e57c00; }
-        .call-st-btn.sel-cancelled { background:#ffebee; border-color:var(--danger); color:var(--danger); }
-        .call-st-btn.sel-rescheduled { background:#ede7f6; border-color:var(--purp); color:var(--purp); }
-        .rem-nav-badge { background:#e57c00; color:white; font-size:10px; font-weight:800; border-radius:10px; padding:1px 6px; margin-left:6px; }
         /* ── Registro modo-tabs ── */
         .rxmt-bar { display:flex; gap:6px; padding:5px; background:#f5ede9; border-radius:12px; margin-bottom:18px; }
         .rxmt { flex:1; padding:9px 12px; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; background:transparent; color:var(--muted); transition:all .18s; }
@@ -1296,9 +1279,6 @@
             </div>
             <div class="nav-item" data-page="historial" onclick="navigate('historial')">
                 <span class="ni-icon">🔍</span><span class="ni-lbl">Historial pacientes</span>
-            </div>
-            <div class="nav-item" data-page="recordatorios" onclick="navigate('recordatorios')">
-                <span class="ni-icon">📞</span><span class="ni-lbl">Recordatorios<span id="rem-nav-badge" class="rem-nav-badge" style="display:none">0</span></span>
             </div>
             <div class="nav-item" data-page="planes" onclick="navigate('planes')">
                 <span class="ni-icon">📋</span><span class="ni-lbl">Planes de tto.</span>
@@ -1721,8 +1701,6 @@
                     <button class="date-nav-btn" onclick="dashNav(1)">&#8250;</button>
                     <button class="date-nav-today" onclick="dashGoToday()">Hoy</button>
                 </div>
-                <!-- Banner llamadas del día -->
-                <div id="db-call-banner" style="display:none;margin-bottom:14px"></div>
                 <!-- Panel salud del mes -->
                 <div id="db-salud" style="margin-bottom:20px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border)"></div>
 
@@ -2828,37 +2806,6 @@
             </div>
         </div>
 
-        <div id="page-recordatorios" class="hidden">
-            <div class="page-header">
-                <div class="ph-left">
-                    <h1>📞 Recordatorios</h1>
-                    <p>Llamadas a pacientes antes de sus citas · Historial de gestión</p>
-                </div>
-                <div class="ph-right">
-                    <button onclick="openNewRemModal()" style="padding:9px 18px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Nuevo recordatorio</button>
-                </div>
-            </div>
-            <div class="page-content">
-                <div class="comm-filter-tabs" style="margin-bottom:20px">
-                    <button class="comm-tab active" id="remtab-hoy"       onclick="setRemTab('hoy')">📞 Llamar hoy <span id="rem-hoy-cnt"></span></button>
-                    <button class="comm-tab"         id="remtab-proximos"  onclick="setRemTab('proximos')">📅 Próximos</button>
-                    <button class="comm-tab"         id="remtab-historial" onclick="setRemTab('historial')">📋 Historial</button>
-                </div>
-                <div id="rem-tab-hoy"></div>
-                <div id="rem-tab-proximos"  class="hidden"></div>
-                <div id="rem-tab-historial" class="hidden">
-                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-                        <input type="text"  class="fc" id="rem-fil-pac"   placeholder="🔍 Buscar paciente"
-                            style="flex:1;min-width:160px;font-size:13px" oninput="renderRemHistorial()">
-                        <input type="date"  class="fc" id="rem-fil-desde" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
-                        <input type="date"  class="fc" id="rem-fil-hasta" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
-                        <button onclick="clearRemFil()" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:12px;cursor:pointer;font-family:inherit">Limpiar</button>
-                    </div>
-                    <div id="rem-historial-list"></div>
-                </div>
-            </div>
-        </div>
-
     </main>
 </div>
 
@@ -2909,11 +2856,10 @@
     </div>
 </div>
 
-<!-- Aquí abajo había una copia entera de este mismo modal y de la página de
-     Recordatorios, pegada por error y sin cerrar: quedaban dos elementos con
-     el código catModal y dos con page-recordatorios. El navegador se queda
-     con el primero de cada uno, así que la app abría el modal de la copia
-     rota, con la página de Recordatorios metida adentro. Se quitó. -->
+<!-- Aquí abajo había una copia entera de este mismo modal, pegada por error y
+     sin cerrar: quedaban dos elementos con el código catModal. El navegador se
+     queda con el primero, así que la app abría el modal de la copia rota. Se
+     quitó. -->
 
 <!-- Toast -->
 <div id="toastArea"></div>
@@ -3536,26 +3482,13 @@ function pacientesEnControl(soloReales) {
             ultimo[nom] = { nom, date: t.date, treat: c, precio: t.price || c.price };
         }
     });
-    /* Si la Dra. le agendó cita al paciente (la casilla «Agendar próxima cita»
-       de la confirmación, que alimenta Recordatorios), esa fecha manda: puede
-       habérsela adelantado o corrido. Los 30 días son solo la estimación para
-       cuando no hay cita puesta. */
-    const citas = {};
-    (DB.get('reminders') || []).forEach(r => {
-        if (r.status !== 'pending' || !r.citaDate) return;
-        const n = (r.patient || '').trim();
-        if (!n) return;
-        if (!citas[n] || r.citaDate > citas[n]) citas[n] = r.citaDate;
-    });
-
     return Object.values(ultimo)
         .map(p => {
-            const cita = citas[p.nom] && citas[p.nom] >= p.date ? citas[p.nom] : null;
             // Recién anotado a mano y sin fecha de último control: se agregó
             // porque el paciente está ahí. Va arriba, listo para registrar.
-            const prox = cita || (p.sinHistoria ? todayISO() : _masDias(p.date, CTR_TOCA));
+            const prox = p.sinHistoria ? todayISO() : _masDias(p.date, CTR_TOCA);
             return { ...p, dias: p.sinHistoria ? 0 : _diasDesde(p.date),
-                     proxima: prox, agendada: !!cita };
+                     proxima: prox };
         })
         .sort((a, b) => a.proxima.localeCompare(b.proxima));
 }
@@ -3643,7 +3576,7 @@ function renderControles() {
     const activos = todos.filter(p => !_estaTerminado(p.nom));
     const act     = activos.filter(p => coincide(p.nom));
 
-    // «Le toca» = ya pasó su fecha (la agendada, o los 30 días si no hay cita)
+    // «Le toca» = ya pasaron los 30 días desde su último control
     const vencido  = p => _diasDesde(p.proxima) >= 0;
     const perdidos = act.filter(p => p.dias >= CTR_PERDIDO);
     const toca     = act.filter(p => vencido(p) && p.dias < CTR_PERDIDO);
@@ -3679,8 +3612,8 @@ function renderControles() {
                 <span>${p.treat.name} · ${
                     p.sinHistoria ? '✋ agregado a mano — todavía sin control registrado'
                   : modo === 'toca' || modo === 'perdido'
-                    ? (p.agendada ? '📅 tenía cita el ' : 'le tocaba el ') + _fechaCorta(p.proxima) + ' — lleva ' + p.dias + ' días'
-                    : (p.agendada ? '📅 cita el ' : 'le toca el ') + _fechaCorta(p.proxima) + ' · último ' + _fechaCorta(p.date)}</span></div>
+                    ? 'le tocaba el ' + _fechaCorta(p.proxima) + ' — lleva ' + p.dias + ' días'
+                    : 'le toca el ' + _fechaCorta(p.proxima) + ' · último ' + _fechaCorta(p.date)}</span></div>
             <div class="ctr-precio">${fmt(p.precio)}</div>
             <div class="ctr-btns">
                 <!-- Los botones salen siempre, aunque no le toque todavía: si el
@@ -3743,6 +3676,11 @@ function registrarControl(nombre, treatId, precio, pm) {
 }
 
 async function navigate(page) {
+    /* Si el nombre de la pantalla no existe, la app se quedaba en blanco: se
+       escondían todas y no se mostraba ninguna, sin decir nada. Pasa con
+       cualquier enlace viejo — «recordatorios» quedó así al quitarlo. Mejor
+       caer en el Panel del día que dejarla mirando una pantalla vacía. */
+    if (!g('page-' + page)) page = 'dashboard';
     _currentPage = page;
 
     // En móvil, cerrar sidebar después de navegar
@@ -3769,7 +3707,6 @@ async function navigate(page) {
     if(page==='reportes')     initReportes();
     if(page==='anulaciones')    initAnulaciones();
     if(page==='controles')     initControles();
-    if(page==='recordatorios') initRecordatorios();
 
     if(t) envolverTablasAnchas(t);   // tablas anchas: que se deslicen, no que estiren
 }
@@ -6255,27 +6192,6 @@ function confirmSaveRx() {
         toast('✅ Tratamiento registrado correctamente', 'success');
     }
 
-    // Crear recordatorio si se agendó próxima cita
-    const rxcFecha = g('rxc-cita-fecha')?.value || '';
-    if (rxcFecha) {
-        const remRec = {
-            id:        'rem' + Date.now(),
-            patient:   savedTx.patient,
-            phone:     (g('rxc-cita-tel')?.value    || '').trim(),
-            citaDate:  rxcFecha,
-            citaHora:  g('rxc-cita-hora')?.value    || '',
-            motivo:    (g('rxc-cita-motivo')?.value || '').trim(),
-            fromTxId:  savedTx.id,
-            status:    'pending',
-            callNotes: '',
-            callDate:  '',
-            createdAt: Date.now()
-        };
-        const reminders = DB.get('reminders') || [];
-        DB.set('reminders', [...reminders, remRec]);
-        if (typeof updateRemBadge === 'function') updateRemBadge();
-    }
-
     resetRxForm();
     renderTodayList();
 }
@@ -6314,11 +6230,6 @@ function resetRxForm() {
     if (g('rx-previo')) g('rx-previo').checked = false;
     if (g('rxPayGrid')) { g('rxPayGrid').style.opacity=''; g('rxPayGrid').style.pointerEvents=''; }
     resetRxPreview();
-    // Reset próxima cita
-    sv('rxc-cita-fecha',''); sv('rxc-cita-hora',''); sv('rxc-cita-motivo',''); sv('rxc-cita-tel','');
-    if (g('rxc-cita-fields'))  g('rxc-cita-fields').style.display = 'none';
-    if (g('rxc-cita-icon'))    g('rxc-cita-icon').style.display   = 'none';
-    if (g('rxc-cita-chk'))   { g('rxc-cita-chk').style.background='white'; g('rxc-cita-chk').style.borderColor='var(--border)'; }
     // Reset modo a tratamiento
     setRxMode('tto');
 }
@@ -9105,9 +9016,6 @@ function unirPacientes(de, a) {
     const planes = DB.get('planes') || [];
     planes.forEach(p => { if (p.patient === de) p.patient = a; });
     DB.set('planes', planes);
-    const rem = DB.get('reminders') || [];
-    rem.forEach(r => { if (r.patient === de) r.patient = a; });
-    DB.set('reminders', rem);
     renderPlanes();
     toast(`✅ ${n} cita(s) quedaron a nombre de ${a}`, 'success');
 }
@@ -11311,7 +11219,7 @@ function addCajaMov(pm, type, amount, desc, date, sourceId) {
 /* ── Dashboard ── */
 let dashDate = todayISO();
 
-function initDashboard() { renderDashboard(); updateRemBadge(); }
+function initDashboard() { renderDashboard(); }
 
 /* ── Panel de salud del mes ── */
 function renderSaludMes() {
@@ -12722,346 +12630,6 @@ function confirmExtracto() {
     if (typeof renderMiCompensacion === 'function') renderMiCompensacion();
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MÓDULO: RECORDATORIOS / LLAMADAS A PACIENTES
-   ═══════════════════════════════════════════════════════════ */
-
-let _remTabActive   = 'hoy';
-let _callSelStatus  = '';
-
-function tomorrowISO() {
-    const d = new Date(); d.setDate(d.getDate() + 1);
-    return d.toISOString().slice(0,10);
-}
-
-function initRecordatorios() {
-    updateRemBadge();
-    // reset to hoy tab each time page loads
-    ['hoy','proximos','historial'].forEach(t => {
-        g('remtab-'+t)?.classList.toggle('active', t === 'hoy');
-        g('rem-tab-'+t)?.classList.toggle('hidden',  t !== 'hoy');
-    });
-    _remTabActive = 'hoy';
-    renderRemHoy();
-}
-
-function setRemTab(tab) {
-    _remTabActive = tab;
-    ['hoy','proximos','historial'].forEach(t => {
-        g('remtab-'+t)?.classList.toggle('active', t === tab);
-        g('rem-tab-'+t)?.classList.toggle('hidden',  t !== tab);
-    });
-    if (tab === 'hoy')       renderRemHoy();
-    if (tab === 'proximos')  renderRemProximos();
-    if (tab === 'historial') renderRemHistorial();
-}
-
-/* ── Render "Llamar hoy" ── */
-function renderRemHoy() {
-    const el = g('rem-tab-hoy');
-    if (!el) return;
-    const tomorrow = tomorrowISO();
-    const today    = todayISO();
-    const rems = (DB.get('reminders') || [])
-        .filter(r => r.status === 'pending' && r.citaDate <= tomorrow)
-        .sort((a,b) => a.citaDate.localeCompare(b.citaDate) || (a.citaHora||'').localeCompare(b.citaHora||''));
-
-    const cnt = g('rem-hoy-cnt');
-    if (cnt) cnt.innerHTML = rems.length > 0
-        ? `<span style="background:#e57c00;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:4px">${rems.length}</span>` : '';
-
-    if (!rems.length) {
-        el.innerHTML = `<div style="text-align:center;padding:52px 24px;color:var(--muted)">
-            <div style="font-size:42px;margin-bottom:12px">📞</div>
-            <div style="font-weight:700;font-size:15px;margin-bottom:6px">Sin llamadas pendientes hoy</div>
-            <div style="font-size:13px;line-height:1.5">No tienes pacientes que llamar hoy.<br>Los recordatorios aparecen aquí el día anterior a la cita.</div>
-        </div>`;
-        return;
-    }
-
-    const venc = rems.filter(r => r.citaDate < today);
-    const hoyY = rems.filter(r => r.citaDate === today);
-    const manY = rems.filter(r => r.citaDate === tomorrow);
-
-    let html = '';
-    if (venc.length) html += `<div style="font-size:11px;font-weight:800;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;margin-top:4px">⚠️ Vencidas (${venc.length})</div>`
-        + venc.map(r => remCardHTML(r, today, tomorrow, false)).join('');
-    if (hoyY.length) html += `<div style="font-size:11px;font-weight:800;color:#e57c00;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;margin-top:${venc.length?'16px':'4px'}">📞 Cita hoy (${hoyY.length})</div>`
-        + hoyY.map(r => remCardHTML(r, today, tomorrow, false)).join('');
-    if (manY.length) html += `<div style="font-size:11px;font-weight:800;color:var(--bronze);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;margin-top:${(venc.length||hoyY.length)?'16px':'4px'}">📅 Cita mañana — llamar hoy (${manY.length})</div>`
-        + manY.map(r => remCardHTML(r, today, tomorrow, false)).join('');
-
-    el.innerHTML = html;
-}
-
-/* ── Render "Próximos" ── */
-function renderRemProximos() {
-    const el = g('rem-tab-proximos');
-    if (!el) return;
-    const tomorrow = tomorrowISO();
-    const today    = todayISO();
-    const rems = (DB.get('reminders') || [])
-        .filter(r => r.status === 'pending' && r.citaDate > tomorrow)
-        .sort((a,b) => a.citaDate.localeCompare(b.citaDate) || (a.citaHora||'').localeCompare(b.citaHora||''));
-
-    if (!rems.length) {
-        el.innerHTML = `<div style="text-align:center;padding:52px 24px;color:var(--muted)">
-            <div style="font-size:42px;margin-bottom:12px">📅</div>
-            <div style="font-weight:700;font-size:15px;margin-bottom:6px">Sin citas próximas</div>
-            <div style="font-size:13px;line-height:1.5">Las citas futuras aparecerán aquí.<br>Al registrar un tratamiento puedes agendar la próxima cita.</div>
-        </div>`;
-        return;
-    }
-
-    // Group by date
-    const byDate = {};
-    rems.forEach(r => { if (!byDate[r.citaDate]) byDate[r.citaDate] = []; byDate[r.citaDate].push(r); });
-
-    el.innerHTML = Object.entries(byDate).map(([date, list]) => {
-        const lbl = new Date(date+'T12:00').toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-        return `<div style="margin-bottom:20px">
-            <div style="font-size:11px;font-weight:800;color:var(--bronze);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${lbl}</div>
-            ${list.map(r => remCardHTML(r, today, tomorrow, false)).join('')}
-        </div>`;
-    }).join('');
-}
-
-/* ── Render historial ── */
-function renderRemHistorial() {
-    const el = g('rem-historial-list');
-    if (!el) return;
-    const filPac   = (gv('rem-fil-pac')   || '').toLowerCase().trim();
-    const filDesde = gv('rem-fil-desde')  || '';
-    const filHasta = gv('rem-fil-hasta')  || '';
-    const today    = todayISO();
-    const tomorrow = tomorrowISO();
-
-    let rems = (DB.get('reminders') || [])
-        .filter(r => r.status !== 'pending')
-        .sort((a,b) => ((b.callDate||b.citaDate) > (a.callDate||a.citaDate)) ? 1 : -1);
-
-    if (filPac)   rems = rems.filter(r => r.patient.toLowerCase().includes(filPac));
-    if (filDesde) rems = rems.filter(r => (r.callDate||r.citaDate) >= filDesde);
-    if (filHasta) rems = rems.filter(r => (r.callDate||r.citaDate) <= filHasta);
-
-    if (!rems.length) {
-        el.innerHTML = `<div style="text-align:center;padding:52px 24px;color:var(--muted)">
-            <div style="font-size:42px;margin-bottom:12px">📋</div>
-            <div style="font-weight:700;font-size:15px;margin-bottom:6px">Sin historial</div>
-            <div style="font-size:13px">El historial de llamadas realizadas aparecerá aquí.</div>
-        </div>`;
-        return;
-    }
-
-    el.innerHTML = rems.map(r => remCardHTML(r, today, tomorrow, true)).join('');
-}
-
-function clearRemFil() {
-    sv('rem-fil-pac',''); sv('rem-fil-desde',''); sv('rem-fil-hasta','');
-    renderRemHistorial();
-}
-
-/* ── Tarjeta de recordatorio ── */
-const REM_ST = {
-    pending:     { lbl:'Pendiente',    color:'#e57c00', bg:'#fff3e0' },
-    confirmed:   { lbl:'Confirmó',     color:'#2e7d32', bg:'#e8f5e9' },
-    no_answer:   { lbl:'No contestó',  color:'#9e6b00', bg:'#fff8e1' },
-    cancelled:   { lbl:'Canceló cita', color:'#c62828', bg:'#ffebee' },
-    rescheduled: { lbl:'Reagendó',     color:'#6a1b9a', bg:'#ede7f6' },
-};
-
-function remCardHTML(r, today, tomorrow, isHistorial) {
-    const st = REM_ST[r.status] || REM_ST.pending;
-    const citaD = new Date(r.citaDate+'T12:00');
-    const citaLbl = citaD.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
-    const horaLbl = r.citaHora ? ` · ${r.citaHora}` : '';
-    const overdue = r.status === 'pending' && r.citaDate < today;
-    const isManana = r.citaDate === tomorrow;
-    const isHoy = r.citaDate === today;
-
-    let borderLeft = '1.5px solid var(--border)';
-    if (overdue)  borderLeft = '4px solid var(--danger)';
-    else if (isHoy || isManana) borderLeft = '4px solid #e57c00';
-
-    const urgeBadge = overdue
-        ? `<span style="font-size:10px;font-weight:800;background:#ffebee;color:var(--danger);padding:2px 7px;border-radius:10px">⚠️ Vencida</span>`
-        : isHoy
-            ? `<span style="font-size:10px;font-weight:800;background:#fff3e0;color:#e57c00;padding:2px 7px;border-radius:10px">🔔 Cita hoy</span>`
-            : isManana
-                ? `<span style="font-size:10px;font-weight:800;background:#fff3e0;color:#e57c00;padding:2px 7px;border-radius:10px">Llamar hoy</span>`
-                : '';
-
-    const stBadge = `<span style="font-size:10px;font-weight:800;background:${st.bg};color:${st.color};padding:2px 7px;border-radius:10px">${st.lbl}</span>`;
-    const callBtn = !isHistorial
-        ? `<button onclick="openCallModal('${eh(r.id)}')" style="padding:7px 14px;border-radius:20px;border:none;background:var(--bronze);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap">📞 Llamar</button>`
-        : '';
-    const callDateStr = r.callDate
-        ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">📞 Llamada registrada: ${r.callDate}</div>` : '';
-    const notesHTML = r.callNotes
-        ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;padding:7px 10px;background:var(--bg);border-radius:8px;line-height:1.4;font-style:italic">"${eh(r.callNotes)}"</div>` : '';
-
-    return `<div class="rem-card" style="border-left:${borderLeft}">
-        <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-                <span style="font-weight:700;font-size:14px;color:var(--dark)">${eh(r.patient)}</span>
-                ${urgeBadge}
-                ${isHistorial ? stBadge : ''}
-            </div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:2px">📅 Cita: <strong style="color:var(--dark)">${citaLbl}${horaLbl}</strong></div>
-            ${r.motivo ? `<div style="font-size:12px;color:var(--muted)">🦷 ${eh(r.motivo)}</div>` : ''}
-            ${r.phone  ? `<div style="font-size:12px;color:var(--muted)">📱 ${eh(r.phone)}</div>` : ''}
-            ${callDateStr}
-            ${notesHTML}
-        </div>
-        ${callBtn}
-    </div>`;
-}
-
-/* ── Abrir / cerrar modal nuevo recordatorio ── */
-function openNewRemModal(fromTxId, patient, citaDate, citaHora, motivo, phone) {
-    sv('rem-from-tx', fromTxId || '');
-    sv('rem-pac',     patient  || '');
-    sv('rem-fecha',   citaDate || '');
-    sv('rem-hora',    citaHora || '');
-    sv('rem-motivo',  motivo   || '');
-    sv('rem-tel',     phone    || '');
-    g('modal-new-rem').style.display = 'flex';
-    setTimeout(() => { if (!patient) g('rem-pac')?.focus(); }, 80);
-}
-
-function closeNewRemModal() {
-    g('modal-new-rem').style.display = 'none';
-}
-
-function saveNewRem() {
-    const patient  = (gv('rem-pac')  || '').trim();
-    const citaDate = gv('rem-fecha') || '';
-    if (!patient)  { toast('Escribe el nombre del paciente', 'error'); return; }
-    if (!citaDate) { toast('Selecciona la fecha de la cita', 'error'); return; }
-    const rec = {
-        id:        'rem' + Date.now(),
-        patient,
-        phone:     (gv('rem-tel')    || '').trim(),
-        citaDate,
-        citaHora:  gv('rem-hora')   || '',
-        motivo:    (gv('rem-motivo') || '').trim(),
-        fromTxId:  gv('rem-from-tx') || '',
-        status:    'pending',
-        callNotes: '',
-        callDate:  '',
-        createdAt: Date.now()
-    };
-    const existing = DB.get('reminders') || [];
-    DB.set('reminders', [...existing, rec]);
-    toast('📅 Recordatorio guardado', 'success');
-    closeNewRemModal();
-    updateRemBadge();
-    if (_currentPage === 'recordatorios') setRemTab(_remTabActive);
-}
-
-/* ── Abrir / cerrar modal llamada ── */
-function openCallModal(remId) {
-    const rems = DB.get('reminders') || [];
-    const rem  = rems.find(r => r.id === remId);
-    if (!rem) return;
-    sv('call-rem-id', remId);
-    _callSelStatus = '';
-    g('call-modal-title').textContent = rem.patient;
-    const citaLbl = new Date(rem.citaDate+'T12:00').toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
-    g('call-modal-sub').textContent = rem.motivo
-        ? `${rem.motivo} · ${citaLbl}`
-        : `Cita: ${citaLbl}${rem.citaHora ? ' · '+rem.citaHora : ''}`;
-    if (g('call-notes')) g('call-notes').value = '';
-    ['confirmed','no_answer','rescheduled','cancelled'].forEach(s => {
-        const btn = g('csb-'+s);
-        if (btn) { btn.className = 'call-st-btn'; }
-    });
-    g('modal-call-log').style.display = 'flex';
-}
-
-function closeCallModal() {
-    g('modal-call-log').style.display = 'none';
-}
-
-function selectCallStatus(status) {
-    _callSelStatus = status;
-    ['confirmed','no_answer','rescheduled','cancelled'].forEach(s => {
-        const btn = g('csb-'+s);
-        if (!btn) return;
-        btn.className = 'call-st-btn' + (s === status ? ' sel-'+status : '');
-    });
-}
-
-function confirmCallModal() {
-    const remId = gv('call-rem-id');
-    if (!remId) return;
-    if (!_callSelStatus) { toast('Selecciona el resultado de la llamada', 'error'); return; }
-    const notes = (g('call-notes')?.value || '').trim();
-    const rems  = DB.get('reminders') || [];
-    const idx   = rems.findIndex(r => r.id === remId);
-    if (idx === -1) { toast('Recordatorio no encontrado', 'error'); return; }
-    rems[idx].status    = _callSelStatus;
-    rems[idx].callNotes = notes;
-    rems[idx].callDate  = todayISO();
-    DB.set('reminders', rems);
-    const stLbl = REM_ST[_callSelStatus]?.lbl || _callSelStatus;
-    toast(`✅ Llamada registrada — ${stLbl}`, 'success');
-    closeCallModal();
-    updateRemBadge();
-    if (_currentPage === 'recordatorios') setRemTab(_remTabActive);
-}
-
-/* ── Badge nav + banner dashboard ── */
-function updateRemBadge() {
-    const tomorrow = tomorrowISO();
-    const today    = todayISO();
-    const count    = (DB.get('reminders') || [])
-        .filter(r => r.status === 'pending' && r.citaDate <= tomorrow).length;
-    // Nav sidebar badge
-    const badge = g('rem-nav-badge');
-    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
-    // Tab badge inside the page (rem-hoy-cnt)
-    const tabCnt = g('rem-hoy-cnt');
-    if (tabCnt) tabCnt.innerHTML = count > 0
-        ? `<span style="background:#e57c00;color:white;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:4px">${count}</span>`
-        : '';
-    const banner = g('db-call-banner');
-    if (!banner) return;
-    if (count > 0) {
-        banner.style.display = 'block';
-        banner.innerHTML = `<div onclick="navigate('recordatorios')" style="cursor:pointer;padding:12px 16px;border-radius:12px;background:#fff3e0;border:1.5px solid #e57c00;display:flex;align-items:center;gap:12px">
-            <span style="font-size:22px">📞</span>
-            <div style="flex:1">
-                <div style="font-weight:700;font-size:13px;color:#e57c00">Tienes ${count} llamada${count!==1?'s':''} pendiente${count!==1?'s':''} hoy</div>
-                <div style="font-size:12px;color:var(--muted)">Haz clic para ver los pacientes que debes llamar</div>
-            </div>
-            <span style="color:#e57c00;font-size:18px;font-weight:700">›</span>
-        </div>`;
-    } else {
-        banner.style.display = 'none';
-    }
-}
-
-/* ── Toggle sección "próxima cita" en modal de confirmación ── */
-function toggleRxProxCita() {
-    const fields = g('rxc-cita-fields');
-    const icon   = g('rxc-cita-icon');
-    const chk    = g('rxc-cita-chk');
-    if (!fields) return;
-    const opening = fields.style.display === 'none';
-    fields.style.display = opening ? 'block' : 'none';
-    if (icon) icon.style.display = opening ? '' : 'none';
-    if (chk)  {
-        chk.style.background  = opening ? 'var(--bronze)' : 'white';
-        chk.style.borderColor = opening ? 'var(--bronze)' : 'var(--border)';
-    }
-    if (!opening) {
-        // clear fields when collapsing
-        sv('rxc-cita-fecha',''); sv('rxc-cita-hora','');
-        sv('rxc-cita-motivo',''); sv('rxc-cita-tel','');
-    }
-}
-
 </script>
 
 <!-- ── Modal de Anulación ── -->
@@ -13321,36 +12889,6 @@ function toggleRxProxCita() {
                     </div>
                 </div>
                 <p style="font-size:11px;color:var(--muted);margin:8px 0 0">Se creará un plan de pago automáticamente en el módulo de Planes.</p>
-            </div>
-        </div>
-        <!-- ── Próxima cita ── -->
-        <div style="margin-bottom:14px">
-            <div onclick="toggleRxProxCita()" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);user-select:none">
-                <div id="rxc-cita-chk" style="width:17px;height:17px;border-radius:4px;border:2px solid var(--border);background:white;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s">
-                    <span id="rxc-cita-icon" style="display:none;color:white;font-size:10px;font-weight:900;line-height:1">✓</span>
-                </div>
-                <span style="font-size:13px;font-weight:600;color:var(--dark)">📅 Agendar próxima cita / recordatorio</span>
-            </div>
-            <div id="rxc-cita-fields" style="display:none;margin-top:8px;padding:12px 14px;background:rgba(152,216,248,.1);border-radius:10px;border:1.5px dashed #5baadc">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-                    <div>
-                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Fecha cita *</label>
-                        <input type="date" class="fc" id="rxc-cita-fecha" style="font-size:13px">
-                    </div>
-                    <div>
-                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Hora</label>
-                        <input type="time" class="fc" id="rxc-cita-hora" style="font-size:13px">
-                    </div>
-                </div>
-                <div style="margin-bottom:10px">
-                    <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">¿A qué viene?</label>
-                    <input type="text" class="fc" id="rxc-cita-motivo" placeholder="Ej: Control ortodoncia, ajuste de brackets…" style="font-size:13px">
-                </div>
-                <div>
-                    <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Teléfono (opcional)</label>
-                    <input type="tel" class="fc" id="rxc-cita-tel" placeholder="300 123 4567" style="font-size:13px">
-                </div>
-                <p style="font-size:11px;color:#5baadc;margin:8px 0 0;font-weight:600">💡 Se creará un recordatorio para llamar el día anterior a la cita</p>
             </div>
         </div>
         <div style="display:flex;gap:10px">
@@ -13695,83 +13233,6 @@ function toggleRxProxCita() {
     </div>
 
   </div>
-</div>
-
-<!-- ══ MODAL: NUEVO RECORDATORIO ══ -->
-<div id="modal-new-rem" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;padding:16px">
-    <div style="background:white;border-radius:16px;max-width:430px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto">
-        <div style="padding:20px 22px 4px;display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">📅</span>
-            <div style="flex:1">
-                <div style="font-weight:800;font-size:16px;color:var(--dark)">Nuevo recordatorio</div>
-                <div style="font-size:12px;color:var(--muted)" id="rem-modal-sub">Agendar llamada antes de la cita</div>
-            </div>
-            <button onclick="closeNewRemModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px;line-height:1">✕</button>
-        </div>
-        <div style="padding:14px 22px 22px;display:flex;flex-direction:column;gap:12px">
-            <input type="hidden" id="rem-from-tx">
-            <div class="fg">
-                <label>Paciente *</label>
-                <div class="pac-wrap">
-                    <input type="text" class="fc" id="rem-pac" placeholder="Nombre del paciente" autocomplete="off"
-                        oninput="rxPacInput('rem-pac','rem-pac-drop')"
-                        onblur="setTimeout(()=>hideRxPacDrop('rem-pac-drop'),160)">
-                    <div id="rem-pac-drop" class="pac-drop"></div>
-                </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                <div class="fg"><label>Fecha cita *</label><input type="date" class="fc" id="rem-fecha"></div>
-                <div class="fg"><label>Hora</label><input type="time" class="fc" id="rem-hora"></div>
-            </div>
-            <div class="fg">
-                <label>¿A qué viene?</label>
-                <input type="text" class="fc" id="rem-motivo" placeholder="Ej: Control ortodoncia, ajuste de brackets…">
-            </div>
-            <div class="fg">
-                <label>Teléfono (opcional)</label>
-                <input type="tel" class="fc" id="rem-tel" placeholder="300 123 4567">
-            </div>
-            <p style="font-size:11px;color:#5baadc;font-weight:600;margin:0">💡 Se creará un recordatorio para llamar el día anterior a la cita</p>
-            <div style="display:flex;gap:10px;margin-top:4px">
-                <button onclick="closeNewRemModal()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Cancelar</button>
-                <button onclick="saveNewRem()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📅 Guardar recordatorio</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ══ MODAL: REGISTRAR LLAMADA ══ -->
-<div id="modal-call-log" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;padding:16px">
-    <div style="background:white;border-radius:16px;max-width:400px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25)">
-        <div style="padding:20px 22px 4px;display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">📞</span>
-            <div style="flex:1">
-                <div style="font-weight:800;font-size:16px;color:var(--dark)" id="call-modal-title">Registrar llamada</div>
-                <div style="font-size:12px;color:var(--muted)" id="call-modal-sub"></div>
-            </div>
-            <button onclick="closeCallModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:4px;line-height:1">✕</button>
-        </div>
-        <div style="padding:14px 22px 22px;display:flex;flex-direction:column;gap:12px">
-            <input type="hidden" id="call-rem-id">
-            <div>
-                <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">¿Cómo resultó la llamada?</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                    <button class="call-st-btn" id="csb-confirmed"   onclick="selectCallStatus('confirmed')">✅ Confirmó</button>
-                    <button class="call-st-btn" id="csb-no_answer"   onclick="selectCallStatus('no_answer')">📵 No contestó</button>
-                    <button class="call-st-btn" id="csb-rescheduled" onclick="selectCallStatus('rescheduled')">🔄 Reagendó</button>
-                    <button class="call-st-btn" id="csb-cancelled"   onclick="selectCallStatus('cancelled')">❌ Canceló</button>
-                </div>
-            </div>
-            <div class="fg">
-                <label>Notas de la llamada (opcional)</label>
-                <textarea id="call-notes" rows="3" class="fc" placeholder="Ej: Confirmó para las 10am, viene con su mamá también…" style="resize:vertical"></textarea>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:4px">
-                <button onclick="closeCallModal()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Cancelar</button>
-                <button onclick="confirmCallModal()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✅ Guardar llamada</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- ── Chip popover (gastos fijos calendar) ────────────────── -->

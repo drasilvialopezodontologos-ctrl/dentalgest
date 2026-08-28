@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DentalGest — Dra. Silvia López</title>
+
+    <!-- ── Para poder dejarla como un ícono, igual que cualquier otra app ──
+         En el computador: Chrome ofrece "Instalar DentalGest" y la abre en su
+         propia ventana, sin barra de direcciones. En el celular: "Añadir a
+         pantalla de inicio" y queda al lado de WhatsApp.
+         El manifest y los dos PNG viven junto a este archivo. -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#564753">
+    <link rel="icon" type="image/png" sizes="512x512" href="icono-512.png">
+    <link rel="apple-touch-icon" href="icono-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="DentalGest">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -215,6 +230,45 @@
             font-family:inherit; padding:0;
         }
         .btn-logout:hover { color:var(--pink); }
+
+        /* ── Atajos de registro ──
+           Los cuatro tratamientos que más se cobran, como botones. Ahorra
+           buscar en la lista larga: un toque deja el doctor y el precio puestos. */
+        .rx-atajos { margin-bottom:16px; }
+        /* Mes nuevo sin historia: no hay atajos que ofrecer y el hueco sobra. */
+        .rx-atajos:empty { margin-bottom:0; }
+        .rx-atajos-lbl { font-size:11px; font-weight:800; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+        .rx-atajos-fila { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; }
+        .rx-atajo { display:flex; flex-direction:column; align-items:flex-start; gap:1px;
+            padding:9px 12px; border-radius:12px; border:1.5px solid var(--border);
+            background:var(--white); cursor:pointer; font-family:inherit; text-align:left;
+            min-width:0; transition:var(--ease); }
+        .rx-atajo:hover { border-color:var(--bronze); box-shadow:var(--shadow-sm); }
+        .rx-atajo-n { font-size:12.5px; font-weight:700; color:var(--dark); line-height:1.25;
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .rx-atajo-p { font-size:12px; font-weight:800; color:var(--bronze); }
+        .rx-atajo-v { font-size:9.5px; color:var(--muted); }
+        @media (max-width:900px) {
+            /* En el celular van de a dos: cuatro botones de ancho completo
+               ocupaban toda la pantalla y tocaba bajar para ver el formulario. */
+            .rx-atajos-fila { grid-template-columns:1fr 1fr; gap:7px; }
+            .rx-atajo { padding:8px 10px; }
+            .rx-atajo-n { font-size:11.5px; }
+            .rx-atajo-p { font-size:11.5px; }
+        }
+
+        /* ── Arranque directo, sin PIN ──
+           Cuando el equipo ya sabe quién entra, la tarjeta del PIN sólo dice
+           "Abriendo…" mientras bajan los datos, en vez de pedir 4 números. */
+        #loginScreen.cargando-directo .user-grid,
+        #loginScreen.cargando-directo .pin-row,
+        #loginScreen.cargando-directo .login-error,
+        #loginScreen.cargando-directo .btn-ingresar,
+        #loginScreen.cargando-directo .auth-salir,
+        #loginScreen.cargando-directo .login-label { display:none; }
+        #loginCargando { display:none; }
+        #loginScreen.cargando-directo #loginCargando { display:block; text-align:center; }
 
 
         /* ── MAQUETA: controles del mes ── */
@@ -1053,6 +1107,8 @@
             <div class="clinic-sub">Consultorio Dra. Silvia López · Santa Marta</div>
         </div>
 
+        <div class="login-label" id="loginCargando">Abriendo tu consultorio…</div>
+
         <div class="login-label">¿Quién ingresa?</div>
         <div class="user-grid">
             <div class="user-btn selected" id="btnSilvia" onclick="selectUser('silvia')">
@@ -1659,6 +1715,8 @@
 
                         <!-- ══ MODO: TRATAMIENTO ══ -->
                         <div id="rx-tto-form">
+                        <!-- Atajos: lo que más se cobra, de un toque. Se llena solo. -->
+                        <div class="rx-atajos" id="rx-atajos"></div>
                         <div class="form-section">
                             <div class="fsh"><span class="fsh-icon">🦷</span>
                                 <div><h3>Datos del tratamiento</h3><p>El precio se carga desde el catálogo — puedes ajustarlo</p></div>
@@ -3129,6 +3187,29 @@ function _dgEsErrorDeSesion(e) {
            msg.includes('permission denied') || msg.includes('row-level security');
 }
 
+/* ── Recordar quién usa este equipo ─────────────────────────────────────────
+   El PIN ya no es lo que protege los datos: eso lo hace el correo y la
+   contraseña contra el servidor. El PIN sólo dice si es Silvia o Sandry, y
+   eso no cambia de un día para otro en el mismo computador. Así que se
+   pregunta una vez y después la app abre sola.
+
+   Para volver a preguntar: "Cerrar sesión" en la app.
+
+   Ojo con el nombre de la clave: NO lleva el prefijo dg_ a propósito. Esas se
+   suben al servidor y las comparten los dos equipos; ésta es de este equipo y
+   sólo de éste. */
+const _DG_EQUIPO = 'dentalgest_equipo';
+
+function _dgEquipoRecuerda() {
+    try {
+        const u = localStorage.getItem(_DG_EQUIPO);
+        return (u && USERS[u]) ? u : null;
+    } catch (e) { return null; }
+}
+function _dgOlvidarEquipo() {
+    try { localStorage.removeItem(_DG_EQUIPO); } catch (e) {}
+}
+
 async function _dgSesionActiva() {
     try {
         const { data } = await _sb.auth.getSession();
@@ -3188,6 +3269,7 @@ async function doAuthLogout() {
     /* También la copia local: si se quedara, cualquiera que abra la app en este
        equipo podría leerla sin haber puesto la contraseña. */
     Object.keys(localStorage).filter(k => k.startsWith('dg_')).forEach(k => localStorage.removeItem(k));
+    _dgOlvidarEquipo();   // el próximo que entre aquí vuelve a decir quién es
     location.reload();
 }
 
@@ -3195,6 +3277,9 @@ async function doAuthLogout() {
 async function _dgArrancarConSesion() {
     g('authScreen').classList.add('hidden');
     g('loginScreen').classList.remove('hidden');
+    /* Si este equipo ya sabe quién entra, no hay nada que preguntar: en lugar
+       del PIN se enseña "Abriendo…" mientras bajan los datos. */
+    g('loginScreen').classList.toggle('cargando-directo', !!_dgEquipoRecuerda());
     /* Con el candado puesto, el canal de tiempo real también tiene que ir
        identificado; si no, los cambios de la otra persona no llegarían solos.
        supabase-js suele hacerlo por su cuenta, pero aquí no se deja al azar. */
@@ -3209,6 +3294,15 @@ async function _dgArrancarConSesion() {
     ponerAlDiaElCatalogo();
     if (caja) caja.style.opacity = '1';
     loadConfig();
+
+    /* Equipo conocido: derecho a la app, sin PIN. */
+    const recordado = _dgEquipoRecuerda();
+    if (recordado) {
+        selUser = recordado;
+        currentUser = USERS[recordado];
+        enterApp();
+        return;
+    }
     g('p0').focus();
 }
 
@@ -3218,8 +3312,14 @@ function doLogin(){
     const cfg=DB.get('config')||DEFAULTS;
     const ok = selUser==='silvia' ? cfg.ps : cfg.psa;
     if(pin===ok){
+        /* De aquí en adelante este equipo ya sabe quién es. */
+        const primeraVez = !_dgEquipoRecuerda();
+        try { localStorage.setItem(_DG_EQUIPO, selUser); } catch (e) {}
         currentUser=USERS[selUser];
         enterApp();
+        if (primeraVez) {
+            toast('✅ Listo. En este equipo ya no se vuelve a pedir el PIN. Para entrar como la otra persona: "Cerrar sesión".', '', 9000);
+        }
     } else {
         g('loginErr').textContent='PIN incorrecto. Inténtalo de nuevo.';
         clearPin(); g('p0').focus();
@@ -3227,8 +3327,13 @@ function doLogin(){
 }
 
 function doLogout(){
+    /* Esto es lo que sirve para cambiar de persona: se olvida quién usaba el
+       equipo y vuelve a salir la pregunta con el PIN. La cuenta (correo y
+       contraseña) no se toca — para eso está el otro botón. */
+    _dgOlvidarEquipo();
     currentUser=null;
     g('appShell').classList.add('hidden');
+    g('loginScreen').classList.remove('cargando-directo');
     g('loginScreen').classList.remove('hidden');
     clearPin(); selectUser('silvia');
 }
@@ -4446,6 +4551,43 @@ function hideRxPacDrop(dropId) {
     if (drop) drop.style.display = 'none';
 }
 
+/* ── Atajos de registro ─────────────────────────────────────────────────────
+   Los cuatro tratamientos que más se cobraron en los últimos dos meses, como
+   botones. Un toque pone el doctor y el precio, y deja el cursor en el nombre
+   del paciente: de cuatro pasos a uno.
+
+   Se calculan de lo ya registrado, no de una lista fija, para que la app siga
+   el ritmo del consultorio sin que nadie la configure. */
+function pintarAtajos() {
+    const caja = g('rx-atajos'); if (!caja) return;
+    const cat = getCatalog();
+    const desde = new Date(Date.now() - 60*86400000).toISOString().slice(0,10);
+    const cuenta = {};
+    (DB.get('tx')||[]).filter(t => t.date >= desde).forEach(t => {
+        /* El registro guarda el nombre escrito, no siempre el id del catálogo:
+           por eso se busca también por nombre. */
+        const c = (t.treatId && cat.find(i=>i.id===t.treatId)) || _buscarEnCatalogo(t.treatName, cat);
+        if (c) cuenta[c.id] = (cuenta[c.id]||0) + 1;
+    });
+    const top = Object.entries(cuenta).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    if (!top.length) { caja.innerHTML = ''; return; }   // mes nuevo, sin historia: nada que ofrecer
+    caja.innerHTML = '<div class="rx-atajos-lbl">⚡ Lo que más registras — un toque y queda listo</div><div class="rx-atajos-fila">' +
+        top.map(([id,n]) => { const t = cat.find(i=>i.id===id);
+            return `<button type="button" class="rx-atajo" onclick="usarAtajo('${eh(id)}')">
+                <span class="rx-atajo-n">${eh(t.name)}</span>
+                <span class="rx-atajo-p">${fmt(t.price)}</span>
+                <span class="rx-atajo-v">${n} ${n===1?'vez':'veces'} en 2 meses</span></button>`;
+        }).join('') + '</div>';
+}
+
+function usarAtajo(treatId) {
+    const t = getCatalog().find(i=>i.id===treatId); if (!t) return;
+    sv('rx-doc', t.docId); onRxDocChange();
+    sv('rx-treat', t.id);  onRxTreatChange();
+    const p = g('rx-patient');
+    if (p) { p.focus(); p.scrollIntoView({block:'center', behavior:'smooth'}); }
+}
+
 function initRegistro() {
     const sel = g('rx-doc');
     sel.innerHTML = '<option value="">— Selecciona —</option>' +
@@ -4458,6 +4600,7 @@ function initRegistro() {
     _saldoPM    = 'efectivo';
     resetRxPreview();
     renderTodayList();
+    pintarAtajos();
     g('rx-today-lbl').textContent = new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
 

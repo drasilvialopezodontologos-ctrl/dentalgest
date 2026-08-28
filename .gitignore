@@ -3,6 +3,11 @@ data.json
 data_*.json
 *.json
 
+# Excepción: el manifest no tiene datos de nadie. Es el archivito que le dice
+# al navegador cómo se llama la app y qué ícono ponerle. Sin él no se puede
+# instalar como app. Cualquier OTRO .json sigue quedando fuera.
+!manifest.json
+
 # Claude session files
 .claude/
 

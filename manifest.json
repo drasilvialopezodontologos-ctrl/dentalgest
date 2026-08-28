@@ -1,0 +1,16 @@
+{
+  "name": "DentalGest — Dra. Silvia López",
+  "short_name": "DentalGest",
+  "description": "Contabilidad del consultorio: cobros, comisiones y cierre de mes.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F7F2EF",
+  "theme_color": "#564753",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

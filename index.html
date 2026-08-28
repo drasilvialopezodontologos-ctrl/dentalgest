@@ -977,6 +977,40 @@
         .btn-done-comm:hover { background:var(--purp); color:var(--white); }
         .comm-paid-tag  { display:inline-block; background:rgba(94,140,106,.1); color:var(--success); padding:4px 10px; border-radius:99px; font-size:10px; font-weight:700; }
 
+        /* ── El equipo, en Configuración ─────────────────────────────
+           Una tarjeta por persona. Antes eran casillas escritas a mano
+           en el HTML, así que meter un doctor nuevo era tocar el
+           programa. Ahora se dibujan solas desde la lista.          */
+        .eq-card   { display:flex; gap:14px; align-items:flex-start; background:var(--white);
+                     border:1.5px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; }
+        .eq-card.eq-off { opacity:.62; background:var(--bg); }
+        .eq-av     { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+                     font-size:12px; font-weight:800; color:var(--white); flex-shrink:0; margin-top:2px; }
+        .eq-body   { flex:1; min-width:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 14px; }
+        .eq-body .fg { margin:0; }
+        .eq-body label { display:block; font-size:10px; font-weight:700; text-transform:uppercase;
+                     letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
+        .eq-body .fc { font-size:13px; padding:8px 10px; }
+        .eq-wide   { grid-column:1 / -1; }
+        .eq-note   { grid-column:1 / -1; font-size:11.5px; color:var(--muted); line-height:1.55; }
+        .eq-side   { display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+        .eq-btn    { border:1.5px solid var(--border); background:var(--white); color:var(--muted);
+                     border-radius:var(--radius-sm); padding:6px 12px; font-size:11px; font-weight:700;
+                     cursor:pointer; font-family:inherit; white-space:nowrap; transition:var(--ease); }
+        .eq-btn:hover { border-color:var(--danger); color:var(--danger); }
+        .eq-btn.eq-back:hover { border-color:var(--success); color:var(--success); }
+        .eq-add    { width:100%; margin-top:4px; border:1.5px dashed var(--border); background:transparent;
+                     color:var(--muted); border-radius:var(--radius); padding:12px; font-size:13px;
+                     font-weight:700; cursor:pointer; font-family:inherit; transition:var(--ease); }
+        .eq-add:hover { border-color:var(--bronze); color:var(--bronze); }
+        .eq-hdr-off{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px;
+                     color:var(--muted); margin:18px 0 10px; }
+        @media(max-width:700px){
+            .eq-card { flex-wrap:wrap; }
+            .eq-body { grid-template-columns:1fr; }
+            .eq-side { flex-direction:row; width:100%; }
+        }
+
         /* ============================================================
            CAJA
         ============================================================ */
@@ -1539,11 +1573,11 @@
                     </div>
                 </div>
 
-                <!-- COMISIONES DE LOS DOCTORES -->
+                <!-- EL EQUIPO -->
                 <div class="form-section">
                     <div class="fsh">
                         <span class="fsh-icon">🤝</span>
-                        <div><h3>Comisiones de los doctores</h3><p>Lo acordado con cada especialista — se puede cambiar cuando se renegocie</p></div>
+                        <div><h3>El equipo</h3><p>Quién trabaja en la clínica y cómo se le paga a cada uno</p></div>
                     </div>
                     <div class="fsb">
                         <div class="alert alert-info" style="margin-bottom:18px">
@@ -1551,51 +1585,9 @@
                             guardó su comisión el día que se registró, así que lo de los meses pasados sigue igual.
                             El porcentaje nuevo empieza a contar desde el próximo cobro que registre.
                         </div>
-                        <div class="form-grid">
-                            <div class="fg">
-                                <label>Diana Valencia — Odontología General</label>
-                                <div class="inp-suf"><span class="suf-lbl">%</span>
-                                    <input type="number" class="fc" id="cfg-cm-diana_v" min="0" max="100" step="0.5"
-                                        placeholder="35"></div>
-                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
-                            </div>
-                            <div class="fg">
-                                <label>Rafael Díaz — Cirugía Maxilofacial</label>
-                                <div class="inp-suf"><span class="suf-lbl">%</span>
-                                    <input type="number" class="fc" id="cfg-cm-rafael" min="0" max="100" step="0.5"
-                                        placeholder="50"></div>
-                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
-                            </div>
-                            <div class="fg">
-                                <label>Nay Jiménez — Ortodoncia</label>
-                                <div class="inp-suf"><span class="suf-lbl">%</span>
-                                    <input type="number" class="fc" id="cfg-cm-nay" min="0" max="100" step="0.5"
-                                        placeholder="55"></div>
-                                <span class="hint">De lo cobrado, después de descontar el laboratorio</span>
-                            </div>
-                            <div class="fg">
-                                <label>Nay Jiménez — solo retenedores</label>
-                                <div class="inp-suf"><span class="suf-lbl">%</span>
-                                    <input type="number" class="fc" id="cfg-cm-nay_retenedor" min="0" max="100" step="0.5"
-                                        placeholder="50"></div>
-                                <span class="hint">Los retenedores van aparte porque se acordaron distinto</span>
-                            </div>
-                            <div class="fg">
-                                <label>Diana Cabeza — Rehabilitación Oral</label>
-                                <div class="inp-suf"><span class="suf-lbl">%</span>
-                                    <input type="number" class="fc" id="cfg-cm-cabeza" min="0" max="100" step="0.5"
-                                        placeholder="50"></div>
-                                <span class="hint">Si el caso lleva laboratorio, se le paga al terminar el caso</span>
-                            </div>
-                        </div>
-                        <div style="margin-top:6px;padding:12px 14px;background:var(--bg);border-radius:10px;
-                             font-size:12px;color:var(--muted);line-height:1.6">
-                            <strong style="color:var(--dark)">Los otros tres no van por porcentaje:</strong><br>
-                            • <strong>Dr. Mendoza</strong> cobra tarifa fija por trabajo. Esa tarifa está en la nota de
-                            cada endodoncia, en <em>Catálogo</em> → ✎ Editar.<br>
-                            • <strong>Mayda Escandón</strong> se acuerda a mano en cada registro.<br>
-                            • <strong>Usted y Sandry</strong> no llevan comisión.
-                        </div>
+                        <div id="cfg-equipo"></div>
+                        <div id="cfg-equipo-retirados"></div>
+                        <button type="button" class="eq-add" onclick="abrirDoctorNuevo()">+ Agregar alguien al equipo</button>
                     </div>
                 </div>
 
@@ -2875,87 +2867,13 @@
             <button class="btn btn-primary" onclick="saveNewTreatment()">Guardar tratamiento</button>
         </div>
     </div>
-
-    <div id="page-recordatorios" class="hidden">
-            <div class="page-header">
-                <div class="ph-left">
-                    <h1>📞 Recordatorios</h1>
-                    <p>Llamadas a pacientes antes de sus citas · Historial de gestión</p>
-                </div>
-                <div class="ph-right">
-                    <button onclick="openNewRemModal()" style="padding:9px 18px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">+ Nuevo recordatorio</button>
-                </div>
-            </div>
-            <div class="page-content">
-                <div class="comm-filter-tabs" style="margin-bottom:20px">
-                    <button class="comm-tab active" id="remtab-hoy"       onclick="setRemTab('hoy')">📞 Llamar hoy <span id="rem-hoy-cnt"></span></button>
-                    <button class="comm-tab"         id="remtab-proximos"  onclick="setRemTab('proximos')">📅 Próximos</button>
-                    <button class="comm-tab"         id="remtab-historial" onclick="setRemTab('historial')">📋 Historial</button>
-                </div>
-                <div id="rem-tab-hoy"></div>
-                <div id="rem-tab-proximos"  class="hidden"></div>
-                <div id="rem-tab-historial" class="hidden">
-                    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-                        <input type="text"  class="fc" id="rem-fil-pac"   placeholder="🔍 Buscar paciente"
-                            style="flex:1;min-width:160px;font-size:13px" oninput="renderRemHistorial()">
-                        <input type="date"  class="fc" id="rem-fil-desde" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
-                        <input type="date"  class="fc" id="rem-fil-hasta" style="width:140px;font-size:13px" onchange="renderRemHistorial()">
-                        <button onclick="clearRemFil()" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:12px;cursor:pointer;font-family:inherit">Limpiar</button>
-                    </div>
-                    <div id="rem-historial-list"></div>
-                </div>
-            </div>
-        </div>
-
-    </main>
 </div>
 
-<!-- Modal: Agregar tratamiento -->
-<div id="catModal" class="modal-overlay hidden">
-    <div class="modal-card">
-        <div class="modal-hdr">
-            <h3>Agregar tratamiento</h3>
-            <button class="modal-x" onclick="closeCatModal()">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="fg">
-                <label>Doctor / Especialista</label>
-                <select class="fc" id="mod-doc"></select>
-            </div>
-            <div class="fg">
-                <label>Nombre del tratamiento</label>
-                <input type="text" class="fc" id="mod-name" placeholder="Ej: Carilla de resina">
-            </div>
-            <div class="fg">
-                <label>Precio base</label>
-                <div class="inp-pre">
-                    <span class="pre-lbl">$</span>
-                    <input type="number" class="fc" id="mod-price" placeholder="0">
-                </div>
-            </div>
-            <div class="fg">
-                <label>Costo de materiales estimado <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-                <div class="inp-pre">
-                    <span class="pre-lbl">$</span>
-                    <input type="number" class="fc" id="mod-matcost" placeholder="0" min="0">
-                </div>
-                <span class="hint" style="font-size:10px">Resina, guantes, anestesia, algodón… promedio por este tratamiento</span>
-            </div>
-            <div class="fg">
-                <label>Nota / regla especial <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-                <input type="text" class="fc" id="mod-note" placeholder="Ej: Comisión a acordar con el especialista">
-            </div>
-            <label class="check-row">
-                <input type="checkbox" id="mod-lab">
-                Incluye costo de laboratorio
-            </label>
-        </div>
-        <div class="modal-foot">
-            <button class="btn btn-ghost" onclick="closeCatModal()">Cancelar</button>
-            <button class="btn btn-primary" onclick="saveNewTreatment()">Guardar tratamiento</button>
-        </div>
-    </div>
-</div>
+<!-- Aquí abajo había una copia entera de este mismo modal y de la página de
+     Recordatorios, pegada por error y sin cerrar: quedaban dos elementos con
+     el código catModal y dos con page-recordatorios. El navegador se queda
+     con el primero de cada uno, así que la app abría el modal de la copia
+     rota, con la página de Recordatorios metida adentro. Se quitó. -->
 
 <!-- Toast -->
 <div id="toastArea"></div>
@@ -3852,11 +3770,10 @@ function loadConfig(){
     sv('cfg-ps',  '');
     sv('cfg-psa', '');
 
-    /* Comisiones: se enseñan en número entendible (35, no 0.35). Si nadie las
-       ha tocado sale el acuerdo original, no una casilla vacía. */
-    Object.keys(COMISION_BASE).forEach(quien => {
-        sv('cfg-cm-' + quien, +(pctComision(quien) * 100).toFixed(2));
-    });
+    /* El equipo se dibuja solo desde la lista. Los porcentajes salen en número
+       entendible (35, no 0.35) y, si nadie los ha tocado, sale el acuerdo
+       original y no una casilla vacía. */
+    renderEquipoCfg();
 }
 
 /* ── Configuración: guardar ── */
@@ -3867,29 +3784,13 @@ function saveConfig(){
     if(ps  && !/^\d{4}$/.test(ps)){ toast('PIN de Silvia: debe tener exactamente 4 dígitos','error'); return; }
     if(psa && !/^\d{4}$/.test(psa)){ toast('PIN de Sandry: debe tener exactamente 4 dígitos','error'); return; }
 
-    /* ── Comisiones ──
-       Se revisan ANTES de guardar nada: si hay una mal escrita se avisa y no
-       se guarda nada, para no dejar la configuración a medias.
-       Una casilla vacía es un error a propósito, no un cero: borrarla sin
-       querer no puede terminar en "este doctor no gana comisión". */
-    const NOMBRE_COM = {
-        diana_v:'Diana Valencia', rafael:'Rafael Díaz', nay:'Nay Jiménez',
-        nay_retenedor:'Nay Jiménez (retenedores)', cabeza:'Diana Cabeza',
-    };
-    const comisiones = {};
-    for (const quien of Object.keys(COMISION_BASE)) {
-        const crudo = gv('cfg-cm-' + quien).trim();
-        if (crudo === '') {
-            toast(`Falta la comisión de ${NOMBRE_COM[quien]}. Si no lleva comisión, escriba 0.`, 'error');
-            return;
-        }
-        const n = parseFloat(crudo);
-        if (!isFinite(n) || n < 0 || n > 100) {
-            toast(`La comisión de ${NOMBRE_COM[quien]} debe ser un número entre 0 y 100.`, 'error');
-            return;
-        }
-        comisiones[quien] = n / 100;
-    }
+    /* ── El equipo ──
+       Se revisa ANTES de guardar nada: si hay algo mal escrito se avisa y no
+       se guarda NADA, ni el equipo ni el resto de la configuración, para no
+       dejarla a medias. */
+    const eq = leerEquipoDeLaPantalla();
+    if (!eq) return;
+    const comisiones = eq.comisiones || {};
 
     const cfg={
         nombre: gv('cfg-nombre')||DEFAULTS.nombre,
@@ -3928,16 +3829,31 @@ function saveConfig(){
     };
 
     // Ojo: esto se pregunta ANTES de guardar, para comparar contra lo que había.
+    const antes     = getDoctores();
     const cambiadas = Object.keys(comisiones).filter(k => pctComision(k) !== comisiones[k]);
+    const nuevos    = eq.equipo ? Object.keys(eq.equipo).filter(id => !antes[id]) : [];
 
     DB.set('config', cfg);
     DB.set('comisiones', comisiones);
+    if (eq.equipo) DB.set('equipo', eq.equipo);
     DB.set('initialized', true);
     g('sbClinic').textContent=cfg.nombre;
 
+    // La lista de tratamientos del que entra, copiada del que se escogió.
+    let copiados = 0;
+    (eq.copiar || []).forEach(c => { copiados += copiarTratamientos(c.id, c.desde); });
+
+    renderEquipoCfg();   // las tarjetas nuevas dejan de serlo
+
     /* Si tocó una comisión conviene repetirle qué alcanza y qué no, porque es
        justo la duda que da miedo: "¿esto me daña lo de agosto?". */
-    if (cambiadas.length) {
+    if (nuevos.length) {
+        const quien = eq.equipo[nuevos[0]].name;
+        toast(nuevos.length === 1
+            ? `✅ ${quien} ya está en el equipo${copiados ? ` — con ${copiados} tratamientos copiados` : ''}. Ya sale en las listas.`
+            : `✅ Entraron ${nuevos.length} personas al equipo${copiados ? ` — con ${copiados} tratamientos copiados` : ''}.`,
+            'success', 8000);
+    } else if (cambiadas.length) {
         toast('✅ Guardado. Las comisiones nuevas cuentan desde el próximo cobro — lo ya registrado no cambió.', 'success', 8000);
     } else {
         toast('✅ Configuración guardada correctamente','success');
@@ -3945,7 +3861,7 @@ function saveConfig(){
 }
 
 // ── Backup / Restauración ─────────────────────────────────────────────────────
-const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','nomina','retiro',
+const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','equipo','nomina','retiro',
                      'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual','initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
@@ -4128,16 +4044,65 @@ document.addEventListener('DOMContentLoaded', async () => {
    CATÁLOGO DE TRATAMIENTOS
 ═══════════════════════════════════════════════════════════════ */
 
-const DOCTORS = {
-    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', comm:'35% después de descontar el laboratorio · Corte semanal' },
-    nay:     { name:'Nay Jiménez',       short:'Nay',            spec:'Ortodoncia',           color:'#9B6EA0', comm:'55% después de laboratorio (50% en retenedores) · De una vez' },
-    rafael:  { name:'Rafael Díaz',       short:'Dr. Díaz',       spec:'Cirugía Maxilofacial', color:'#A0393E', comm:'50% después de laboratorio · De una vez' },
-    mendoza: { name:'Enrique Mendoza',   short:'Dr. Mendoza',    spec:'Endodoncia',           color:'#3A6EA0', comm:'Tarifa fija, después de descontar el laboratorio · De una vez' },
-    mayda:   { name:'Mayda Escandón',    short:'Mayda',          spec:'Periodoncia',          color:'#5E8C6A', comm:'Comisión acordada a mano · De una vez' },
-    cabeza:  { name:'Diana Cabeza',      short:'Dra. Cabeza',    spec:'Rehabilitación Oral',  color:'#7A5A9C', comm:'50% después de laboratorio · Al terminar el caso' },
-    silvia:  { name:'Dra. Silvia López', short:'Dra. Silvia',    spec:'Titular',              color:'#564753', comm:'Sin comisión — es la titular' },
-    sandry:  { name:'Sandry Flórez',     short:'Sandry',         spec:'Auxiliar Odontología', color:'#8A7878', comm:'Sin comisión — va por nómina quincenal' },
+/* ── El equipo ──────────────────────────────────────────────────────────────
+   Éste es el equipo de fábrica. El de verdad se edita en Configuración y se
+   guarda en la base; esto es sólo el punto de partida y el paracaídas.
+
+   `tipo` dice CÓMO se le paga, y es de lo único que sabe el motor de
+   comisiones. Cuatro formas, que son las cuatro que se usan de verdad:
+
+     porcentaje → un % de lo cobrado, después de descontar el laboratorio
+     tarifa     → una plata fija por tratamiento, que fija el especialista.
+                  El monto NO vive aquí sino en cada tratamiento del catálogo
+                  (campo `feeEsp`), porque cambia de un trabajo a otro
+     manual     → se teclea en cada registro, porque se acuerda caso por caso
+     ninguna    → no lleva comisión
+
+   `cuando` dice CUÁNDO se le paga: `ya` de una vez, o `alTerminar` cuando el
+   caso se acabe (los trabajos con laboratorio de la Dra. Cabeza).
+
+   Un tratamiento puede llevarle la contraria al trato general con el campo
+   `pctEsp` — así los retenedores de Nay van al 50% aunque lo suyo sea 55%,
+   sin que eso esté escrito a mano dentro del programa. */
+const DOCTORES_BASE = {
+    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', tipo:'porcentaje', cuando:'ya',         corte:'Corte semanal' },
+    nay:     { name:'Nay Jiménez',       short:'Nay',            spec:'Ortodoncia',           color:'#9B6EA0', tipo:'porcentaje', cuando:'ya' },
+    rafael:  { name:'Rafael Díaz',       short:'Dr. Díaz',       spec:'Cirugía Maxilofacial', color:'#A0393E', tipo:'porcentaje', cuando:'ya' },
+    mendoza: { name:'Enrique Mendoza',   short:'Dr. Mendoza',    spec:'Endodoncia',           color:'#3A6EA0', tipo:'tarifa',     cuando:'ya' },
+    mayda:   { name:'Mayda Escandón',    short:'Mayda',          spec:'Periodoncia',          color:'#5E8C6A', tipo:'manual',     cuando:'ya' },
+    cabeza:  { name:'Diana Cabeza',      short:'Dra. Cabeza',    spec:'Rehabilitación Oral',  color:'#7A5A9C', tipo:'porcentaje', cuando:'alTerminar' },
+    silvia:  { name:'Dra. Silvia López', short:'Dra. Silvia',    spec:'Titular',              color:'#564753', tipo:'ninguna',    razon:'es la titular' },
+    sandry:  { name:'Sandry Flórez',     short:'Sandry',         spec:'Auxiliar Odontología', color:'#8A7878', tipo:'ninguna',    razon:'va por nómina quincenal' },
 };
+
+/* El equipo de verdad: lo guardado encima de lo de fábrica. Se lee de la base
+   —no del equipo— para que los dos computadores vean la misma lista.
+
+   Devuelve a TODOS, incluido el que ya no trabaja aquí, porque los informes de
+   agosto tienen que poder seguir diciendo «Mayda Escandón» y no un código
+   suelto. Para las listas donde se escoge quién atendió está la de abajo. */
+function getDoctores() {
+    const guardado = DB.get('equipo');
+    if (!guardado || typeof guardado !== 'object' || !Object.keys(guardado).length) return DOCTORES_BASE;
+    // Los de fábrica primero, para que un equipo guardado viejo no se quede
+    // sin los campos que se hayan agregado después.
+    const salida = {};
+    Object.keys({ ...DOCTORES_BASE, ...guardado }).forEach(id => {
+        salida[id] = { ...(DOCTORES_BASE[id] || {}), ...(guardado[id] || {}) };
+    });
+    return salida;
+}
+
+/* Sólo los que siguen atendiendo. Es la lista de las casillas donde se escoge
+   el doctor: si Mayda ya no viene, no tiene por qué seguir estorbando ahí.
+   Retirarla no la borra — sus cobros, sus tratamientos y lo que se le deba
+   siguen intactos, y si vuelve se reactiva. */
+function getDoctoresActivos() {
+    const todos = getDoctores();
+    const activos = {};
+    Object.entries(todos).forEach(([id, d]) => { if (d.activo !== false) activos[id] = d; });
+    return activos;
+}
 
 /* ── Lo que se lleva cada doctor ────────────────────────────────────────────
    Los porcentajes acordados con cada especialista. Antes estaban escritos a
@@ -4154,11 +4119,10 @@ const DOCTORS = {
    Se guarda en la base y no en el equipo, para que los dos computadores vean
    el mismo acuerdo. */
 const COMISION_BASE = {
-    diana_v:       0.35,
-    rafael:        0.50,
-    nay:           0.55,
-    nay_retenedor: 0.50,
-    cabeza:        0.50,
+    diana_v: 0.35,
+    rafael:  0.50,
+    nay:     0.55,
+    cabeza:  0.50,
 };
 
 /* Porcentaje vigente. Si nadie lo ha tocado —o quedó un valor absurdo— se
@@ -4168,28 +4132,320 @@ function pctComision(quien) {
     const v = guardados[quien];
     return (typeof v === 'number' && isFinite(v) && v >= 0 && v <= 1)
         ? v
-        : COMISION_BASE[quien];
+        : (COMISION_BASE[quien] || 0);
 }
 const _pc = quien => Math.round(pctComision(quien) * 100);   // 0.35 → 35, para mostrar
 
-/* La frasecita que sale en el Catálogo al lado del nombre del doctor. Se
-   arma con el porcentaje de ahora, no con uno escrito a mano, para que no
-   diga una cosa mientras la app calcula otra. */
-function textoComision(docId) {
-    switch (docId) {
-        case 'diana_v': return `${_pc('diana_v')}% después de descontar el laboratorio · Corte semanal`;
-        case 'nay':     return `${_pc('nay')}% después de laboratorio (${_pc('nay_retenedor')}% en retenedores) · De una vez`;
-        case 'rafael':  return `${_pc('rafael')}% después de laboratorio · De una vez`;
-        case 'cabeza':  return `${_pc('cabeza')}% después de laboratorio · Al terminar el caso`;
-        default:        return (DOCTORS[docId] || {}).comm || '';
+/* ── La regla de un tratamiento ─────────────────────────────────────────────
+   Dos cosas que un tratamiento le puede llevar la contraria al trato general:
+
+     feeEsp → lo que el especialista le cobra a ella por ESE trabajo
+     pctEsp → un porcentaje distinto sólo para ESE trabajo
+
+   Las dos eran texto dentro de la nota y la app las sacaba leyendo el renglón
+   con una expresión regular. Bastaba corregir una tilde para que la comisión
+   se fuera a cero sin que nadie se diera cuenta. Ahora son campos.
+
+   Se sigue leyendo la nota vieja como paracaídas, por si en algún equipo
+   quedó un catálogo guardado que todavía no ha pasado por la migración.
+
+   La regla es del tratamiento DE ESE DOCTOR, no del tratamiento a secas: el
+   50% de los retenedores es lo acordado con Nay, no una propiedad de los
+   retenedores. Si el cobro quedó a nombre de otro doctor, vale el trato de
+   ese otro doctor. */
+function reglaDe(treat, docId) {
+    if (!treat) return {};
+    if (docId && treat.docId && treat.docId !== docId) return {};
+    const r = {};
+    if (Number.isFinite(treat.feeEsp) && treat.feeEsp > 0) r.feeEsp = treat.feeEsp;
+    else {
+        const enLaNota = (treat.note || '').match(/[Pp]ago fijo al especialista:\s*\$\s*([\d.]+)/);
+        if (enLaNota) r.feeEsp = parseInt(enLaNota[1].replace(/\./g, ''), 10) || 0;
     }
+    if (Number.isFinite(treat.pctEsp) && treat.pctEsp >= 0 && treat.pctEsp <= 100) r.pctEsp = treat.pctEsp / 100;
+    else {
+        const pctNota = (treat.note || '').match(/[Cc]omisión\s+(\d+)\s*%\s*después de lab/);
+        if (pctNota) r.pctEsp = parseInt(pctNota[1], 10) / 100;
+    }
+    return r;
+}
+
+/* La frasecita que sale en el Catálogo al lado del nombre del doctor. Se arma
+   con el trato de ahora, no con uno escrito a mano, para que no diga una cosa
+   mientras la app calcula otra. */
+function textoComision(docId) {
+    const d = getDoctores()[docId];
+    if (!d) return '';
+    const cuando = d.corte ? ` · ${d.corte}`
+                 : d.cuando === 'alTerminar' ? ' · Al terminar el caso'
+                 : ' · De una vez';
+    switch (d.tipo) {
+        case 'porcentaje': return `${_pc(docId)}% después de descontar el laboratorio${cuando}`;
+        case 'tarifa':     return `Tarifa fija por tratamiento, que se fija en el Catálogo${cuando}`;
+        case 'manual':     return `Comisión acordada a mano en cada registro${cuando}`;
+        default:           return `Sin comisión${d.razon ? ' — ' + d.razon : ''}`;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EL EQUIPO, EDITABLE DESDE CONFIGURACIÓN
+
+   Antes esta pantalla eran cinco casillas escritas a mano en el HTML, una
+   por doctor. Agregar a alguien —o cambiarle el trato— era tocar el
+   programa. Ahora las tarjetas se dibujan solas desde la lista y todo lo
+   que es un hecho del consultorio es una casilla.
+
+   RETIRAR NO ES BORRAR. Un doctor retirado desaparece de las listas donde
+   se escoge quién atendió, y de nada más: sus cobros de agosto, sus
+   tratamientos del catálogo y lo que se le deba siguen exactamente igual,
+   y si vuelve se reactiva con un botón. Borrar de verdad dejaría informes
+   viejos hablando de un código suelto.
+═══════════════════════════════════════════════════════════════ */
+const EQ_TIPOS = {
+    porcentaje: 'Un % de lo que se cobra',
+    tarifa:     'Una tarifa fija que pone él, por trabajo',
+    manual:     'Se acuerda a mano en cada registro',
+    ninguna:    'No lleva comisión',
+};
+const EQ_EXPLICA = {
+    porcentaje: 'El porcentaje se descuenta después del laboratorio.',
+    tarifa:     'Lo que le cobra a usted por cada trabajo se escribe en <em>Catálogo → ✎ Editar</em>, porque cambia de un trabajo a otro.',
+    manual:     'Al registrar el cobro sale una casilla para teclear lo acordado esa vez.',
+    ninguna:    'No se le calcula nada. Escriba abajo por qué, para que quede dicho.',
+};
+const EQ_COLORES = ['#997771','#9B6EA0','#A0393E','#3A6EA0','#5E8C6A','#7A5A9C','#564753','#8A7878','#B08968','#4F7A8C'];
+
+function _eqIniciales(nombre) {
+    return (nombre || '?').replace(/^(Dra?\.?|Sr[a]?\.?)\s+/i, '')
+        .split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?';
+}
+function _eqEsc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Una tarjeta. `copiarDe` sólo se ofrece cuando la persona es nueva: es la
+   pregunta «¿con qué lista de tratamientos arranca?», y no tiene sentido
+   volver a hacerla después. */
+function _eqTarjeta(id, d, esNuevo) {
+    const pct    = Number.isFinite(d.pct) ? d.pct : _pc(id);
+    const off    = d.activo === false;
+    const otros  = Object.entries(getDoctores())
+        .filter(([oid]) => oid !== id)
+        .map(([oid, o]) => `<option value="${oid}">${_eqEsc(o.name)} — ${_eqEsc(o.spec || '')}</option>`).join('');
+
+    return `
+    <div class="eq-card${off ? ' eq-off' : ''}" data-eq-id="${id}"${esNuevo ? ' data-eq-nuevo="1"' : ''}>
+        <div class="eq-av" style="background:${d.color || '#8A7878'}">${_eqIniciales(d.name)}</div>
+        <div class="eq-body">
+            <div class="fg">
+                <label>Nombre</label>
+                <input type="text" class="fc" id="eq-name-${id}" value="${_eqEsc(d.name)}" placeholder="Nombre y apellido">
+            </div>
+            <div class="fg">
+                <label>Como aparece en las listas</label>
+                <input type="text" class="fc" id="eq-short-${id}" value="${_eqEsc(d.short)}" placeholder="Ej: Dra. Valencia">
+            </div>
+            <div class="fg">
+                <label>Especialidad</label>
+                <input type="text" class="fc" id="eq-spec-${id}" value="${_eqEsc(d.spec)}" placeholder="Ej: Ortodoncia">
+            </div>
+            <div class="fg">
+                <label>Cómo se le paga</label>
+                <select class="fc" id="eq-tipo-${id}" onchange="eqTipoCambio('${id}')">
+                    ${Object.entries(EQ_TIPOS).map(([k, txt]) =>
+                        `<option value="${k}"${(d.tipo || 'porcentaje') === k ? ' selected' : ''}>${txt}</option>`).join('')}
+                </select>
+            </div>
+            <div class="fg" id="eq-pct-grp-${id}" style="display:${(d.tipo || 'porcentaje') === 'porcentaje' ? 'block' : 'none'}">
+                <label>Porcentaje</label>
+                <div class="inp-suf"><span class="suf-lbl">%</span>
+                    <input type="number" class="fc" id="eq-pct-${id}" min="0" max="100" step="0.5" value="${pct}"></div>
+            </div>
+            <div class="fg" id="eq-cuando-grp-${id}" style="display:${(d.tipo || 'porcentaje') === 'porcentaje' ? 'block' : 'none'}">
+                <label>Cuándo se le causa</label>
+                <select class="fc" id="eq-cuando-${id}">
+                    <option value="ya"${d.cuando !== 'alTerminar' ? ' selected' : ''}>De una vez, el día del trabajo</option>
+                    <option value="alTerminar"${d.cuando === 'alTerminar' ? ' selected' : ''}>Al terminar el caso (si lleva laboratorio)</option>
+                </select>
+            </div>
+            <div class="fg eq-wide" id="eq-razon-grp-${id}" style="display:${(d.tipo || 'porcentaje') === 'ninguna' ? 'block' : 'none'}">
+                <label>Por qué no lleva comisión</label>
+                <input type="text" class="fc" id="eq-razon-${id}" value="${_eqEsc(d.razon)}" placeholder="Ej: va por nómina quincenal">
+            </div>
+            ${esNuevo ? `
+            <div class="fg eq-wide">
+                <label>Con qué lista de tratamientos arranca</label>
+                <select class="fc" id="eq-copiar-${id}">
+                    <option value="">Empezar sin lista</option>
+                    ${otros}
+                </select>
+                <span class="hint">Se copian los tratamientos y los precios de esa persona, para no escribirlos otra vez. Después se editan.</span>
+            </div>` : ''}
+            <div class="eq-note" id="eq-explica-${id}">${EQ_EXPLICA[d.tipo || 'porcentaje']}</div>
+        </div>
+        <div class="eq-side">
+            ${off
+                ? `<button type="button" class="eq-btn eq-back" onclick="reactivarDoctor('${id}')">Volvió</button>`
+                : `<button type="button" class="eq-btn" onclick="retirarDoctor('${id}')">Ya no trabaja aquí</button>`}
+        </div>
+    </div>`;
+}
+
+function eqTipoCambio(id) {
+    const tipo = gv('eq-tipo-' + id) || 'porcentaje';
+    const ver  = (elId, si) => { const e = g(elId); if (e) e.style.display = si ? 'block' : 'none'; };
+    ver('eq-pct-grp-' + id,    tipo === 'porcentaje');
+    ver('eq-cuando-grp-' + id, tipo === 'porcentaje');
+    ver('eq-razon-grp-' + id,  tipo === 'ninguna');
+    const ex = g('eq-explica-' + id);
+    if (ex) ex.innerHTML = EQ_EXPLICA[tipo] || '';
+}
+
+function renderEquipoCfg() {
+    const todos = getDoctores();
+    const act = [], off = [];
+    Object.entries(todos).forEach(([id, d]) => (d.activo === false ? off : act).push([id, d]));
+
+    g('cfg-equipo').innerHTML = act.map(([id, d]) => _eqTarjeta(id, d, false)).join('');
+    g('cfg-equipo-retirados').innerHTML = !off.length ? '' :
+        `<div class="eq-hdr-off">Ya no trabajan aquí (${off.length}) — sus cobros y sus tratamientos siguen intactos</div>` +
+        off.map(([id, d]) => _eqTarjeta(id, d, false)).join('');
+}
+
+/* Agregar es pegar una tarjeta más, sin volver a dibujar las otras: si estaba
+   a mitad de un cambio en otra, no se le pierde. */
+function abrirDoctorNuevo() {
+    const usados = Object.keys(getDoctores());
+    const id = 'dr' + Date.now().toString(36);
+    const color = EQ_COLORES[usados.length % EQ_COLORES.length];
+    g('cfg-equipo').insertAdjacentHTML('beforeend',
+        _eqTarjeta(id, { name:'', short:'', spec:'', color, tipo:'porcentaje', cuando:'ya', pct:50 }, true));
+    const casilla = g('eq-name-' + id);
+    if (casilla) { casilla.scrollIntoView({ behavior:'smooth', block:'center' }); casilla.focus(); }
+}
+
+/* Lee las tarjetas de la pantalla. Si algo está mal devuelve null y avisa —
+   y entonces NO se guarda nada, para no dejar el equipo a medias. */
+function leerEquipoDeLaPantalla() {
+    const base = getDoctores();
+    const tarjetas = [...document.querySelectorAll('#page-config [data-eq-id]')];
+    if (!tarjetas.length) return { equipo:null, comisiones:null, copiar:[] };
+
+    const equipo = {}, comisiones = {}, copiar = [];
+    for (const t of tarjetas) {
+        const id      = t.dataset.eqId;
+        const esNuevo = t.dataset.eqNuevo === '1';
+        const nombre  = (gv('eq-name-' + id) || '').trim();
+        if (!nombre) {
+            toast(esNuevo ? 'A la persona nueva le falta el nombre.' : 'Nadie del equipo se puede quedar sin nombre.', 'error', 5000);
+            return null;
+        }
+        const tipo = gv('eq-tipo-' + id) || 'porcentaje';
+        const d = {
+            ...(base[id] || {}),
+            name:  nombre,
+            short: (gv('eq-short-' + id) || '').trim() || nombre,
+            spec:  (gv('eq-spec-'  + id) || '').trim(),
+            tipo,
+        };
+        if (tipo === 'porcentaje') {
+            /* Una casilla vacía es error a propósito, no un cero: borrarla sin
+               querer no puede terminar en "este doctor no gana comisión". */
+            const crudo = (gv('eq-pct-' + id) || '').trim();
+            if (crudo === '') {
+                toast(`Falta el porcentaje de ${nombre}. Si de verdad no lleva, escoja «No lleva comisión».`, 'error', 6000);
+                return null;
+            }
+            const n = parseFloat(crudo);
+            if (!isFinite(n) || n < 0 || n > 100) {
+                toast(`El porcentaje de ${nombre} debe ser un número entre 0 y 100.`, 'error', 6000);
+                return null;
+            }
+            comisiones[id] = n / 100;
+            d.cuando = gv('eq-cuando-' + id) || 'ya';
+            delete d.razon;
+        } else {
+            delete d.cuando;
+            if (tipo === 'ninguna') d.razon = (gv('eq-razon-' + id) || '').trim();
+            else delete d.razon;
+        }
+        equipo[id] = d;
+        if (esNuevo) {
+            const desde = gv('eq-copiar-' + id) || '';
+            if (desde) copiar.push({ id, desde });
+        }
+    }
+    return { equipo, comisiones, copiar };
+}
+
+/* Copiar la lista de otro doctor, para que el nuevo no arranque en blanco.
+
+   Códigos nuevos, no los del otro: si se repitieran, los cobros viejos
+   terminarían apuntando al tratamiento equivocado.
+
+   Se copia lo que es del TRABAJO —el nombre, el precio, el material, si lleva
+   laboratorio— y no lo que es del TRATO con el otro doctor. El 50% de los
+   retenedores es lo acordado con Nay; pegárselo callado a quien entra sería
+   inventarle un acuerdo. Lo mismo la tarifa del especialista. Entra con el
+   porcentaje que se le puso en su tarjeta, y si algún trabajo va aparte se le
+   escribe en el Catálogo.
+
+   Van marcados como `isCustom` porque no son de fábrica: así se pueden borrar
+   uno por uno con la ✕, que es justo lo que se necesita al empezar a podar
+   una lista prestada. */
+function copiarTratamientos(nuevoId, desdeId) {
+    const cat = getCatalog();
+    const suyos = cat.filter(t => t.docId === desdeId);
+    if (!suyos.length) return 0;
+    const sello = Date.now().toString(36);
+    const copias = suyos.map((t, i) => {
+        const { feeEsp, pctEsp, ...delTrabajo } = t;
+        return { ...delTrabajo, id: 'c' + sello + i, docId: nuevoId, isCustom: true };
+    });
+    DB.set('catalog', [...cat, ...copias]);
+    return copias.length;
+}
+
+function retirarDoctor(id) {
+    const d = getDoctores()[id];
+    if (!d) return;
+    if (!confirm(
+        `${d.name} sale de las listas donde se escoge quién atendió.\n\n` +
+        `NO se borra nada: sus cobros, sus tratamientos y lo que se le deba\n` +
+        `siguen exactamente igual, y los informes de los meses pasados\n` +
+        `siguen diciendo su nombre. Si vuelve, se reactiva con un botón.\n\n` +
+        `¿Retirar a ${d.name}?`
+    )) return;
+    _guardarEquipo({ [id]: { activo:false } }, `${d.name} salió de las listas. Nada de lo registrado cambió.`);
+}
+
+function reactivarDoctor(id) {
+    const d = getDoctores()[id];
+    if (!d) return;
+    _guardarEquipo({ [id]: { activo:true } }, `${d.name} vuelve a salir en las listas.`);
+}
+
+/* Guarda lo que hay en pantalla más un retoque puntual (retirar/reactivar),
+   en una sola pasada, para que un cambio a medio escribir no se pierda. */
+function _guardarEquipo(retoque, mensaje) {
+    const leido = leerEquipoDeLaPantalla();
+    if (!leido) return;
+    const equipo = leido.equipo || {};
+    Object.entries(retoque || {}).forEach(([id, campos]) => {
+        equipo[id] = { ...(getDoctores()[id] || {}), ...(equipo[id] || {}), ...campos };
+    });
+    if (leido.comisiones && Object.keys(leido.comisiones).length) DB.set('comisiones', leido.comisiones);
+    DB.set('equipo', equipo);
+    renderEquipoCfg();
+    if (mensaje) toast('✅ ' + mensaje, 'success', 6000);
 }
 
 // Helper: nombre corto del doctor por docId o por docName
 function docShort(docId, docName) {
-    if (docId && DOCTORS[docId]) return DOCTORS[docId].short;
+    if (docId && getDoctores()[docId]) return getDoctores()[docId].short;
     if (docName) {
-        const found = Object.values(DOCTORS).find(d => d.name === docName);
+        const found = Object.values(getDoctores()).find(d => d.name === docName);
         if (found) return found.short;
         // fallback: apellido
         const parts = (docName || '').split(' ');
@@ -4242,9 +4498,12 @@ const CATALOG_DEFAULTS = [
     { id:'ot03', docId:'nay', name:'Brackets estéticos — zafiro',          price:2800000, matCost:280000, lab:false, note:'Incluye 1er control' },
     { id:'ot04', docId:'nay', name:'Brackets autoligables',                price:2500000, matCost:220000, lab:false, note:'Incluye 1er control' },
     { id:'ot05', docId:'nay', name:'Control mensual ortodoncia',           price:65000,   matCost:10000,  lab:false, note:'Pacientes antiguos entre 60.000 y 65.000 · nuevos 70.000 — se teclea el del paciente' },
-    { id:'ot06', docId:'nay', name:'Retenedor removible Hawley',           price:250000,  matCost:15000,  lab:true,  note:'Comisión 50% después de lab' },
-    { id:'ot07', docId:'nay', name:'Retenedor transparente thermoformed',  price:200000,  matCost:10000,  lab:true,  note:'Comisión 50% después de lab' },
-    { id:'ot08', docId:'nay', name:'Retenedor fijo adherido',              price:150000,  matCost:12000,  lab:true,  note:'Comisión 50% después de lab' },
+    /* Los retenedores se acordaron al 50% y no al 55% como el resto de lo de
+       Nay. Eso también estaba escondido en el texto de la nota; ahora es un
+       campo, `pctEsp`, y se cambia en Catálogo → ✎ Editar. */
+    { id:'ot06', docId:'nay', name:'Retenedor removible Hawley',           price:250000,  matCost:15000,  lab:true,  pctEsp:50, note:'' },
+    { id:'ot07', docId:'nay', name:'Retenedor transparente thermoformed',  price:200000,  matCost:10000,  lab:true,  pctEsp:50, note:'' },
+    { id:'ot08', docId:'nay', name:'Retenedor fijo adherido',              price:150000,  matCost:12000,  lab:true,  pctEsp:50, note:'' },
     { id:'ot09', docId:'nay', name:'Ortopedia funcional (aparato)',        price:1200000, matCost:20000,  lab:true,  note:'Incluye aparato de laboratorio' },
     { id:'ot10', docId:'nay', name:'Expansión maxilar',                    price:1500000, matCost:20000,  lab:true,  note:'Incluye aparato de laboratorio' },
     // Lo que de verdad se cobró en agosto y no estaba en el catálogo.
@@ -4270,14 +4529,22 @@ const CATALOG_DEFAULTS = [
     { id:'cj09', docId:'rafael', name:'Levantamiento de seno (sinus lift)',price:2000000, matCost:40000,  lab:true,  note:'Incluye laboratorio' },
     { id:'cj10', docId:'rafael', name:'Biopsia',                           price:200000,  matCost:12000,  lab:false, note:'' },
     { id:'cj11', docId:'rafael', name:'Cirugía periodontal',               price:400000,  matCost:20000,  lab:false, note:'' },
-    // ── ENDODONCIA (Enrique Mendoza) — tarifas fijas
-    { id:'en01', docId:'mendoza', name:'Valoración endodoncia',            price:50000,   matCost:6000,   lab:false, note:'Pago fijo al especialista: $50.000' },
-    { id:'en02', docId:'mendoza', name:'Endodoncia unirradicular',         price:260000,  matCost:22000,  lab:false, note:'Pago fijo al especialista: $260.000' },
-    { id:'en03', docId:'mendoza', name:'Endodoncia birradicular',          price:330000,  matCost:28000,  lab:false, note:'Pago fijo al especialista: $330.000' },
-    { id:'en04', docId:'mendoza', name:'Endodoncia multirradicular',       price:360000,  matCost:35000,  lab:false, note:'Pago fijo al especialista: $360.000' },
-    { id:'en05', docId:'mendoza', name:'Retratamiento unirradicular',      price:330000,  matCost:25000,  lab:false, note:'Pago fijo al especialista: $330.000' },
-    { id:'en06', docId:'mendoza', name:'Retratamiento birradicular',       price:400000,  matCost:32000,  lab:false, note:'Pago fijo al especialista: $400.000' },
-    { id:'en07', docId:'mendoza', name:'Retratamiento multirradicular',    price:430000,  matCost:38000,  lab:false, note:'Pago fijo al especialista: $430.000' },
+    /* ── ENDODONCIA (Enrique Mendoza) — tarifa fija ─────────────────────────
+       `price` es lo que paga la paciente. `feeEsp` es lo que el Dr. Mendoza le
+       cobra a ella. Son dos números distintos y hasta hoy sólo había uno: la
+       tarifa de Mendoza vivía dentro del TEXTO de la nota y la app la sacaba
+       leyendo el renglón con una expresión regular. Además el catálogo de
+       fábrica traía la tarifa de él metida en la casilla del precio, así que
+       toda endodoncia aparecía dejando cero.
+
+       Los precios de aquí son los de ella, del respaldo del 23 de agosto. */
+    { id:'en01', docId:'mendoza', name:'Valoración endodoncia',            price:100000,  matCost:6000,   lab:false, feeEsp:50000,  note:'' },
+    { id:'en02', docId:'mendoza', name:'Endodoncia unirradicular',         price:450000,  matCost:22000,  lab:false, feeEsp:260000, note:'' },
+    { id:'en03', docId:'mendoza', name:'Endodoncia birradicular',          price:550000,  matCost:28000,  lab:false, feeEsp:330000, note:'' },
+    { id:'en04', docId:'mendoza', name:'Endodoncia multirradicular',       price:700000,  matCost:35000,  lab:false, feeEsp:360000, note:'' },
+    { id:'en05', docId:'mendoza', name:'Retratamiento unirradicular',      price:600000,  matCost:25000,  lab:false, feeEsp:330000, note:'' },
+    { id:'en06', docId:'mendoza', name:'Retratamiento birradicular',       price:700000,  matCost:32000,  lab:false, feeEsp:400000, note:'' },
+    { id:'en07', docId:'mendoza', name:'Retratamiento multirradicular',    price:800000,  matCost:38000,  lab:false, feeEsp:430000, note:'' },
     // ── PERIODONCIA (Mayda Escandón)
     { id:'pe01', docId:'mayda', name:'Valoración periodoncia',             price:50000,   matCost:6000,   lab:false, note:'Comisión a acordar' },
     { id:'pe02', docId:'mayda', name:'Detartraje supragingival',           price:80000,   matCost:8000,   lab:false, note:'Comisión a acordar' },
@@ -4456,7 +4723,44 @@ function ponerAlDiaElCatalogo() {
         if (v) { t.matCost = v; costosRepuestos++; }
     });
 
-    if (!faltan.length && !notasCorregidas && !sobran.length && !retirados.length && !costosRepuestos) return;
+    /* De la nota al campo.
+       La tarifa del especialista y el porcentaje aparte vivían dentro del
+       TEXTO de la nota, y la app los sacaba leyendo el renglón con una
+       expresión regular. Bastaba corregir una tilde para que la cuenta se
+       fuera a cero sin que nadie se diera cuenta. Ahora son campos, y esto
+       los pasa una sola vez.
+
+       De paso arregla un error viejo y caro: en el catálogo de fábrica las
+       endodoncias traían de precio lo que le cobra el Dr. Mendoza a ella, no
+       lo que paga la paciente. Así que TODA endodoncia aparecía dejando cero.
+       Se reconoce porque el precio es exactamente igual a la tarifa de él
+       —una coincidencia que ella nunca habría escrito— y sólo en ese caso se
+       repone el precio de verdad, el de su propio respaldo. Si el precio es
+       cualquier otro número lo puso ella, y no se toca. */
+    const precioReal = new Map(CATALOG_DEFAULTS.map(t => [t.id, t.price]));
+    const limpiarNota = s => (s || '').replace(/^[\s·—-]+|[\s·—-]+$/g, '');
+    let reglasPasadas = 0, preciosRepuestos = 0;
+    cat.forEach(t => {
+        const enLaNota = (t.note || '').match(/[Pp]ago fijo al especialista:\s*\$\s*([\d.]+)/);
+        if (enLaNota && !Number.isFinite(t.feeEsp)) {
+            t.feeEsp = parseInt(enLaNota[1].replace(/\./g, ''), 10) || 0;
+            t.note   = limpiarNota((t.note || '').replace(enLaNota[0], ''));
+            reglasPasadas++;
+            if (t.price === t.feeEsp && precioReal.get(t.id) && precioReal.get(t.id) !== t.price) {
+                t.price = precioReal.get(t.id);
+                preciosRepuestos++;
+            }
+        }
+        const pctNota = (t.note || '').match(/[Cc]omisión\s+(\d+)\s*%\s*después de lab/);
+        if (pctNota && !Number.isFinite(t.pctEsp)) {
+            t.pctEsp = parseInt(pctNota[1], 10);
+            t.note   = limpiarNota((t.note || '').replace(pctNota[0], ''));
+            reglasPasadas++;
+        }
+    });
+
+    if (!faltan.length && !notasCorregidas && !sobran.length && !retirados.length
+        && !costosRepuestos && !reglasPasadas && !preciosRepuestos) return;
 
     const fuera = [...sobran, ...retirados];
     let lista = fuera.length ? cat.filter(t => !fuera.includes(t.id)) : cat;
@@ -4470,19 +4774,22 @@ function ponerAlDiaElCatalogo() {
     if (sobran.length) console.log('Catálogo: se quitaron ' + sobran.length + ' repetidos sin usar (' + sobran.join(', ') + ')');
     if (retirados.length) console.log('Catálogo: se retiraron ' + retirados.length + ' tratamientos que ya no se hacen (' + retirados.join(', ') + ')');
     if (costosRepuestos) console.log('Catálogo: se repuso el costo del material en ' + costosRepuestos + ' tratamientos');
+    if (reglasPasadas) console.log('Catálogo: ' + reglasPasadas + ' reglas pasaron de la nota a su propia casilla');
+    if (preciosRepuestos) console.log('Catálogo: se repuso el precio de paciente en ' + preciosRepuestos + ' endodoncias (traían la tarifa del especialista)');
 }
 
 function renderCatalogFilters() {
+    /* Los botoncitos salen del equipo, no de una lista escrita a mano: quien
+       se agregue en Configuración aparece aquí solo. Los nombres cortos de
+       siempre se respetan, que son los que ella lee de un vistazo. */
+    const CORTO = { diana_v:'Odont. General', nay:'Ortodoncia', rafael:'Cirugía',
+                    mendoza:'Endodoncia', mayda:'Periodoncia', cabeza:'Rehabilitación',
+                    silvia:'Dra. Silvia', sandry:'Auxiliar' };
     const FILTERS = [
-        { id:'all',     label:'Todos' },
-        { id:'diana_v', label:'Odont. General' },
-        { id:'nay',     label:'Ortodoncia' },
-        { id:'rafael',  label:'Cirugía' },
-        { id:'mendoza', label:'Endodoncia' },
-        { id:'mayda',   label:'Periodoncia' },
-        { id:'cabeza',  label:'Rehabilitación' },
-        { id:'silvia',  label:'Dra. Silvia' },
-        { id:'sandry',  label:'Auxiliar' },
+        { id:'all', label:'Todos' },
+        ...Object.entries(getDoctores()).map(([id, d]) => ({
+            id, label: CORTO[id] || d.spec || d.short || d.name,
+        })),
     ];
     g('catFilterBar').innerHTML = FILTERS.map(f =>
         `<button class="cat-filter-btn${catFilter===f.id?' active':''}" onclick="setCatFilter('${f.id}')">${f.label}</button>`
@@ -4499,20 +4806,38 @@ function setCatFilter(fid) {
 function renderCatalog() {
     const q = (g('catSearch')||{value:''}).value.toLowerCase().trim();
     const all = getCatalog();
-    const ORDER = ['diana_v','nay','rafael','mendoza','mayda','cabeza','silvia','sandry'];
+    const docs = getDoctores();
+    /* El orden de siempre primero, y detrás quien se haya agregado después.
+       Antes esta lista estaba escrita a mano, así que un doctor nuevo no
+       aparecía nunca en el Catálogo por más tratamientos que tuviera. */
+    const DE_SIEMPRE = ['diana_v','nay','rafael','mendoza','mayda','cabeza','silvia','sandry'];
+    const conTrabajo = [...new Set(all.map(t => t.docId))];
+    const ORDER = [...new Set([
+        ...DE_SIEMPRE.filter(id => docs[id]),
+        ...Object.keys(docs).filter(id => !DE_SIEMPRE.includes(id)),
+        ...conTrabajo.filter(id => id && !docs[id]),   // huérfanos: mejor verlos que perderlos
+    ])];
     let html = '';
     ORDER.forEach(docId => {
         if (catFilter !== 'all' && catFilter !== docId) return;
-        const doc = DOCTORS[docId];
+        const doc = docs[docId] || { name:docId, spec:'(ya no está en el equipo)', color:'#8A7878', tipo:'ninguna' };
         const items = all.filter(t => t.docId===docId && (!q || t.name.toLowerCase().includes(q)));
         if (!items.length) return;
+        /* La columna de más depende de cómo se le pague. A Mendoza le importa
+           cuánto le cobra a ella por cada trabajo; a los de porcentaje, si
+           algún trabajo va a un porcentaje distinto del suyo. A los demás no
+           les sale nada, para no llenar la tabla de casillas muertas. */
+        const esTarifa = doc.tipo === 'tarifa';
+        const esPct    = doc.tipo === 'porcentaje';
+        const thExtra  = esTarifa ? '<th style="width:135px">🧾 Le cobra a usted</th>'
+                       : esPct    ? '<th style="width:105px">% aparte</th>' : '';
         html += `
         <div class="cat-section">
             <div class="cat-sec-hdr">
                 <div class="cat-doc-info">
                     <div class="cat-doc-avatar" style="background:${doc.color}20;color:${doc.color}">${doc.name[0]}</div>
                     <div>
-                        <div class="cat-doc-name">${doc.name}</div>
+                        <div class="cat-doc-name">${doc.name}${doc.activo===false?' <span style="font-size:11px;font-weight:600;color:var(--muted)">· ya no trabaja aquí</span>':''}</div>
                         <div class="cat-doc-spec">${doc.spec}</div>
                     </div>
                 </div>
@@ -4523,12 +4848,13 @@ function renderCatalog() {
                 <thead><tr>
                     <th>Tratamiento</th>
                     <th style="width:130px">Precio base</th>
+                    ${thExtra}
                     <th style="width:110px">🧴 Materiales</th>
                     <th style="width:68px;text-align:center">Lab</th>
                     <th>Nota / regla</th>
                     <th style="width:110px"></th>
                 </tr></thead>
-                <tbody>${items.map(catRow).join('')}</tbody>
+                <tbody>${items.map(t => catRow(t, doc)).join('')}</tbody>
             </table>
         </div>`;
     });
@@ -4536,12 +4862,26 @@ function renderCatalog() {
     g('catSections').innerHTML = html;
 }
 
-function catRow(t) {
+function catRow(t, doc) {
+    doc = doc || getDoctores()[t.docId] || {};
+    const esTarifa = doc.tipo === 'tarifa';
+    const esPct    = doc.tipo === 'porcentaje';
+
     if (editingCatRow === t.id) {
+        const tdExtra = esTarifa
+            ? `<td><div class="inp-pre"><span class="pre-lbl" style="font-size:11px">$</span>
+                   <input type="number" class="fc fc-sm" value="${Number.isFinite(t.feeEsp)?t.feeEsp:''}" id="ef-${t.id}"
+                          style="padding-left:22px" placeholder="0" min="0"></div></td>`
+            : esPct
+            ? `<td><div class="inp-suf"><span class="suf-lbl" style="font-size:11px">%</span>
+                   <input type="number" class="fc fc-sm" value="${Number.isFinite(t.pctEsp)?t.pctEsp:''}" id="epc-${t.id}"
+                          placeholder="${_pc(t.docId)}" min="0" max="100" step="0.5"></div></td>`
+            : '';
         return `<tr class="cat-row editing" id="tr-${t.id}">
             <td><input type="text" class="fc fc-sm" value="${eh(t.name)}" id="en-${t.id}"></td>
             <td><div class="inp-pre"><span class="pre-lbl" style="font-size:11px">$</span>
                 <input type="number" class="fc fc-sm" value="${t.price}" id="ep-${t.id}" style="padding-left:22px"></div></td>
+            ${tdExtra}
             <td><div class="inp-pre"><span class="pre-lbl" style="font-size:11px">$</span>
                 <input type="number" class="fc fc-sm" value="${t.matCost||0}" id="em-${t.id}" style="padding-left:22px" placeholder="0"></div></td>
             <td style="text-align:center">
@@ -4555,9 +4895,15 @@ function catRow(t) {
             </div></td>
         </tr>`;
     }
+    const tdExtra = esTarifa
+        ? `<td class="price-cell" style="color:${t.feeEsp>0?'var(--purp)':'var(--muted)'};font-size:12px">${t.feeEsp>0?fmt(t.feeEsp):'—'}</td>`
+        : esPct
+        ? `<td class="price-cell" style="color:${Number.isFinite(t.pctEsp)?'var(--purp)':'var(--muted)'};font-size:12px">${Number.isFinite(t.pctEsp)?t.pctEsp+'%':'—'}</td>`
+        : '';
     return `<tr class="cat-row" id="tr-${t.id}">
         <td>${eh(t.name)}${t.isCustom?'<span class="cat-custom-badge">custom</span>':''}</td>
         <td class="price-cell">${fmt(t.price)}</td>
+        ${tdExtra}
         <td class="price-cell" style="color:${t.matCost>0?'var(--bronze)':'var(--muted)'};font-size:12px">${t.matCost>0?fmt(t.matCost):'—'}</td>
         <td style="text-align:center">${t.lab?'<span class="lab-badge">🧪 Sí</span>':'<span style="color:var(--muted);font-size:12px">—</span>'}</td>
         <td class="note-cell">${t.note?`<span class="cat-note">${eh(t.note)}</span>`:''}</td>
@@ -4583,7 +4929,35 @@ function saveCatEdit(id) {
     const items = getCatalog();
     const i = items.findIndex(t => t.id===id);
     if (i===-1) return;
-    items[i] = {...items[i], name, price, matCost, lab, note};
+    const fila = {...items[i], name, price, matCost, lab, note};
+
+    /* Lo que el especialista le cobra a ella por ESTE trabajo. En blanco es
+       en blanco, que no es lo mismo que cero: en blanco quiere decir «no está
+       acordado», y cero querría decir «me lo hace gratis». */
+    const elFee = g('ef-'+id);
+    if (elFee) {
+        const v = elFee.value.trim();
+        if (v === '') delete fila.feeEsp;
+        else {
+            const n = parseFloat(v);
+            if (!isFinite(n) || n < 0) { toast('Lo que le cobra el especialista debe ser un número, o quedar en blanco.','error',6000); return; }
+            fila.feeEsp = n;
+        }
+    }
+    /* Un porcentaje sólo para este trabajo, distinto al del doctor. En blanco
+       quiere decir «el de siempre», que es lo normal. */
+    const elPct = g('epc-'+id);
+    if (elPct) {
+        const v = elPct.value.trim();
+        if (v === '') delete fila.pctEsp;
+        else {
+            const n = parseFloat(v);
+            if (!isFinite(n) || n < 0 || n > 100) { toast('El porcentaje aparte debe ser un número entre 0 y 100 — o déjelo en blanco para que valga el del doctor.','error',7000); return; }
+            fila.pctEsp = n;
+        }
+    }
+
+    items[i] = fila;
     DB.set('catalog', items);
     editingCatRow = null;
     renderCatalog();
@@ -4601,7 +4975,7 @@ function deleteCatTreatment(id) {
 }
 
 function openAddModal() {
-    g('mod-doc').innerHTML = Object.entries(DOCTORS).map(([id,d]) =>
+    g('mod-doc').innerHTML = Object.entries(getDoctoresActivos()).map(([id,d]) =>
         `<option value="${id}">${d.name} — ${d.spec}</option>`
     ).join('');
     g('mod-name').value=''; g('mod-price').value=''; g('mod-note').value=''; g('mod-matcost').value='';
@@ -4842,8 +5216,10 @@ function usarAtajo(treatId) {
 
 function initRegistro() {
     const sel = g('rx-doc');
+    // Sólo los que siguen atendiendo. Los retirados sí salen en los filtros
+    // del historial, porque sus cobros de antes siguen ahí.
     sel.innerHTML = '<option value="">— Selecciona —</option>' +
-        Object.entries(DOCTORS).map(([id,d]) =>
+        Object.entries(getDoctoresActivos()).map(([id,d]) =>
             `<option value="${id}">${d.name} — ${d.spec}</option>`
         ).join('');
     sv('rx-date', todayISO());
@@ -4988,32 +5364,76 @@ const COMISION_ESTADO = {
     sinComision:'owner',    // no lleva comisión: es de la clínica
 };
 
+/* Antes esta función preguntaba «¿quién es?» y tenía un caso escrito a mano
+   por cada doctor. Eso significaba que meter un doctor nuevo, o cambiarle el
+   trato a uno, era tocar el programa. Ahora pregunta «¿cómo se le paga?» y
+   la respuesta es un dato del doctor (`tipo`), editable en Configuración.
+   Sólo hay cuatro formas de pagarle a alguien, y son éstas cuatro.        */
 function comisionDe({ docId, price = 0, lab = 0, treatId = null, manual = 0, conLaboratorio }) {
     if (!docId) return null;
-    const treat   = treatId ? getCatalog().find(t => t.id === treatId) : null;
-    const postLab = Math.max(0, price - lab);
-    const conLab  = (pct, quien) => ({
-        amount: Math.round(postLab * pct),
-        label:  lab > 0
-            ? `${Math.round(pct*100)}% de ${fmt(price)} − ${fmt(lab)} de laboratorio`
-            : `${Math.round(pct*100)}% de lo cobrado`,
-        status: COMISION_ESTADO.pendiente,
-        quien,
-    });
+    const d = getDoctores()[docId];
+    if (!d) return { amount: 0, label: '', status: COMISION_ESTADO.sinComision, quien: '' };
 
-    switch (docId) {
-        case 'diana_v': return conLab(pctComision('diana_v'), 'Diana Valencia');
-        case 'rafael':  return conLab(pctComision('rafael'),  'Rafael Díaz');
-        case 'nay': {
-            const esRetenedor = treat?.note?.includes('50% después de lab');
-            const c = conLab(pctComision(esRetenedor ? 'nay_retenedor' : 'nay'), 'Nay Jiménez');
-            if (esRetenedor) c.label += ' (retenedor)';
-            return c;
+    const treat   = treatId ? getCatalog().find(t => t.id === treatId) : null;
+    const regla   = reglaDe(treat, docId);
+    const postLab = Math.max(0, price - lab);
+    const quien   = d.name || '';
+
+    switch (d.tipo) {
+
+        case 'porcentaje': {
+            // El tratamiento puede traer su propio porcentaje —los retenedores
+            // de Nay se acordaron al 50% y no al 55%— y ése manda sobre el del
+            // doctor. Si no trae ninguno, va el del doctor.
+            const propio = regla.pctEsp !== undefined;
+            const pct    = propio ? regla.pctEsp : pctComision(docId);
+            const n      = Math.round(pct * 100);
+
+            if (d.cuando === 'alTerminar') {
+                const esValoracion = treat?.name?.toLowerCase().includes('valoración');
+                // Si a un caso con laboratorio se le abona por partes, el
+                // segundo abono ya no descuenta laboratorio —se descontó una
+                // sola vez— y sin esto parecería un caso sin laboratorio, o sea
+                // pagadero de una vez. El caso es uno solo: quien lo llama dice
+                // si lo tiene.
+                const hayLab = conLaboratorio !== undefined
+                    ? conLaboratorio
+                    : (treat?.lab === true || lab > 0);
+
+                if (esValoracion || !hayLab) {
+                    // Valoración y trabajos sin laboratorio: se causan y se pagan de una vez
+                    return {
+                        amount: Math.round(price * pct),
+                        label: esValoracion ? `${n}% de lo cobrado (valoración)` : `${n}% de lo cobrado`,
+                        status: COMISION_ESTADO.pendiente,
+                        quien,
+                    };
+                }
+                // Con laboratorio: se le paga al terminar el caso
+                return {
+                    amount: Math.round(postLab * pct),
+                    label:  `${n}% de ${fmt(price)} − ${fmt(lab)} de laboratorio — al terminar el caso`,
+                    status: COMISION_ESTADO.diferida,
+                    quien,
+                };
+            }
+
+            return {
+                amount: Math.round(postLab * pct),
+                label: (lab > 0
+                        ? `${n}% de ${fmt(price)} − ${fmt(lab)} de laboratorio`
+                        : `${n}% de lo cobrado`)
+                       + (propio ? ' (acordado para este tratamiento)' : ''),
+                status: COMISION_ESTADO.pendiente,
+                quien,
+            };
         }
-        case 'mendoza': {
-            // La nota del catálogo trae "Pago fijo al especialista: $260.000"
-            const enLaNota = treat?.note?.match(/\$\s*([\d.]+)/);
-            const fijo   = enLaNota ? parseInt(enLaNota[1].replace(/\./g, '')) : 0;
+
+        case 'tarifa': {
+            // Lo que el especialista le cobra a ella, que no es lo que paga la
+            // paciente. Vive en el tratamiento, casilla «Lo que le cobra a
+            // usted» del Catálogo.
+            const fijo   = regla.feeEsp || 0;
             const amount = Math.max(0, fijo - lab);
             return {
                 amount,
@@ -5021,45 +5441,20 @@ function comisionDe({ docId, price = 0, lab = 0, treatId = null, manual = 0, con
                     ? `Tarifa fija ${fmt(fijo)} − ${fmt(lab)} de laboratorio`
                     : `Tarifa fija del especialista: ${fmt(fijo)}`,
                 status: COMISION_ESTADO.pendiente,
-                quien: 'Enrique Mendoza',
+                quien,
             };
         }
-        case 'mayda':
-            return { amount: manual, label: 'Comisión acordada a mano', status: COMISION_ESTADO.pendiente, quien: 'Mayda Escandón' };
-        case 'cabeza': {
-            const esValoracion = treat?.name?.toLowerCase().includes('valoración');
-            // Si a un caso con laboratorio se le abona por partes, el segundo
-            // abono ya no descuenta laboratorio —se descontó una sola vez— y
-            // sin esto parecería un caso sin laboratorio, o sea pagadero de
-            // una vez. El caso es uno solo: quien lo llama dice si lo tiene.
-            const hayLab = conLaboratorio !== undefined
-                ? conLaboratorio
-                : (treat?.lab === true || lab > 0);
-            const pctCab = pctComision('cabeza');
-            const nCab   = Math.round(pctCab * 100);
-            if (esValoracion || !hayLab) {
-                // Valoración y trabajos sin laboratorio: se causan y se pagan de una vez
-                return {
-                    amount: Math.round(price * pctCab),
-                    label: esValoracion ? `${nCab}% de lo cobrado (valoración)` : `${nCab}% de lo cobrado`,
-                    status: COMISION_ESTADO.pendiente,
-                    quien: 'Diana Cabeza',
-                };
-            }
-            // Con laboratorio: se le paga al terminar el caso
+
+        case 'manual':
+            return { amount: manual, label: 'Comisión acordada a mano', status: COMISION_ESTADO.pendiente, quien };
+
+        default:  // 'ninguna'
             return {
-                amount: Math.round(postLab * pctCab),
-                label:  `${nCab}% de ${fmt(price)} − ${fmt(lab)} de laboratorio — al terminar el caso`,
-                status: COMISION_ESTADO.diferida,
-                quien: 'Diana Cabeza',
+                amount: 0,
+                label: d.razon ? `Sin comisión — ${d.razon}` : 'Sin comisión',
+                status: COMISION_ESTADO.sinComision,
+                quien,
             };
-        }
-        case 'silvia':
-            return { amount: 0, label: 'Sin comisión — es la titular', status: COMISION_ESTADO.sinComision, quien: 'Dra. Silvia López' };
-        case 'sandry':
-            return { amount: 0, label: 'Sin comisión — va por nómina', status: COMISION_ESTADO.sinComision, quien: 'Sandry Flórez' };
-        default:
-            return { amount: 0, label: '', status: COMISION_ESTADO.sinComision, quien: '' };
     }
 }
 
@@ -5103,7 +5498,7 @@ function updateRxPreview() {
     } else { bi.style.display='none'; }
 
     if (!docId || !price) { resetRxPreview(); return; }
-    const doc = DOCTORS[docId];
+    const doc = getDoctores()[docId];
     let html = `<div class="cp-hdr">Comisión — ${doc.name}</div>`;
     if (!comm) { html+='<div class="cp-empty"><p>Completa los datos del tratamiento</p></div>'; g('rxCommPreview').innerHTML=html; return; }
 
@@ -5228,7 +5623,7 @@ function saveRx() {
     const base  = {
         date:gv('rx-date')||todayISO(),
         patient:nombreDelPaciente(gv('rx-patient'))||'Sin nombre',
-        docId, docName:DOCTORS[docId]?.name||docId,
+        docId, docName:getDoctores()[docId]?.name||docId,
         treatId, treatName:treat?.name||'',
         labCost:parseFloat(gv('rx-lab'))||0,
         matCost:parseFloat(gv('rx-matcost'))||0,
@@ -5574,7 +5969,7 @@ function initHistorial() {
     const sel = g('hist-doc');
     if (!sel) return;
     sel.innerHTML = '<option value="">Todos los doctores</option>' +
-        Object.entries(DOCTORS).map(([id,d]) =>
+        Object.entries(getDoctores()).map(([id,d]) =>
             `<option value="${id}">${d.name}</option>`
         ).join('');
     histSetRango('mes');
@@ -6321,7 +6716,7 @@ function renderRepDoc(mes, allTx) {
     if (!docs.length) { g('rep-doc').innerHTML='<div class="db-empty" style="padding:48px">Sin producción este mes</div>'; return; }
 
     const rows = docs.map(d => {
-        const dc      = DOCTORS[d.docId] || {};
+        const dc      = getDoctores()[d.docId] || {};
         const color   = dc.color || '#997771';
         const neto    = d.prod - d.comm;
         const pct     = Math.round(d.prod/maxProd*100);
@@ -7914,7 +8309,7 @@ function initPlanes() {
     sv('pln-date', todayISO());
     // populate doctor select
     const sel = g('pln-doc');
-    sel.innerHTML = Object.entries(DOCTORS)
+    sel.innerHTML = Object.entries(getDoctoresActivos())
         .filter(([id]) => id!=='silvia' && id!=='sandry')
         .map(([id,d]) => `<option value="${id}">${d.name} — ${d.spec}</option>`).join('');
     renderPlanes();
@@ -7942,7 +8337,7 @@ function savePlan() {
     const plan = {
         id:'pl'+Date.now(),
         patient, docId,
-        docName:DOCTORS[docId]?.name||docId,
+        docName:getDoctores()[docId]?.name||docId,
         treatDesc:treat||'Plan de tratamiento',
         totalAgreed:total,
         labCost: parseFloat(g('pln-lab').value)||0,
@@ -8047,7 +8442,7 @@ function renderPlanes() {
         return;
     }
     el.innerHTML = repetidos + all.map(p => {
-        const dc       = DOCTORS[p.docId] || {};
+        const dc       = getDoctores()[p.docId] || {};
         const color    = dc.color || '#997771';
         const pagado   = p.abonos.reduce((s,a)=>s+a.amount,0);
         const saldo    = p.totalAgreed - pagado;
@@ -8462,7 +8857,7 @@ function renderComisiones() {
     });
 
     listEl.innerHTML = pmBar + migraBanner + Object.values(byDoc).map(doc => {
-        const dc       = DOCTORS[doc.docId] || {};
+        const dc       = getDoctores()[doc.docId] || {};
         const color    = dc.color || '#997771';
         const initials = doc.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
         const total    = doc.txs.reduce((s,t)=>s+t.commission,0);
@@ -8573,7 +8968,7 @@ function showPayCommModal(mode, txIdOrDocId) {
             </div>`;
     } else {
         _pcmDocId = txIdOrDocId;
-        const nm  = DOCTORS[txIdOrDocId]?.name || txIdOrDocId;
+        const nm  = getDoctores()[txIdOrDocId]?.name || txIdOrDocId;
         const pendientes = txs.filter(t=>t.docId===txIdOrDocId && t.commStatus==='pending');
         const total = pendientes.reduce((s,t)=>s+t.commission,0);
         _pcmTotal = total;
@@ -8718,7 +9113,7 @@ function confirmPayCommModal() {
         });
         DB.set('tx', txs);
         _reciboTotal = total;
-        const nm = DOCTORS[_pcmDocId]?.name || _pcmDocId;
+        const nm = getDoctores()[_pcmDocId]?.name || _pcmDocId;
         toast(`✅ ${fmt(total)} pagados a ${nm} — ${pmLabel}`, 'success');
     }
 
@@ -8789,8 +9184,8 @@ let _abmDocId = null, _abmTotal = 0, _abmSelPM = null;
 
 function abonarComm(docId, totalPendiente) {
     _abmDocId = docId; _abmTotal = totalPendiente; _abmSelPM = null;
-    const nm  = DOCTORS[docId]?.name || docId;
-    const doc = DOCTORS[docId] || {};
+    const nm  = getDoctores()[docId]?.name || docId;
+    const doc = getDoctores()[docId] || {};
     g('abm-title').textContent = 'Abonar comisión — ' + nm;
     g('abm-sub').textContent   = doc.spec || '';
     g('abm-detail').innerHTML  = `Total pendiente: <strong style="color:var(--purp)">${fmt(totalPendiente)}</strong><br><span style="font-size:11px;color:var(--muted)">Se aplicará a las comisiones más antiguas primero</span>`;
@@ -10355,7 +10750,7 @@ function renderDashboard() {
         docEl.innerHTML = '<div class="db-empty">Sin producción este día</div>';
     } else {
         docEl.innerHTML = docRows.map(dr => {
-            const dc       = Object.values(DOCTORS).find(d => d.name === dr.name) || {};
+            const dc       = Object.values(getDoctores()).find(d => d.name === dr.name) || {};
             const color    = dc.color || '#997771';
             const initials = dr.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
             return `<div class="doc-prod-row">
@@ -10640,7 +11035,7 @@ function printGxList() {
 function printComprobanteDoc(docId, tab) {
     const allTx = (DB.get('tx')||[]).filter(t=>t.docId===docId && t.commStatus===tab);
     if (!allTx.length) { toast('No hay registros en esta categoría','error'); return; }
-    const dc    = DOCTORS[docId] || {};
+    const dc    = getDoctores()[docId] || {};
     const total = allTx.reduce((s,t)=>s+t.commission,0);
     const dateStr = new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const tabLabel = tab==='pending'?'Pendiente de pago':tab==='paid'?'Pagado':'Diferido';
@@ -10680,7 +11075,7 @@ function printComprobanteDoc(docId, tab) {
 function printCommRecibo(docId, txIds, total, pmLabel) {
     if (!docId || !txIds || !txIds.length) return;
     const allTx = DB.get('tx') || [];
-    const dc    = DOCTORS[docId] || {};
+    const dc    = getDoctores()[docId] || {};
     const cfg   = DB.get('config') || DEFAULTS;
     const txsPagados = allTx.filter(t => txIds.includes(t.id));
     if (!txsPagados.length) return;
@@ -10731,7 +11126,7 @@ function printCommRecibo(docId, txIds, total, pmLabel) {
 function whatsappDoc(docId, tab) {
     const allTx = (DB.get('tx')||[]).filter(t=>t.docId===docId && t.commStatus===tab);
     if (!allTx.length) { toast('No hay registros en esta categoría','error'); return; }
-    const dc    = DOCTORS[docId] || {};
+    const dc    = getDoctores()[docId] || {};
     const total = allTx.reduce((s,t)=>s+t.commission,0);
     const nombre= (dc.name||docId).split(' ')[0];
     const items = allTx.map(t=>{
@@ -10910,7 +11305,7 @@ function initCostos() {
     // Poblar filtro de doctor
     const sel = g('costo-doc-filter');
     sel.innerHTML = '<option value="">Todos los especialistas</option>' +
-        Object.entries(DOCTORS).map(([id,d]) =>
+        Object.entries(getDoctores()).map(([id,d]) =>
             `<option value="${id}">${d.name}</option>`
         ).join('');
     renderCostos();
@@ -10955,7 +11350,7 @@ function renderCostos() {
 
     let html = '';
     Object.entries(byDoc).forEach(([docId, items]) => {
-        const doc = DOCTORS[docId] || { name: docId, color: '#997771' };
+        const doc = getDoctores()[docId] || { name: docId, color: '#997771' };
         const rows = items.map(t => {
             const mc       = t.matCost || 0;
             const margen   = t.price > 0 ? Math.round((t.price - mc) / t.price * 100) : 0;

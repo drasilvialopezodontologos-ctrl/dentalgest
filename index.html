@@ -3966,6 +3966,73 @@ function limpiarDuplicadosTx() {
     if (typeof renderDashboard === 'function') renderDashboard();
 }
 
+/* ── Reponerle a lo ya cobrado el costo del material ────────────────────────
+   El costo del material se copia del catálogo al cobro en el momento de
+   registrarlo, igual que la comisión: cada cobro guarda el suyo y de ahí en
+   adelante no cambia. Eso está bien —agosto sigue diciendo lo mismo aunque hoy
+   la resina cueste otra cosa— pero dejó un hueco: los cobros que se hicieron
+   mientras la lista de precios estaba sin costear quedaron en material $0, y
+   en Rentabilidad parecen tratamientos que no gastan nada.
+
+   Esto lo llena. Pero NO solo: sale un botón, ella ve cuántos son y cuánto
+   suman, y decide. Escribir encima de lo ya registrado no es cosa de hacer a
+   escondidas.
+
+   Tres cosas que no toca nunca: un costo que ya esté puesto (aunque sea
+   distinto al del catálogo — si lo escribió a mano es porque el del catálogo
+   estaba mal), los saldos y abonos de meses anteriores (no son un tratamiento,
+   no gastan material) y el segundo renglón de un pago mixto (el costo entero
+   va en el primero, ponerlo en los dos sería gastarlo dos veces).
+
+   OJO con `sinPareja`: los cobros de agosto entraron desde el Excel con el
+   nombre escrito a mano —«Control de Ortodoncia Reparación 12-35»— y sin
+   tratamiento de la lista detrás. A ésos no se les puede adivinar el costo sin
+   inventar, así que se cuentan aparte y se dicen, en vez de dejar creer que
+   quedaron arreglados. De septiembre en adelante no vuelve a pasar: al
+   registrar se escoge el tratamiento de la lista y el costo va pegado. */
+function costosQueFaltan(txs) {
+    const cat = getCatalog();
+    const porId     = new Map();
+    const porNombre = new Map();
+    cat.forEach(t => {
+        if (!t.matCost) return;
+        porId.set(t.id, t.matCost);
+        const k = 'n:' + mismoNombre(t.name);
+        if (!porNombre.has(k)) porNombre.set(k, t.matCost);
+    });
+    const listos = [], sinPareja = [];
+    (txs || []).forEach(t => {
+        if (t.matCost)    return;
+        if (t.splitChild) return;
+        const costo = porId.get(t.treatId) || porNombre.get('n:' + mismoNombre(t.treatName));
+        if (costo) listos.push({ tx: t, costo });
+        else       sinPareja.push(t);
+    });
+    return { listos, sinPareja };
+}
+
+function reponerCostosMateriales() {
+    const txs = DB.get('tx') || [];
+    const { listos } = costosQueFaltan(txs);
+    if (!listos.length) {
+        toast('No hay ningún cobro al que se le pueda poner el costo desde la lista de precios', 'error', 5000);
+        return;
+    }
+    const suma = listos.reduce((s, p) => s + p.costo, 0);
+    if (!confirm(
+        'Se les va a poner el costo del material a ' + listos.length + ' cobros,\n' +
+        'tomándolo de lo que hoy dice el Catálogo: ' + fmt(suma) + ' en total.\n\n' +
+        'No cambia el precio, ni la comisión, ni el laboratorio. Los cobros que ya\n' +
+        'tienen costo se quedan como están.\n\n' +
+        '¿Ponerlo ahora?'
+    )) return;
+    listos.forEach(p => { p.tx.matCost = p.costo; });
+    DB.set('tx', txs);
+    toast('✅ Listo — ' + listos.length + ' cobros quedaron con su costo de material (' + fmt(suma) + ' en total)', 'success', 7000);
+    if (typeof renderReportes  === 'function') renderReportes();
+    if (typeof renderDashboard === 'function') renderDashboard();
+}
+
 function exportBackup() {
     if (!_dgCache) { toast('Espera a que la app termine de cargar', 'error'); return; }
     const snapshot = {};
@@ -4131,111 +4198,125 @@ function docShort(docId, docName) {
     return '—';
 }
 
+/* matCost = lo que cuesta el material de ese tratamiento: guantes, anestesia,
+   resina, fresas, lo que se gasta y hay que reponer. NO incluye laboratorio
+   (ése va aparte, por caso) ni la comisión del doctor ni el arriendo. Es lo
+   que se resta primero para saber si un tratamiento deja o no deja.
+
+   Estos números los sacó la Dra. Silvia trabajo por trabajo. Se habían
+   perdido al reponer los datos de agosto —el respaldo de agosto no traía la
+   lista de precios, así que el catálogo volvió al de fábrica, que venía en
+   ceros— y se recuperaron del respaldo del 23 de agosto.
+
+   Seis quedaron estimados, porque son tratamientos que entraron después de
+   que ella hiciera el cálculo y nunca los costeó: og20, ot11, ot14, ot15,
+   ot16 y ot17. Están puestos a partir de sus propios números en trabajos
+   parecidos, y se corrigen en Catálogo → ✎ Editar. */
 const CATALOG_DEFAULTS = [
     // ── ODONTOLOGÍA GENERAL (Diana Valencia)
-    { id:'og01', docId:'diana_v', name:'Valoración / Consulta',            price:30000,   lab:false, note:'' },
-    { id:'og02', docId:'diana_v', name:'Limpieza dental (profilaxis)',      price:60000,   lab:false, note:'' },
-    { id:'og03', docId:'diana_v', name:'Limpieza dental + flúor',          price:75000,   lab:false, note:'' },
-    { id:'og04', docId:'diana_v', name:'Obturación resina — 1 cara',       price:80000,   lab:false, note:'' },
-    { id:'og05', docId:'diana_v', name:'Obturación resina — 2 caras',      price:120000,  lab:false, note:'' },
-    { id:'og06', docId:'diana_v', name:'Obturación resina — 3 caras',      price:150000,  lab:false, note:'' },
+    { id:'og01', docId:'diana_v', name:'Valoración / Consulta',            price:30000,   matCost:6000,   lab:false, note:'' },
+    { id:'og02', docId:'diana_v', name:'Limpieza dental (profilaxis)',      price:60000,   matCost:10000,  lab:false, note:'' },
+    { id:'og03', docId:'diana_v', name:'Limpieza dental + flúor',          price:75000,   matCost:12000,  lab:false, note:'' },
+    { id:'og04', docId:'diana_v', name:'Obturación resina — 1 cara',       price:80000,   matCost:15000,  lab:false, note:'' },
+    { id:'og05', docId:'diana_v', name:'Obturación resina — 2 caras',      price:120000,  matCost:18000,  lab:false, note:'' },
+    { id:'og06', docId:'diana_v', name:'Obturación resina — 3 caras',      price:150000,  matCost:22000,  lab:false, note:'' },
     /* og07 y og08 eran las obturaciones en amalgama. La Dra. no trabaja
        amalgama, así que salieron. Ver CATALOGO_RETIRADO más abajo. */
-    { id:'og09', docId:'diana_v', name:'Sellante de fosas y fisuras',      price:30000,   lab:false, note:'Precio por diente' },
-    { id:'og10', docId:'diana_v', name:'Detartraje / curetaje',            price:80000,   lab:false, note:'' },
-    { id:'og11', docId:'diana_v', name:'Fluorización',                     price:30000,   lab:false, note:'' },
-    { id:'og12', docId:'diana_v', name:'Blanqueamiento en consultorio',     price:400000,  lab:false, note:'' },
-    { id:'og13', docId:'diana_v', name:'Blanqueamiento para casa',          price:300000,  lab:false, note:'Incluye kit y cubetas' },
+    { id:'og09', docId:'diana_v', name:'Sellante de fosas y fisuras',      price:30000,   matCost:6000,   lab:false, note:'Precio por diente' },
+    { id:'og10', docId:'diana_v', name:'Detartraje / curetaje',            price:80000,   matCost:8000,   lab:false, note:'' },
+    { id:'og11', docId:'diana_v', name:'Fluorización',                     price:30000,   matCost:6000,   lab:false, note:'' },
+    { id:'og12', docId:'diana_v', name:'Blanqueamiento en consultorio',     price:400000,  matCost:55000,  lab:false, note:'' },
+    { id:'og13', docId:'diana_v', name:'Blanqueamiento para casa',          price:300000,  matCost:30000,  lab:false, note:'Incluye kit y cubetas' },
     /* og14 y og15 eran «Radiografía periapical» y «Radiografía bite-wing».
        La Dra. no toma radiografías, así que salieron de la lista de precios.
        Los ids quedan libres a propósito: no se reutilizan, para que ningún
        registro viejo termine apuntando a otro tratamiento. */
-    { id:'og16', docId:'diana_v', name:'Extracción dental simple',          price:80000,   lab:false, note:'' },
-    { id:'og17', docId:'diana_v', name:'Extracción dental compleja',        price:150000,  lab:false, note:'' },
-    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',         price:70000,   lab:false, note:'Precio por diente · ajustable si hay descuento' },
-    { id:'og18', docId:'diana_v', name:'Pulpotomía (diente temporal)',       price:120000,  lab:false, note:'' },
-    { id:'og19', docId:'diana_v', name:'Corona en resina directa',          price:150000,  lab:false, note:'' },
+    { id:'og16', docId:'diana_v', name:'Extracción dental simple',          price:80000,   matCost:10000,  lab:false, note:'' },
+    { id:'og17', docId:'diana_v', name:'Extracción dental compleja',        price:150000,  matCost:18000,  lab:false, note:'' },
+    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',         price:70000,   matCost:10000,  lab:false, note:'Precio por diente · ajustable si hay descuento' },
+    { id:'og18', docId:'diana_v', name:'Pulpotomía (diente temporal)',       price:120000,  matCost:15000,  lab:false, note:'' },
+    { id:'og19', docId:'diana_v', name:'Corona en resina directa',          price:150000,  matCost:20000,  lab:false, note:'' },
     // ── ORTODONCIA (Nay Jiménez)
-    { id:'ot01', docId:'nay', name:'Valoración ortodoncia',                 price:50000,   lab:false, note:'' },
-    { id:'ot02', docId:'nay', name:'Brackets metálicos (instalación)',      price:2000000, lab:false, note:'Incluye 1er control' },
-    { id:'ot03', docId:'nay', name:'Brackets estéticos — zafiro',          price:2800000, lab:false, note:'Incluye 1er control' },
-    { id:'ot04', docId:'nay', name:'Brackets autoligables',                price:2500000, lab:false, note:'Incluye 1er control' },
-    { id:'ot05', docId:'nay', name:'Control mensual ortodoncia',           price:65000,   lab:false, note:'Pacientes antiguos entre 60.000 y 65.000 · nuevos 70.000 — se teclea el del paciente' },
-    { id:'ot06', docId:'nay', name:'Retenedor removible Hawley',           price:250000,  lab:true,  note:'Comisión 50% después de lab' },
-    { id:'ot07', docId:'nay', name:'Retenedor transparente thermoformed',  price:200000,  lab:true,  note:'Comisión 50% después de lab' },
-    { id:'ot08', docId:'nay', name:'Retenedor fijo adherido',              price:150000,  lab:true,  note:'Comisión 50% después de lab' },
-    { id:'ot09', docId:'nay', name:'Ortopedia funcional (aparato)',        price:1200000, lab:true,  note:'Incluye aparato de laboratorio' },
-    { id:'ot10', docId:'nay', name:'Expansión maxilar',                    price:1500000, lab:true,  note:'Incluye aparato de laboratorio' },
+    { id:'ot01', docId:'nay', name:'Valoración ortodoncia',                 price:50000,   matCost:6000,   lab:false, note:'' },
+    { id:'ot02', docId:'nay', name:'Brackets metálicos (instalación)',      price:2000000, matCost:10000,  lab:false, note:'Incluye 1er control' },
+    { id:'ot03', docId:'nay', name:'Brackets estéticos — zafiro',          price:2800000, matCost:280000, lab:false, note:'Incluye 1er control' },
+    { id:'ot04', docId:'nay', name:'Brackets autoligables',                price:2500000, matCost:220000, lab:false, note:'Incluye 1er control' },
+    { id:'ot05', docId:'nay', name:'Control mensual ortodoncia',           price:65000,   matCost:10000,  lab:false, note:'Pacientes antiguos entre 60.000 y 65.000 · nuevos 70.000 — se teclea el del paciente' },
+    { id:'ot06', docId:'nay', name:'Retenedor removible Hawley',           price:250000,  matCost:15000,  lab:true,  note:'Comisión 50% después de lab' },
+    { id:'ot07', docId:'nay', name:'Retenedor transparente thermoformed',  price:200000,  matCost:10000,  lab:true,  note:'Comisión 50% después de lab' },
+    { id:'ot08', docId:'nay', name:'Retenedor fijo adherido',              price:150000,  matCost:12000,  lab:true,  note:'Comisión 50% después de lab' },
+    { id:'ot09', docId:'nay', name:'Ortopedia funcional (aparato)',        price:1200000, matCost:20000,  lab:true,  note:'Incluye aparato de laboratorio' },
+    { id:'ot10', docId:'nay', name:'Expansión maxilar',                    price:1500000, matCost:20000,  lab:true,  note:'Incluye aparato de laboratorio' },
     // Lo que de verdad se cobró en agosto y no estaba en el catálogo.
     // La reparación se cobra APARTE del control, en su propio renglón: así
     // cuadran las once citas de agosto que la traen. Confirmado por Silvia
     // el 2026-08-22.
-    { id:'ot11', docId:'nay', name:'Control ortodoncia autoligado',        price:120000,  lab:false, note:'Entre 110.000 y 120.000 según el paciente — se teclea el suyo' },
-    { id:'ot12', docId:'nay', name:'Control ortodoncia mini',              price:70000,   lab:false, note:'' },
-    { id:'ot13', docId:'nay', name:'Control ortodoncia mixto',             price:100000,  lab:false, note:'' },
-    { id:'ot14', docId:'nay', name:'Reparación de bracket',                price:20000,   lab:false, note:'Precio por bracket · va en renglón aparte del control' },
-    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado',     price:30000,   lab:false, note:'Precio por bracket · va en renglón aparte del control' },
-    { id:'ot16', docId:'nay', name:'Montaje inferior mini',                price:300000,  lab:false, note:'' },
-    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',           price:185000,  lab:false, note:'' },
+    { id:'ot11', docId:'nay', name:'Control ortodoncia autoligado',        price:120000,  matCost:10000,  lab:false, note:'Entre 110.000 y 120.000 según el paciente — se teclea el suyo' },
+    { id:'ot12', docId:'nay', name:'Control ortodoncia mini',              price:70000,   matCost:10000,  lab:false, note:'' },
+    { id:'ot13', docId:'nay', name:'Control ortodoncia mixto',             price:100000,  matCost:10000,  lab:false, note:'' },
+    { id:'ot14', docId:'nay', name:'Reparación de bracket',                price:20000,   matCost:5000,   lab:false, note:'Precio por bracket · va en renglón aparte del control' },
+    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado',     price:30000,   matCost:10000,  lab:false, note:'Precio por bracket · va en renglón aparte del control' },
+    { id:'ot16', docId:'nay', name:'Montaje inferior mini',                price:300000,  matCost:8000,   lab:false, note:'' },
+    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',           price:185000,  matCost:8000,   lab:false, note:'' },
     // ── CIRUGÍA MAXILOFACIAL (Rafael Díaz)
-    { id:'cj01', docId:'rafael', name:'Valoración cirugía',                price:50000,   lab:false, note:'' },
-    { id:'cj02', docId:'rafael', name:'Extracción cordal simple',          price:200000,  lab:false, note:'' },
-    { id:'cj03', docId:'rafael', name:'Extracción cordal complicada',      price:350000,  lab:false, note:'' },
-    { id:'cj04', docId:'rafael', name:'Extracción cordal impactada',       price:500000,  lab:false, note:'' },
-    { id:'cj05', docId:'rafael', name:'Frenillectomía',                    price:200000,  lab:false, note:'' },
-    { id:'cj06', docId:'rafael', name:'Implante dental',                   price:2500000, lab:true,  note:'Incluye laboratorio (implante + corona)' },
-    { id:'cj07', docId:'rafael', name:'Corona sobre implante',             price:1500000, lab:true,  note:'Incluye laboratorio' },
-    { id:'cj08', docId:'rafael', name:'Injerto óseo',                      price:1200000, lab:true,  note:'Incluye laboratorio' },
-    { id:'cj09', docId:'rafael', name:'Levantamiento de seno (sinus lift)',price:2000000, lab:true,  note:'Incluye laboratorio' },
-    { id:'cj10', docId:'rafael', name:'Biopsia',                           price:200000,  lab:false, note:'' },
-    { id:'cj11', docId:'rafael', name:'Cirugía periodontal',               price:400000,  lab:false, note:'' },
+    { id:'cj01', docId:'rafael', name:'Valoración cirugía',                price:50000,   matCost:6000,   lab:false, note:'' },
+    { id:'cj02', docId:'rafael', name:'Extracción cordal simple',          price:200000,  matCost:15000,  lab:false, note:'' },
+    { id:'cj03', docId:'rafael', name:'Extracción cordal complicada',      price:350000,  matCost:22000,  lab:false, note:'' },
+    { id:'cj04', docId:'rafael', name:'Extracción cordal impactada',       price:500000,  matCost:30000,  lab:false, note:'' },
+    { id:'cj05', docId:'rafael', name:'Frenillectomía',                    price:200000,  matCost:15000,  lab:false, note:'' },
+    { id:'cj06', docId:'rafael', name:'Implante dental',                   price:2500000, matCost:25000,  lab:true,  note:'Incluye laboratorio (implante + corona)' },
+    { id:'cj07', docId:'rafael', name:'Corona sobre implante',             price:1500000, matCost:15000,  lab:true,  note:'Incluye laboratorio' },
+    { id:'cj08', docId:'rafael', name:'Injerto óseo',                      price:1200000, matCost:35000,  lab:true,  note:'Incluye laboratorio' },
+    { id:'cj09', docId:'rafael', name:'Levantamiento de seno (sinus lift)',price:2000000, matCost:40000,  lab:true,  note:'Incluye laboratorio' },
+    { id:'cj10', docId:'rafael', name:'Biopsia',                           price:200000,  matCost:12000,  lab:false, note:'' },
+    { id:'cj11', docId:'rafael', name:'Cirugía periodontal',               price:400000,  matCost:20000,  lab:false, note:'' },
     // ── ENDODONCIA (Enrique Mendoza) — tarifas fijas
-    { id:'en01', docId:'mendoza', name:'Valoración endodoncia',            price:50000,   lab:false, note:'Pago fijo al especialista: $50.000' },
-    { id:'en02', docId:'mendoza', name:'Endodoncia unirradicular',         price:260000,  lab:false, note:'Pago fijo al especialista: $260.000' },
-    { id:'en03', docId:'mendoza', name:'Endodoncia birradicular',          price:330000,  lab:false, note:'Pago fijo al especialista: $330.000' },
-    { id:'en04', docId:'mendoza', name:'Endodoncia multirradicular',       price:360000,  lab:false, note:'Pago fijo al especialista: $360.000' },
-    { id:'en05', docId:'mendoza', name:'Retratamiento unirradicular',      price:330000,  lab:false, note:'Pago fijo al especialista: $330.000' },
-    { id:'en06', docId:'mendoza', name:'Retratamiento birradicular',       price:400000,  lab:false, note:'Pago fijo al especialista: $400.000' },
-    { id:'en07', docId:'mendoza', name:'Retratamiento multirradicular',    price:430000,  lab:false, note:'Pago fijo al especialista: $430.000' },
+    { id:'en01', docId:'mendoza', name:'Valoración endodoncia',            price:50000,   matCost:6000,   lab:false, note:'Pago fijo al especialista: $50.000' },
+    { id:'en02', docId:'mendoza', name:'Endodoncia unirradicular',         price:260000,  matCost:22000,  lab:false, note:'Pago fijo al especialista: $260.000' },
+    { id:'en03', docId:'mendoza', name:'Endodoncia birradicular',          price:330000,  matCost:28000,  lab:false, note:'Pago fijo al especialista: $330.000' },
+    { id:'en04', docId:'mendoza', name:'Endodoncia multirradicular',       price:360000,  matCost:35000,  lab:false, note:'Pago fijo al especialista: $360.000' },
+    { id:'en05', docId:'mendoza', name:'Retratamiento unirradicular',      price:330000,  matCost:25000,  lab:false, note:'Pago fijo al especialista: $330.000' },
+    { id:'en06', docId:'mendoza', name:'Retratamiento birradicular',       price:400000,  matCost:32000,  lab:false, note:'Pago fijo al especialista: $400.000' },
+    { id:'en07', docId:'mendoza', name:'Retratamiento multirradicular',    price:430000,  matCost:38000,  lab:false, note:'Pago fijo al especialista: $430.000' },
     // ── PERIODONCIA (Mayda Escandón)
-    { id:'pe01', docId:'mayda', name:'Valoración periodoncia',             price:50000,   lab:false, note:'Comisión a acordar' },
-    { id:'pe02', docId:'mayda', name:'Detartraje supragingival',           price:80000,   lab:false, note:'Comisión a acordar' },
-    { id:'pe03', docId:'mayda', name:'Curetaje periodontal (por cuadrante)',price:150000, lab:false, note:'Comisión a acordar' },
-    { id:'pe04', docId:'mayda', name:'Raspado y alisado radicular (cuadrante)',price:150000,lab:false,note:'Comisión a acordar' },
-    { id:'pe05', docId:'mayda', name:'Cirugía de colgajo',                 price:500000,  lab:false, note:'Comisión a acordar' },
-    { id:'pe06', docId:'mayda', name:'Alargamiento de corona clínica',     price:350000,  lab:false, note:'Comisión a acordar' },
-    { id:'pe07', docId:'mayda', name:'Cirugía regenerativa',               price:600000,  lab:true,  note:'Comisión a acordar (puede incluir membrana/injerto)' },
-    { id:'pe08', docId:'mayda', name:'Mantenimiento periodontal',          price:80000,   lab:false, note:'Comisión a acordar' },
+    { id:'pe01', docId:'mayda', name:'Valoración periodoncia',             price:50000,   matCost:6000,   lab:false, note:'Comisión a acordar' },
+    { id:'pe02', docId:'mayda', name:'Detartraje supragingival',           price:80000,   matCost:8000,   lab:false, note:'Comisión a acordar' },
+    { id:'pe03', docId:'mayda', name:'Curetaje periodontal (por cuadrante)',price:150000,  matCost:10000,  lab:false, note:'Comisión a acordar' },
+    { id:'pe04', docId:'mayda', name:'Raspado y alisado radicular (cuadrante)',price:150000,  matCost:12000,  lab:false,note:'Comisión a acordar' },
+    { id:'pe05', docId:'mayda', name:'Cirugía de colgajo',                 price:500000,  matCost:25000,  lab:false, note:'Comisión a acordar' },
+    { id:'pe06', docId:'mayda', name:'Alargamiento de corona clínica',     price:350000,  matCost:20000,  lab:false, note:'Comisión a acordar' },
+    { id:'pe07', docId:'mayda', name:'Cirugía regenerativa',               price:600000,  matCost:35000,  lab:true,  note:'Comisión a acordar (puede incluir membrana/injerto)' },
+    { id:'pe08', docId:'mayda', name:'Mantenimiento periodontal',          price:80000,   matCost:8000,   lab:false, note:'Comisión a acordar' },
     // ── REHABILITACIÓN ORAL (Diana Cabeza)
-    { id:'rh01', docId:'cabeza', name:'Valoración rehabilitación',         price:60000,   lab:false, note:'Comisión 50% del cobrado' },
-    { id:'rh02', docId:'cabeza', name:'Corona metal-porcelana',            price:850000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh03', docId:'cabeza', name:'Corona full porcelana / zirconio',  price:1200000, lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh04', docId:'cabeza', name:'Corona acrílica provisional',       price:150000,  lab:false, note:'' },
-    { id:'rh05', docId:'cabeza', name:'Carilla de porcelana',              price:1000000, lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh06', docId:'cabeza', name:'Carilla de resina directa',         price:400000,  lab:false, note:'' },
-    { id:'rh07', docId:'cabeza', name:'Puente fijo 3 unidades',            price:2500000, lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh08', docId:'cabeza', name:'Prótesis total removible',          price:1200000, lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh09', docId:'cabeza', name:'Prótesis parcial acrílica',         price:900000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh10', docId:'cabeza', name:'Prótesis parcial metálica',         price:1500000, lab:true,  note:'Pago al entregar · 50% post-lab' },
-    { id:'rh11', docId:'cabeza', name:'Poste de fibra de vidrio',          price:200000,  lab:false, note:'' },
-    { id:'rh12', docId:'cabeza', name:'Poste colado',                      price:400000,  lab:true,  note:'Incluye laboratorio' },
-    { id:'rh13', docId:'cabeza', name:'Placa de bruxismo',                 price:350000,  lab:true,  note:'Incluye laboratorio' },
-    { id:'rh14', docId:'cabeza', name:'Reparación de prótesis',            price:120000,  lab:false, note:'' },
+    { id:'rh01', docId:'cabeza', name:'Valoración rehabilitación',         price:60000,   matCost:6000,   lab:false, note:'Comisión 50% del cobrado' },
+    { id:'rh02', docId:'cabeza', name:'Corona metal-porcelana',            price:850000,  matCost:20000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh03', docId:'cabeza', name:'Corona full porcelana / zirconio',  price:1200000, matCost:20000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh04', docId:'cabeza', name:'Corona acrílica provisional',       price:150000,  matCost:15000,  lab:false, note:'' },
+    { id:'rh05', docId:'cabeza', name:'Carilla de porcelana',              price:1000000, matCost:18000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh06', docId:'cabeza', name:'Carilla de resina directa',         price:400000,  matCost:20000,  lab:false, note:'' },
+    { id:'rh07', docId:'cabeza', name:'Puente fijo 3 unidades',            price:2500000, matCost:30000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh08', docId:'cabeza', name:'Prótesis total removible',          price:1200000, matCost:15000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh09', docId:'cabeza', name:'Prótesis parcial acrílica',         price:900000,  matCost:12000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh10', docId:'cabeza', name:'Prótesis parcial metálica',         price:1500000, matCost:12000,  lab:true,  note:'Pago al entregar · 50% post-lab' },
+    { id:'rh11', docId:'cabeza', name:'Poste de fibra de vidrio',          price:200000,  matCost:18000,  lab:false, note:'' },
+    { id:'rh12', docId:'cabeza', name:'Poste colado',                      price:400000,  matCost:15000,  lab:true,  note:'Incluye laboratorio' },
+    { id:'rh13', docId:'cabeza', name:'Placa de bruxismo',                 price:350000,  matCost:12000,  lab:true,  note:'Incluye laboratorio' },
+    { id:'rh14', docId:'cabeza', name:'Reparación de prótesis',            price:120000,  matCost:8000,   lab:false, note:'' },
     // ── TITULAR (Dra. Silvia López)
-    { id:'sl01', docId:'silvia', name:'Valoración / Consulta',             price:30000,   lab:false, note:'' },
-    { id:'sl02', docId:'silvia', name:'Limpieza dental (profilaxis)',       price:60000,   lab:false, note:'' },
-    { id:'sl03', docId:'silvia', name:'Limpieza dental + flúor',           price:75000,   lab:false, note:'' },
-    { id:'sl04', docId:'silvia', name:'Obturación resina — 1 cara',        price:80000,   lab:false, note:'' },
-    { id:'sl05', docId:'silvia', name:'Obturación resina — 2 caras',       price:120000,  lab:false, note:'' },
-    { id:'sl06', docId:'silvia', name:'Obturación resina — 3 caras',       price:150000,  lab:false, note:'' },
-    { id:'sl07', docId:'silvia', name:'Sellante de fosas y fisuras',       price:30000,   lab:false, note:'Precio por diente' },
-    { id:'sl08', docId:'silvia', name:'Detartraje / curetaje',             price:80000,   lab:false, note:'' },
-    { id:'sl09', docId:'silvia', name:'Blanqueamiento en consultorio',     price:400000,  lab:false, note:'' },
-    { id:'sl10', docId:'silvia', name:'Extracción dental simple',          price:80000,   lab:false, note:'' },
+    { id:'sl01', docId:'silvia', name:'Valoración / Consulta',             price:30000,   matCost:6000,   lab:false, note:'' },
+    { id:'sl02', docId:'silvia', name:'Limpieza dental (profilaxis)',       price:60000,   matCost:10000,  lab:false, note:'' },
+    { id:'sl03', docId:'silvia', name:'Limpieza dental + flúor',           price:75000,   matCost:12000,  lab:false, note:'' },
+    { id:'sl04', docId:'silvia', name:'Obturación resina — 1 cara',        price:80000,   matCost:15000,  lab:false, note:'' },
+    { id:'sl05', docId:'silvia', name:'Obturación resina — 2 caras',       price:120000,  matCost:18000,  lab:false, note:'' },
+    { id:'sl06', docId:'silvia', name:'Obturación resina — 3 caras',       price:150000,  matCost:22000,  lab:false, note:'' },
+    { id:'sl07', docId:'silvia', name:'Sellante de fosas y fisuras',       price:30000,   matCost:6000,   lab:false, note:'Precio por diente' },
+    { id:'sl08', docId:'silvia', name:'Detartraje / curetaje',             price:80000,   matCost:8000,   lab:false, note:'' },
+    { id:'sl09', docId:'silvia', name:'Blanqueamiento en consultorio',     price:400000,  matCost:55000,  lab:false, note:'' },
+    { id:'sl10', docId:'silvia', name:'Extracción dental simple',          price:80000,   matCost:10000,  lab:false, note:'' },
     // ── AUXILIAR (Sandry Flórez — limpiezas)
-    { id:'sa01', docId:'sandry', name:'Profilaxis (limpieza dental)',       price:60000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
-    { id:'sa02', docId:'sandry', name:'Profilaxis + aplicación de flúor',  price:75000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
-    { id:'sa03', docId:'sandry', name:'Aplicación de flúor',               price:30000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
+    { id:'sa01', docId:'sandry', name:'Profilaxis (limpieza dental)',       price:60000,   matCost:10000,  lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
+    { id:'sa02', docId:'sandry', name:'Profilaxis + aplicación de flúor',  price:75000,   matCost:12000,  lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
+    { id:'sa03', docId:'sandry', name:'Aplicación de flúor',               price:30000,   matCost:6000,   lab:false, note:'Lo hace Sandry · sin comisión, va por nómina' },
 ];
 
 let catFilter = 'all';
@@ -4274,13 +4355,13 @@ const CATALOGO_QUE_FALTABA = [
       mismoQue:['Control mini','Control de ortodoncia mini','Control mensual mini'] },
     { id:'ot13', docId:'nay', name:'Control ortodoncia mixto',         price:100000, lab:false, note:'', matCost:10000,
       mismoQue:['Control mixto','Control de ortodoncia mixto','Control mensual mixto'] },
-    { id:'ot14', docId:'nay', name:'Reparación de bracket',            price:20000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:0,
+    { id:'ot14', docId:'nay', name:'Reparación de bracket',            price:20000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:5000,
       mismoQue:['Reparacion de Brackets Metalicos','Reparación de brackets metálicos','Reparacion de bracket','Reparación de brackets'] },
-    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado', price:30000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:0,
+    { id:'ot15', docId:'nay', name:'Reparación de bracket autoligado', price:30000,  lab:false, note:'Precio por bracket · va en renglón aparte del control', matCost:10000,
       mismoQue:['Reparacion de Autoligado','Reparación de autoligado','Reparacion de bracket autoligado'] },
-    { id:'ot16', docId:'nay', name:'Montaje inferior mini',            price:300000, lab:false, note:'', matCost:0,
+    { id:'ot16', docId:'nay', name:'Montaje inferior mini',            price:300000, lab:false, note:'', matCost:8000,
       mismoQue:['Montaje Inferior Mini','Montaje inferior'] },
-    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',       price:185000, lab:false, note:'', matCost:0,
+    { id:'ot17', docId:'nay', name:'Retiro de brackets y topes',       price:185000, lab:false, note:'', matCost:8000,
       mismoQue:['Retiro de Backets y topes','Retiro de brackets','Retiro de brackets y topes'] },
 
     /* Las seis exodoncias de agosto se escribieron a mano porque el catálogo
@@ -4288,7 +4369,7 @@ const CATALOGO_QUE_FALTABA = [
        además vale menos que la extracción simple de adulto ($80.000), así que
        va en su propio renglón. El precio es el de referencia: en el formulario
        se puede cambiar, o usar el botón 🏷️ Descuento. */
-    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',    price:70000,  lab:false, note:'Precio por diente · ajustable si hay descuento', matCost:0,
+    { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',    price:70000,  lab:false, note:'Precio por diente · ajustable si hay descuento', matCost:10000,
       mismoQue:['Exodoncia Diente Temporal','Exodoncia diente temporal','Exodoncia temporal',
                 'Exodoncia Dientes Temporal','Exodoncia dientes temporales','Exodoncia de diente temporal'] },
 ];
@@ -4353,7 +4434,29 @@ function ponerAlDiaElCatalogo() {
     // Los retirados salen igual que los repetidos, pero solo si nadie los cobró.
     const retirados = CATALOGO_RETIRADO.filter(id => codigos.has(id) && !usados.has(id));
 
-    if (!faltan.length && !notasCorregidas && !sobran.length && !retirados.length) return;
+    /* Reponer el costo del material.
+       Al reponer los datos de agosto el catálogo volvió al de fábrica y se
+       perdió lo que la Dra. había costeado trabajo por trabajo. Aquí se vuelve
+       a poner desde la lista de referencia.
+
+       Sólo se llenan los que están en cero o en blanco: un número escrito a
+       mano NUNCA se pisa, aunque sea distinto al de referencia. Si ella lo
+       cambió es porque el de referencia estaba mal, no al revés. */
+    const referencia = new Map();
+    [...CATALOG_DEFAULTS, ...CATALOGO_QUE_FALTABA].forEach(t => {
+        if (t.matCost) {
+            referencia.set(t.id, t.matCost);
+            if (!referencia.has('n:' + mismoNombre(t.name))) referencia.set('n:' + mismoNombre(t.name), t.matCost);
+        }
+    });
+    let costosRepuestos = 0;
+    cat.forEach(t => {
+        if (t.matCost) return;                       // ya tiene: no se toca
+        const v = referencia.get(t.id) || referencia.get('n:' + mismoNombre(t.name));
+        if (v) { t.matCost = v; costosRepuestos++; }
+    });
+
+    if (!faltan.length && !notasCorregidas && !sobran.length && !retirados.length && !costosRepuestos) return;
 
     const fuera = [...sobran, ...retirados];
     let lista = fuera.length ? cat.filter(t => !fuera.includes(t.id)) : cat;
@@ -4366,6 +4469,7 @@ function ponerAlDiaElCatalogo() {
     if (faltan.length) console.log('Catálogo: entraron ' + faltan.length + ' tratamientos que faltaban');
     if (sobran.length) console.log('Catálogo: se quitaron ' + sobran.length + ' repetidos sin usar (' + sobran.join(', ') + ')');
     if (retirados.length) console.log('Catálogo: se retiraron ' + retirados.length + ' tratamientos que ya no se hacen (' + retirados.join(', ') + ')');
+    if (costosRepuestos) console.log('Catálogo: se repuso el costo del material en ' + costosRepuestos + ' tratamientos');
 }
 
 function renderCatalogFilters() {
@@ -5144,9 +5248,12 @@ function saveRx() {
         newRecs.push({ ...base, id:'tx'+Date.now(), price:amt1, payMethod:rxCurrentPM,
             commission:comm?.amount||0, commLabel:comm?.label||'', commStatus:comm?.status||'pending',
             splitGroup:'sg'+Date.now(), createdAt:Date.now() });
-        // Tx2: monto secundario — sin comisión (ya está en tx1)
+        // Tx2: monto secundario — sin comisión, sin laboratorio y sin material:
+        // los tres van completos en tx1. Es un solo tratamiento pagado con dos
+        // métodos, no dos tratamientos, así que el costo no se gasta dos veces.
         newRecs.push({ ...base, id:'tx'+(Date.now()+1), price:splitAmt, payMethod:splitPm,
             commission:0, commLabel:'Pago mixto — comisión en registro principal', commStatus:'owner',
+            labCost:0, matCost:0,
             splitChild:true, createdAt:Date.now()+1 });
     } else {
         newRecs.push({ ...base, id:'tx'+Date.now(), price, payMethod:rxCurrentPM,
@@ -6424,6 +6531,14 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
     })).sort((a,b)=>b.avgMargenN-a.avgMargenN);
 
     const hasMat = allTx.some(t=>t.matCost>0);
+    /* Cobros de este período sin costo de material. Importa distinguir dos
+       casos, porque se arreglan distinto: los que sí tienen pareja en la lista
+       de precios (un botón y listo) y los que entraron con el nombre escrito a
+       mano y no pegan con nada (ésos hay que decirlos, no disimularlos). */
+    const faltantes  = typeof costosQueFaltan === 'function' ? costosQueFaltan(allTx) : {listos:[],sinPareja:[]};
+    const puedeLlenar= faltantes.listos.length;
+    const sinPareja  = faltantes.sinPareja.length;
+    const sinCosto   = puedeLlenar + sinPareja;
     const tratRows = treats.map(t=>{
         const mnCls = t.avgMargenN>=0?'color:var(--success)':'color:var(--danger)';
         const mbCls = t.margenPct>=60?'color:var(--success)':t.margenPct>=40?'color:var(--bronze)':'color:var(--danger)';
@@ -6496,6 +6611,24 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
             <h3>🦷 ¿Cuánto te deja cada tratamiento?</h3>
             <span style="font-size:11px;color:var(--muted)">Overhead por tto: ${fmt(overheadPorTrat)} · Margen neto = margen bruto − overhead</span>
         </div>
+        ${sinCosto ? `
+        <div style="margin:14px 18px 0;padding:12px 14px;background:rgba(191,155,92,.10);border:1px solid rgba(191,155,92,.35);border-radius:var(--radius-sm)">
+            <div style="font-size:12.5px;color:var(--dark);line-height:1.55">
+                🧴 <strong>${sinCosto} de ${nTrat} cobros de este período no traen el costo del material</strong>,
+                así que aquí aparecen como si el tratamiento no gastara nada y el margen le sale más alto de lo que en realidad es.
+            </div>
+            ${sinPareja ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55">
+                De ésos, <strong>${sinPareja}</strong> ${sinPareja===1?'entró':'entraron'} con el nombre escrito a mano
+                («Control de Ortodoncia Reparación 12-35») y no ${sinPareja===1?'coincide':'coinciden'} con ningún tratamiento de su lista de precios,
+                así que la app no sabe qué material gastaron y prefiere no inventarlo.
+                <strong>De aquí en adelante no vuelve a pasar:</strong> al registrar usted escoge el tratamiento de la lista y el costo se va pegado.
+            </div>` : ''}
+            ${puedeLlenar ? `
+            <button onclick="reponerCostosMateriales()" style="margin-top:10px;padding:8px 14px;border-radius:8px;border:1.5px solid var(--bronze);background:white;color:var(--bronze);cursor:pointer;font-size:12px;font-weight:700">🧴 Ponerle el costo a ${puedeLlenar} ${puedeLlenar===1?'cobro':'cobros'}</button>
+            <div style="font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5">
+                Toma el costo que hoy tiene cada tratamiento en <strong>Catálogo</strong>. No cambia precios ni comisiones, y no toca los cobros que ya tienen costo puesto.
+            </div>` : ''}
+        </div>` : ''}
         ${!treats.length ? '<div class="db-empty" style="padding:40px">Sin tratamientos este mes</div>' : `
         <div style="overflow-x:auto"><table class="db-compact-table">
             <thead><tr>
@@ -6512,7 +6645,7 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
         </table></div>
         <div style="padding:10px 18px;font-size:11px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border)">
             💡 <strong>Overhead</strong> = ${fmt(costosFijos)} costos fijos ÷ <strong>${denomTrat} tratamientos</strong> (${overheadSrc}) = <strong>${fmt(overheadPorTrat)} / tto</strong>.${avgTrats===0?' · <em>Ve a Configuración → "Promedio de tratamientos al mes" para un overhead más realista.</em>':''}
-            ${!hasMat?' · <em>Agrega costos de materiales al catálogo para un análisis más preciso.</em>':''}
+            ${(!hasMat && !sinCosto)?' · <em>Ponle a cada tratamiento su costo de material en Catálogo → ✎ Editar, y este cuadro te dice cuánto deja de verdad.</em>':''}
         </div>`}
     </div>
     <!-- Gráfica P&L -->

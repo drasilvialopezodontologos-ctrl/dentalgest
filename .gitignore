@@ -8,6 +8,9 @@ data_*.json
 # instalar como app. Cualquier OTRO .json sigue quedando fuera.
 !manifest.json
 
+# Copias de seguridad que se hacen antes de tocar el archivo grande
+index.html.backup-*
+
 # Claude session files
 .claude/
 

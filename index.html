@@ -594,6 +594,7 @@
         .alert { padding:12px 16px; border-radius:var(--radius-sm); font-size:13px; line-height:1.5; }
         .alert-info { background:rgba(153,119,113,.08); border-left:3px solid var(--bronze); color:var(--dark); }
         .alert-success { background:rgba(94,140,106,.08); border-left:3px solid var(--success); color:var(--dark); }
+        .alert-warn { background:rgba(160,57,62,.07); border-left:3px solid var(--danger); color:var(--dark); }
 
         /* ============================================================
            COMING SOON
@@ -1141,6 +1142,32 @@
             .eq-side { flex-direction:row; width:100%; }
         }
 
+        /* Proveedores: cada uno es una pastilla con su ✕. Se ven todos de un
+           vistazo y se quita el que sobra sin abrir nada.                  */
+        .prov-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+        .prov-chip  { display:inline-flex; align-items:center; gap:5px; background:var(--bg);
+                      border:1px solid var(--border); border-radius:999px; padding:4px 6px 4px 11px;
+                      font-size:12px; color:var(--dark); max-width:100%; }
+        .prov-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .prov-chip button { border:none; background:transparent; color:var(--muted); cursor:pointer;
+                      font-size:14px; line-height:1; padding:2px 4px; border-radius:50%; font-family:inherit; }
+        .prov-chip button:hover { color:var(--danger); background:rgba(160,57,62,.1); }
+        .prov-none  { font-size:11.5px; color:var(--muted); font-style:italic; margin-bottom:8px; }
+        .prov-add   { display:flex; gap:6px; }
+        .prov-add .fc { flex:1; min-width:0; }
+        .prov-add button { border:1.5px solid var(--border); background:var(--white); color:var(--muted);
+                      border-radius:var(--radius-sm); padding:6px 12px; font-size:12px; font-weight:700;
+                      cursor:pointer; font-family:inherit; white-space:nowrap; transition:var(--ease); }
+        .prov-add button:hover { border-color:var(--bronze); color:var(--bronze); }
+        /* La casilla que mueve el punto de equilibrio. Va con su explicación al
+           lado, no sola: «variable» no quiere decir nada si no se dice de qué. */
+        .cat-var    { grid-column:1 / -1; display:flex; gap:9px; align-items:flex-start;
+                      background:var(--bg); border-radius:var(--radius-sm); padding:9px 11px; }
+        .cat-var input { margin-top:2px; width:16px; height:16px; flex-shrink:0; accent-color:var(--bronze); cursor:pointer; }
+        .cat-var label { font-size:12px !important; text-transform:none !important; letter-spacing:0 !important;
+                      font-weight:600 !important; color:var(--dark) !important; margin:0 !important; cursor:pointer; }
+        .cat-var .hint { display:block; font-weight:400; color:var(--muted); font-size:11px; margin-top:2px; }
+
         /* ============================================================
            CAJA
         ============================================================ */
@@ -1376,6 +1403,9 @@
             <div class="nav-sec">Herramientas</div>
             <div class="nav-item" data-page="catalogo" onclick="navigate('catalogo')">
                 <span class="ni-icon">📑</span><span class="ni-lbl">Catálogo</span>
+            </div>
+            <div class="nav-item" data-page="cierremes" onclick="navigate('cierremes')">
+                <span class="ni-icon">📅</span><span class="ni-lbl">Cierre de mes</span>
             </div>
             <div class="nav-item" data-page="reportes" onclick="navigate('reportes')">
                 <span class="ni-icon">📊</span><span class="ni-lbl">Reportes</span>
@@ -2258,6 +2288,33 @@ Devolver no es gastar.</strong></div>
                     </div>
                 </div>
 
+                <!-- CATEGORÍAS DE GASTOS -->
+                <div class="form-section">
+                    <div class="fsh">
+                        <span class="fsh-icon">🏷️</span>
+                        <div><h3>Categorías de gastos y proveedores</h3><p>Las casillas que salen al anotar un gasto — y a quién le compra</p></div>
+                    </div>
+                    <div class="fsb">
+                        <div class="alert alert-info" style="margin-bottom:18px">
+                            💡 Aquí manda usted. Puede <strong>agregar</strong> una categoría nueva,
+                            <strong>cambiarle el nombre</strong>, meterle o quitarle <strong>proveedores</strong>,
+                            y <strong>retirar</strong> la que no use. Retirar no borra nada: los gastos ya
+                            anotados con esa categoría siguen igual, sólo deja de aparecer en la lista.
+                        </div>
+                        <div class="alert alert-warn" style="margin-bottom:18px">
+                            ⚠️ La casilla <strong>«sube y baja con los pacientes»</strong> decide qué es
+                            <strong>carga fija</strong> y qué no. Lo que queda <strong>sin</strong> marcar
+                            se reparte entre todos los tratamientos del mes en 📈 Rentabilidad —es lo que
+                            hace que un tratamiento salga en rojo—. Márquela sólo en lo que se gasta más
+                            cuando atiende más: laboratorio, insumos, pasajes del especialista. El arriendo
+                            y la luz se pagan igual haya o no pacientes, así que ésos van sin marcar.
+                        </div>
+                        <div id="cfg-cats"></div>
+                        <div id="cfg-cats-retiradas"></div>
+                        <button type="button" class="eq-add" onclick="abrirCategoriaNueva()">+ Agregar una categoría</button>
+                    </div>
+                </div>
+
                 <!-- SEGURIDAD -->
                 <div class="form-section">
                     <div class="fsh">
@@ -3035,6 +3092,152 @@ Devolver no es gastar.</strong></div>
                     </div>
                 </div>
 
+                <!-- 🔒 Cierre de caja (arqueo del efectivo).
+                     Sólo efectivo: es lo único que se cuenta con la mano. El banco
+                     y Bold no se cuentan, se cuadran contra el extracto, y eso es
+                     otro módulo. Un cierre diario del banco sólo produciría
+                     diferencias falsas —Bold entra días después, el 4×1000 lo
+                     descuentan sin avisar— y quien reporta dejaría de creerle.
+
+                     El día NO se bloquea: ella registra cosas días después y un
+                     bloqueo la dejaría atrapada. Se avisa y queda la constancia. -->
+                <div class="db-section" style="margin-bottom:20px">
+                    <div class="db-sec-hdr">
+                        <h3>🔒 Cierre de caja</h3>
+                        <div id="cc-estado" style="font-size:12px;font-weight:800;color:var(--muted)"></div>
+                    </div>
+                    <div style="padding:18px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">Día que se cierra</label>
+                                <input class="form-input" type="date" id="cc-fecha" onchange="renderCierre()">
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">¿Quién contó?</label>
+                                <select class="form-input" id="cc-quien"></select>
+                            </div>
+                        </div>
+
+                        <div style="background:var(--bg);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px">
+                                <span style="font-size:12.5px;font-weight:700">Lo que debería haber en el cajón</span>
+                                <span id="cc-esperado" style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums">$0</span>
+                            </div>
+                            <div id="cc-esperado-detalle" style="font-size:11px;line-height:1.6;color:var(--muted)"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Lo que hay de verdad — cuéntelo y tecléelo</label>
+                            <input class="form-input" type="number" id="cc-contado" placeholder="0" min="0" oninput="renderCierreDif()">
+                        </div>
+
+                        <div id="cc-dif-box" style="display:none;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+                                <span style="font-size:12.5px;font-weight:800" id="cc-dif-titulo"></span>
+                                <span id="cc-dif-monto" style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums"></span>
+                            </div>
+                            <p id="cc-dif-texto" style="margin:8px 0 0;font-size:11.5px;line-height:1.65"></p>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:16px">
+                            <label class="form-label">Observación <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+                            <input class="form-input" type="text" id="cc-nota" placeholder="Ej: se pagó un domicilio y no se anotó">
+                        </div>
+
+                        <button class="btn btn-primary" style="width:100%" onclick="guardarCierre()">🔒 Guardar el cierre</button>
+                        <div id="cc-lista" style="margin-top:18px"></div>
+                    </div>
+                </div>
+
+                <!-- 🏦 Conciliación con Bancolombia.
+                     El efectivo se cuenta con la mano; el banco no. Aquí se compara
+                     lo que dice la app contra el extracto, UNA VEZ AL MES —Bold
+                     consigna días después y el 4×1000 lo descuentan sin avisar, así
+                     que cuadrarlo a diario sólo daría diferencias falsas—.
+
+                     Lo que de verdad busca esta pantalla no es «cuadrar»: es
+                     encontrar la plata que el banco movió y la app nunca supo. Esos
+                     cobros son gastos reales que hoy no pesan en ningún mes. -->
+                <div class="db-section" style="margin-bottom:20px">
+                    <div class="db-sec-hdr">
+                        <h3>🏦 Conciliación con Bancolombia</h3>
+                        <div id="cb-estado" style="font-size:12px;font-weight:800;color:var(--muted)"></div>
+                    </div>
+                    <div style="padding:18px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">Mes del extracto</label>
+                                <select class="form-input" id="cb-mes" onchange="renderConcil()"></select>
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">¿Quién lo revisó?</label>
+                                <select class="form-input" id="cb-quien"></select>
+                            </div>
+                        </div>
+
+                        <div style="background:var(--bg);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px">
+                                <span style="font-size:12.5px;font-weight:700">Saldo según la app al cierre del mes</span>
+                                <span id="cb-saldo-app" style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums">$0</span>
+                            </div>
+                            <div id="cb-saldo-detalle" style="font-size:11px;line-height:1.6;color:var(--muted)"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Saldo final del extracto — cópielo del último renglón</label>
+                            <input class="form-input" type="number" id="cb-extracto" placeholder="0" oninput="renderConcilDif()">
+                        </div>
+
+                        <div id="cb-dif-box" style="display:none;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+                                <span style="font-size:12.5px;font-weight:800" id="cb-dif-titulo"></span>
+                                <span id="cb-dif-monto" style="font-size:17px;font-weight:800;font-variant-numeric:tabular-nums"></span>
+                            </div>
+                            <p id="cb-dif-texto" style="margin:8px 0 0;font-size:11.5px;line-height:1.65"></p>
+                            <button class="btn btn-sm" id="cb-btn-cobro" style="margin-top:10px;display:none" onclick="abrirCobroBanco()">➕ Anotar lo que el banco cobró</button>
+                        </div>
+
+                        <!-- El monto y la dirección vienen puestos desde la diferencia:
+                             ella confirma, no calcula. Si fueron varios cobros, corrige
+                             el monto y repite. -->
+                        <div id="cb-cobro-form" style="display:none;background:var(--bg);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                            <div id="cb-cobro-titulo" style="font-size:12.5px;font-weight:800;margin-bottom:12px"></div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+                                <div class="form-group" style="margin:0">
+                                    <label class="form-label">Fecha</label>
+                                    <input class="form-input" type="date" id="cb-cobro-fecha">
+                                </div>
+                                <div class="form-group" style="margin:0">
+                                    <label class="form-label">Monto</label>
+                                    <input class="form-input" type="number" id="cb-cobro-monto" placeholder="0" min="0">
+                                </div>
+                            </div>
+                            <div class="form-group" id="cb-cobro-cat-grp">
+                                <label class="form-label">¿Qué fue?</label>
+                                <select class="form-input" id="cb-cobro-cat"></select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:12px">
+                                <label class="form-label">Descripción</label>
+                                <input class="form-input" type="text" id="cb-cobro-desc" placeholder="Ej: cuota de manejo agosto">
+                            </div>
+                            <div style="display:flex;gap:10px">
+                                <button class="btn btn-primary" style="flex:1" onclick="guardarCobroBanco()">Anotarlo</button>
+                                <button class="btn" onclick="cerrarCobroBanco()">Cancelar</button>
+                            </div>
+                        </div>
+
+                        <div id="cb-lista" style="margin-bottom:14px"></div>
+
+                        <div class="form-group" style="margin-bottom:16px">
+                            <label class="form-label">Observación <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+                            <input class="form-input" type="text" id="cb-nota" placeholder="Ej: la consignación del 30 entró el 2 de septiembre">
+                        </div>
+
+                        <button class="btn btn-primary" style="width:100%" onclick="guardarConcil()">🏦 Guardar la conciliación</button>
+                        <div id="cb-hist" style="margin-top:18px"></div>
+                    </div>
+                </div>
+
                 <!-- 🤝 Lo que la clínica le debe a la dueña.
                      Nace del aire acondicionado: ella puso $1.800.000 de su bolsillo
                      y ese dinero no aparecía en ninguna parte de la app. No es
@@ -3450,6 +3653,67 @@ Devolver no es gastar.</strong></div>
             <div class="page-content">
                 <div class="cat-filter-bar" id="catFilterBar"></div>
                 <div id="catSections"></div>
+            </div>
+        </div>
+
+        <!-- ══ CIERRE DE MES ══
+             El resultado de un mes es un número vivo: la app lo recalcula cada
+             vez que abre. Si en noviembre alguien corrige un cobro de agosto,
+             agosto cambia — y el comparativo queda mintiendo, porque estaría
+             comparando contra un mes que ya no es el que se cerró.
+
+             Cerrar el mes le toma la foto. Esa foto es la que compara, y es la
+             que dice el acta que se firma. -->
+        <div id="page-cierremes" class="hidden">
+            <div class="page-header">
+                <div class="ph-left">
+                    <h1>📅 Cierre de mes</h1>
+                    <p>Congela los números del mes, imprime el acta y compara contra los meses anteriores</p>
+                </div>
+                <div class="ph-right">
+                    <select class="form-input" id="cm-mes" style="width:auto" onchange="renderCierreMes()"></select>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="db-section" style="margin-bottom:20px">
+                    <div class="db-sec-hdr">
+                        <h3>Los números del mes</h3>
+                        <div id="cm-estado" style="font-size:12px;font-weight:800;color:var(--muted)"></div>
+                    </div>
+                    <div style="padding:18px">
+                        <div id="cm-aviso" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:11.5px;line-height:1.65"></div>
+                        <div id="cm-tabla"></div>
+                        <div class="form-group" style="margin:16px 0 12px">
+                            <label class="form-label">Observación del mes <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional — queda escrita en el acta)</span></label>
+                            <input class="form-input" type="text" id="cm-nota" placeholder="Ej: mes con dos semanas de vacaciones de la doctora">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">Quién preparó los números</label>
+                                <select class="form-input" id="cm-preparo"></select>
+                            </div>
+                            <div class="form-group" style="margin:0">
+                                <label class="form-label">Quién los aprueba</label>
+                                <select class="form-input" id="cm-aprobo"></select>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button class="btn btn-primary" style="flex:1;min-width:180px" onclick="guardarCierreMes()">📅 Cerrar el mes</button>
+                            <button class="btn" id="cm-btn-acta" onclick="printActaMes()">🖨️ Imprimir el acta</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="db-section">
+                    <div class="db-sec-hdr"><h3>Comparativo mes a mes</h3></div>
+                    <div style="padding:18px">
+                        <p style="margin:0 0 14px;font-size:11.5px;line-height:1.65;color:var(--muted)">
+                            Los meses <strong>cerrados</strong> se comparan con la foto que se les tomó, así el pasado
+                            no se mueve. El mes en curso sale marcado como provisional porque todavía puede cambiar.
+                        </p>
+                        <div id="cm-comparativo"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -4047,6 +4311,7 @@ async function _dgArrancarConSesion() {
     ponerAlDiaElCatalogo();
     ponerAlDiaLasEmpleadas();
     ponerAlDiaLosHonorarios();
+    ponerAlDiaLosCortes();
     migrarSalidasDelAlquiler();
     if (caja) caja.style.opacity = '1';
     loadConfig();
@@ -4496,6 +4761,7 @@ async function navigate(page) {
     if(page==='alquiler')     initAlquiler();
     if(page==='nomina')       initNomina();
     if(page==='reportes')     initReportes();
+    if(page==='cierremes')    renderCierreMes();
     if(page==='anulaciones')    initAnulaciones();
     if(page==='controles')     initControles();
     if(page==='manual')        initManual();
@@ -4535,6 +4801,7 @@ function loadConfig(){
        original y no una casilla vacía. */
     renderEquipoCfg();
     renderEmpleadasCfg();
+    renderCategoriasCfg();
     renderAtajosCfg();
     montarAcordeonCfg();
 }
@@ -4706,10 +4973,12 @@ function initManual() {
                 <tr><th colspan="2">Sus cifras de ${nombreMes}</th></tr>
                 <tr><td><strong>Carga fija</strong><br>lo que se paga haya o no haya pacientes</td>
                     <td style="text-align:right;font-weight:800;white-space:nowrap">${fmt(R.cargaFijaTotal)}</td></tr>
-                ${R.gastosVariables > 0 ? `<tr><td>Lo que sube y baja con los pacientes<br>laboratorio, insumos, pasajes</td>
+                ${R.gastosVariables > 0 ? `<tr><td>Lo que sube y baja con los pacientes<br>${nombresCatsVariables()}</td>
                     <td style="text-align:right;white-space:nowrap">${fmt(R.gastosVariables)}</td></tr>` : ''}
-                <tr><td>Lo que costó el mes entero</td>
-                    <td style="text-align:right;white-space:nowrap">${fmt(R.totalFijos)}</td></tr>
+                ${R.honorarios > 0 ? `<tr><td>Honorarios de los especialistas<br>suben y bajan con cada tratamiento</td>
+                    <td style="text-align:right;white-space:nowrap">${fmt(R.honorarios)}</td></tr>` : ''}
+                <tr><td>Lo que costó el mes entero<br>carga fija + lo que sube y baja + honorarios${R.materiales > 0 ? ' + materiales' : ''}</td>
+                    <td style="text-align:right;white-space:nowrap">${fmt(R.totalFijos + R.honorarios + R.materiales)}</td></tr>
                 ${hayProd ? `
                 <tr><td><strong>Punto de equilibrio</strong><br>lo que hay que producir para no perder</td>
                     <td style="text-align:right;font-weight:800;white-space:nowrap">${fmt(R.equilibrio)}</td></tr>
@@ -4752,6 +5021,10 @@ function saveConfig(){
        estaba, que no es lo mismo que borrarlas. */
     const empleadas = leerEmpleadasDeLaPantalla();
     if (empleadas === null && document.querySelector('#page-config [data-emp-id]')) return;
+
+    /* Y lo mismo con las categorías de gastos. */
+    const categorias = leerCategoriasDeLaPantalla();
+    if (categorias === null && document.querySelector('#page-config [data-cat-id]')) return;
 
     const cfg={
         nombre: gv('cfg-nombre')||DEFAULTS.nombre,
@@ -4796,6 +5069,7 @@ function saveConfig(){
     DB.set('comisiones', comisiones);
     if (eq.equipo) DB.set('equipo', eq.equipo);
     if (empleadas) DB.set('empleadas', empleadas);
+    if (categorias) DB.set('gxcats', categorias);
     DB.set('initialized', true);
     g('sbClinic').textContent=cfg.nombre;
 
@@ -4805,6 +5079,8 @@ function saveConfig(){
 
     renderEquipoCfg();   // las tarjetas nuevas dejan de serlo
     renderEmpleadasCfg();
+    renderCategoriasCfg();
+    refrescarCatsEnGastos();
 
     /* Si tocó una comisión conviene repetirle qué alcanza y qué no, porque es
        justo la duda que da miedo: "¿esto me daña lo de agosto?". */
@@ -4826,7 +5102,7 @@ function saveConfig(){
 // ── Backup / Restauración ─────────────────────────────────────────────────────
 const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','equipo','empleadas','atajos','nomina','retiro',
                      'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual',
-                     'prestamos', 'initialized'];
+                     'prestamos', 'gxcats', 'cierres', 'concil', 'cierresMes', 'initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
 function limpiarDuplicadosTx() {
@@ -5029,7 +5305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
    `pctEsp` — así los retenedores de Nay van al 50% aunque lo suyo sea 55%,
    sin que eso esté escrito a mano dentro del programa. */
 const DOCTORES_BASE = {
-    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', tipo:'porcentaje', cuando:'ya',         corte:'Corte semanal' },
+    diana_v: { name:'Diana Valencia',    short:'Dra. Valencia',  spec:'Odontología General',  color:'#997771', tipo:'porcentaje', cuando:'ya',         corte:'semanal' },
     nay:     { name:'Nay Jiménez',       short:'Nay',            spec:'Ortodoncia',           color:'#9B6EA0', tipo:'porcentaje', cuando:'ya' },
     rafael:  { name:'Rafael Díaz',       short:'Dr. Díaz',       spec:'Cirugía Maxilofacial', color:'#A0393E', tipo:'porcentaje', cuando:'ya' },
     mendoza: { name:'Enrique Mendoza',   short:'Dr. Mendoza',    spec:'Endodoncia',           color:'#3A6EA0', tipo:'tarifa',     cuando:'ya' },
@@ -5140,9 +5416,20 @@ function reglaDe(treat, docId) {
 function textoComision(docId) {
     const d = getDoctores()[docId];
     if (!d) return '';
-    const cuando = d.corte ? ` · ${d.corte}`
-                 : d.cuando === 'alTerminar' ? ' · Al terminar el caso'
-                 : ' · De una vez';
+    /* Las dos cosas se dicen SIEMPRE y por separado. Antes se mostraba una o
+       la otra —si había corte, tapaba al cuándo—, y así no había manera de
+       ver de un vistazo que una cosa es a qué mes le pesa el gasto y la otra
+       es qué día sale la plata. */
+    const alTerminar = d.cuando === 'alTerminar';
+    const nace   = alTerminar ? 'nace al terminar el caso' : 'nace el día del trabajo';
+    /* «Nace al terminar el caso» y «se liquida el mismo día del trabajo» juntos
+       se contradicen: si el honorario todavía no existe, no hay qué pagar. En
+       ese par, «el mismo día» quiere decir el día en que nace. */
+    const corte  = d.corte || 'mismoDia';
+    const paga   = (alTerminar && corte === 'mismoDia')
+                 ? 'al cerrar el caso'
+                 : (EQ_CORTES[corte] || EQ_CORTES.mismoDia).toLowerCase();
+    const cuando = ` · ${nace} · se liquida ${paga}`;
     switch (d.tipo) {
         case 'porcentaje': return `${_pc(docId)}% después de descontar el laboratorio${cuando}`;
         case 'tarifa':     return `Tarifa fija por tratamiento, que se fija en el Catálogo${cuando}`;
@@ -5171,6 +5458,52 @@ const EQ_TIPOS = {
     manual:     'Se acuerda a mano en cada registro',
     ninguna:    'No lleva comisión',
 };
+
+/* Cada cuánto le ENTREGA la plata al especialista. Es una cosa distinta de
+   cuándo NACE el honorario, y por eso son dos campos y no uno solo.
+
+   Ella los pidió juntos —«el día del trabajo, semanal, quincenal, mensual o al
+   terminar el caso»— y juntos no pueden ir: «semanal» no es un momento en que
+   pase algo, es la fecha en que ella paga. Si «quincenal» moviera la fecha del
+   gasto, el trabajo del 28 de agosto se le iría a septiembre y agosto cerraría
+   con un honorario de menos. Eso es precisamente lo que ella no quiere que
+   pase. Así que el mes lo decide `cuando`, y `corte` decide cuándo paga. */
+const EQ_CORTES = {
+    mismoDia: 'El mismo día del trabajo',
+    semanal:  'Cada semana',
+    quincenal:'Cada quincena',
+    mensual:  'Una vez al mes',
+    alCerrar: 'Cuando se termina el caso',
+};
+
+/* Quién lleva honorario. Antes «cuándo se causa» sólo salía para los de
+   porcentaje, así que a Enrique Mendoza —endodoncia, tarifa fija— no había
+   forma de ponerle que se le causa al terminar. */
+const _eqLlevaComision = tipo => (tipo || 'porcentaje') !== 'ninguna';
+
+/* `corte` era texto suelto —a la Dra. Valencia le decía «Corte semanal»— y
+   ahora es una casilla con opciones. Sin esto, ese texto no calzaría con
+   ninguna opción, la lista se iría sola a «El mismo día» y le habríamos
+   cambiado el trato de la Dra. Valencia sin avisarle. Corre una vez. */
+function ponerAlDiaLosCortes() {
+    const guardado = DB.get('equipo');
+    const fuente   = (guardado && Object.keys(guardado).length) ? guardado : DOCTORES_BASE;
+    const viejo    = { 'corte semanal':'semanal', 'corte quincenal':'quincenal',
+                       'corte mensual':'mensual', 'corte diario':'mismoDia' };
+    let tocado = false;
+    const salida = {};
+    Object.entries(fuente).forEach(([id, d]) => {
+        const c = d.corte;
+        if (typeof c === 'string' && !EQ_CORTES[c]) {
+            const nuevo = viejo[_sinTildes(c)] || 'semanal';
+            salida[id] = { ...d, corte: nuevo };
+            tocado = true;
+        } else {
+            salida[id] = d;
+        }
+    });
+    if (tocado) DB.set('equipo', salida);
+}
 const EQ_EXPLICA = {
     porcentaje: 'El porcentaje se descuenta después del laboratorio.',
     tarifa:     'Lo que le cobra a usted por cada trabajo se escribe en <em>Catálogo → ✎ Editar</em>, porque cambia de un trabajo a otro.',
@@ -5226,12 +5559,21 @@ function _eqTarjeta(id, d, esNuevo) {
                 <div class="inp-suf"><span class="suf-lbl">%</span>
                     <input type="number" class="fc" id="eq-pct-${id}" min="0" max="100" step="0.5" value="${pct}"></div>
             </div>
-            <div class="fg" id="eq-cuando-grp-${id}" style="display:${(d.tipo || 'porcentaje') === 'porcentaje' ? 'block' : 'none'}">
-                <label>Cuándo se le causa</label>
+            <div class="fg" id="eq-cuando-grp-${id}" style="display:${_eqLlevaComision(d.tipo) ? 'block' : 'none'}">
+                <label>Cuándo NACE el honorario</label>
                 <select class="fc" id="eq-cuando-${id}">
-                    <option value="ya"${d.cuando !== 'alTerminar' ? ' selected' : ''}>De una vez, el día del trabajo</option>
-                    <option value="alTerminar"${d.cuando === 'alTerminar' ? ' selected' : ''}>Al terminar el caso (si lleva laboratorio)</option>
+                    <option value="ya"${d.cuando !== 'alTerminar' ? ' selected' : ''}>El día del trabajo</option>
+                    <option value="alTerminar"${d.cuando === 'alTerminar' ? ' selected' : ''}>Al terminar el caso (prótesis, y lo que lleve laboratorio)</option>
                 </select>
+                <span class="hint">Decide a qué mes le pesa el gasto. Nada más.</span>
+            </div>
+            <div class="fg" id="eq-corte-grp-${id}" style="display:${_eqLlevaComision(d.tipo) ? 'block' : 'none'}">
+                <label>Cada cuánto le liquida</label>
+                <select class="fc" id="eq-corte-${id}">
+                    ${Object.entries(EQ_CORTES).map(([k, txt]) =>
+                        `<option value="${k}"${(d.corte || 'mismoDia') === k ? ' selected' : ''}>${txt}</option>`).join('')}
+                </select>
+                <span class="hint">Decide cuándo le entrega la plata. No cambia de mes el gasto.</span>
             </div>
             <div class="fg eq-wide" id="eq-razon-grp-${id}" style="display:${(d.tipo || 'porcentaje') === 'ninguna' ? 'block' : 'none'}">
                 <label>Por qué no lleva comisión</label>
@@ -5260,7 +5602,8 @@ function eqTipoCambio(id) {
     const tipo = gv('eq-tipo-' + id) || 'porcentaje';
     const ver  = (elId, si) => { const e = g(elId); if (e) e.style.display = si ? 'block' : 'none'; };
     ver('eq-pct-grp-' + id,    tipo === 'porcentaje');
-    ver('eq-cuando-grp-' + id, tipo === 'porcentaje');
+    ver('eq-cuando-grp-' + id, _eqLlevaComision(tipo));
+    ver('eq-corte-grp-' + id,  _eqLlevaComision(tipo));
     ver('eq-razon-grp-' + id,  tipo === 'ninguna');
     const ex = g('eq-explica-' + id);
     if (ex) ex.innerHTML = EQ_EXPLICA[tipo] || '';
@@ -5330,10 +5673,20 @@ function leerEquipoDeLaPantalla() {
                 return null;
             }
             comisiones[id] = n / 100;
-            d.cuando = gv('eq-cuando-' + id) || 'ya';
             delete d.razon;
+        }
+
+        /* Cuándo nace y cada cuánto se liquida valen para todos los que llevan
+           honorario, no sólo los de porcentaje. */
+        if (_eqLlevaComision(tipo)) {
+            d.cuando = gv('eq-cuando-' + id) || 'ya';
+            d.corte  = gv('eq-corte-'  + id) || 'mismoDia';
         } else {
             delete d.cuando;
+            delete d.corte;
+        }
+
+        if (tipo !== 'porcentaje') {
             if (tipo === 'ninguna') d.razon = (gv('eq-razon-' + id) || '').trim();
             else delete d.razon;
         }
@@ -5685,6 +6038,19 @@ const CATALOG_DEFAULTS = [
     { id:'cj09', docId:'rafael', name:'Levantamiento de seno (sinus lift)',price:2000000, matCost:40000,  lab:true,  note:'Incluye laboratorio' },
     { id:'cj10', docId:'rafael', name:'Biopsia',                           price:200000,  matCost:12000,  lab:false, note:'' },
     { id:'cj11', docId:'rafael', name:'Cirugía periodontal',               price:400000,  matCost:20000,  lab:false, note:'' },
+    /* Dos cirugías de agosto que no tenían dónde ir. Los cordales sí estaban
+       (cj02·cj03·cj04), pero sacar quirúrgicamente un diente que NO es cordal
+       no, y la regularización tampoco.
+
+       La exodoncia quirúrgica va en CERO a propósito. Ella confirmó que los
+       $980.000 del 3 de agosto fueron el paquete por las ocho, no un precio
+       por diente, así que no existe un precio de lista que precargar: los
+       $122.500 eran un promedio mío. En cero, el formulario la obliga a
+       teclearlo —no deja guardar sin precio— y así nunca se cuela un número
+       que nadie cotizó. El material va en cero por lo mismo: gastar en ocho
+       dientes no es lo mismo que en uno. */
+    { id:'cj12', docId:'rafael', name:'Exodoncia quirúrgica (diente no cordal)', price:0, matCost:0, lab:false, note:'Se cotiza por caso según cuántos dientes · referencia: $980.000 por 8 dientes (agosto) · teclee precio y material del caso' },
+    { id:'cj13', docId:'rafael', name:'Regularización alveolar (por cuadrante)', price:300000, matCost:20000, lab:false, note:'Precio por cuadrante · referencia: cuadrante 1, 24 de agosto' },
     /* ── ENDODONCIA (Enrique Mendoza) — tarifa fija ─────────────────────────
        `price` es lo que paga la paciente. `feeEsp` es lo que el Dr. Mendoza le
        cobra a ella. Son dos números distintos y hasta hoy sólo había uno: la
@@ -5725,6 +6091,9 @@ const CATALOG_DEFAULTS = [
     { id:'rh12', docId:'cabeza', name:'Poste colado',                      price:400000,  matCost:15000,  lab:true,  note:'Incluye laboratorio' },
     { id:'rh13', docId:'cabeza', name:'Placa de bruxismo',                 price:350000,  matCost:12000,  lab:true,  note:'Incluye laboratorio' },
     { id:'rh14', docId:'cabeza', name:'Reparación de prótesis',            price:120000,  matCost:8000,   lab:false, note:'' },
+    /* La transitoria no es la parcial acrílica ni la corona provisional: es la
+       que se entrega el mismo día de las extracciones mientras cicatriza. */
+    { id:'rh15', docId:'cabeza', name:'Prótesis transitoria',              price:400000,  matCost:12000,  lab:true,  note:'Pago al entregar · 50% post-lab · referencia: transitoria inferior, 15 de agosto' },
     // ── TITULAR (Dra. Silvia López)
     { id:'sl01', docId:'silvia', name:'Valoración / Consulta',             price:30000,   matCost:6000,   lab:false, note:'' },
     { id:'sl02', docId:'silvia', name:'Limpieza dental (profilaxis)',       price:60000,   matCost:10000,  lab:false, note:'' },
@@ -5795,6 +6164,19 @@ const CATALOGO_QUE_FALTABA = [
     { id:'og20', docId:'diana_v', name:'Exodoncia diente temporal',    price:70000,  lab:false, note:'Precio por diente · ajustable si hay descuento', matCost:10000,
       mismoQue:['Exodoncia Diente Temporal','Exodoncia diente temporal','Exodoncia temporal',
                 'Exodoncia Dientes Temporal','Exodoncia dientes temporales','Exodoncia de diente temporal'] },
+
+    /* Las tres de agosto que no existían con ningún nombre. Se revisó renglón
+       por renglón antes de agregarlas: la valoración de rehabilitación ya era
+       rh01 y los cordales ya eran cj02·cj03·cj04, así que ésas NO se tocan. */
+    { id:'cj12', docId:'rafael', name:'Exodoncia quirúrgica (diente no cordal)', price:0, lab:false, matCost:0,
+      note:'Se cotiza por caso según cuántos dientes · referencia: $980.000 por 8 dientes (agosto) · teclee precio y material del caso',
+      mismoQue:['Exodoncia quirurgica','Exodoncia Quirúrgica','Exodoncia Quirurquica','Cirugía de exodoncia'] },
+    { id:'cj13', docId:'rafael', name:'Regularización alveolar (por cuadrante)', price:300000, lab:false, matCost:20000,
+      note:'Precio por cuadrante · referencia: cuadrante 1, 24 de agosto',
+      mismoQue:['Regularizacion alveolar','Regularización alveolar','Alveoloplastia','Regularizacion de reborde'] },
+    { id:'rh15', docId:'cabeza', name:'Prótesis transitoria',                    price:400000, lab:true,  matCost:12000,
+      note:'Pago al entregar · 50% post-lab · referencia: transitoria inferior, 15 de agosto',
+      mismoQue:['Protesis transitoria','Prótesis transitoria','Protesis Transitoria Inferior','Prótesis inmediata'] },
 ];
 
 // Dos nombres son el mismo tratamiento si, quitándoles tildes, mayúsculas
@@ -6885,6 +7267,11 @@ function saveRx() {
         if (splitPm === rxCurrentPM) { toast('Los dos métodos deben ser diferentes','error'); return; }
     }
 
+    // Sólo el efectivo descuadra un arqueo: lo del banco y Bold no se cuentan.
+    // El mes cerrado, en cambio, se mueve con cualquier cobro, pague como pague.
+    const tocaElCajon = rxCurrentPM === 'efectivo' || (splitPayActive && splitPm === 'efectivo');
+    if (!avisarSiElPeriodoEstaCerrado(gv('rx-date') || todayISO(), tocaElCajon)) return;
+
     const comm  = getRxCommission();
     const treat = getCatalog().find(t=>t.id===treatId);
     const descActive = g('rx-desc-row').style.display !== 'none';
@@ -7431,10 +7818,19 @@ const DIAG_LABELS = {
     otro:         'Otro (ver notas)',
 };
 
-const EXPENSE_CATS = {
+/* Las categorías de fábrica. Ya NO se leen directamente: son la semilla de
+   getCategorias(), que es la que manda. Todo esto —el nombre, los proveedores
+   y si el gasto sube y baja con los pacientes— se edita desde
+   Configuración → 🏷️ Categorías de gastos, sin tener que tocar el código.
+
+   «variable: true» quiere decir que ese gasto crece cuando hay más pacientes
+   y se encoge cuando hay menos. Los demás se pagan igual haya o no trabajo, y
+   ésos son los que forman la carga fija. La diferencia MUEVE el punto de
+   equilibrio, así que es una decisión de ella, no un dato escondido aquí. */
+const CATS_BASE = {
     // ── Costos directos al tratamiento ──────────────────────────
-    lab:          { label:'🧪 Laboratorio',               providers:['Duodent','Adental','Eduardo Uribe','Jairo Donado'] },
-    insumos:      { label:'🦷 Insumos odontológicos',     providers:['Costadent','Salud Dental','Ortodentales','Adental','Distriimplantes'] },
+    lab:          { label:'🧪 Laboratorio',               variable:true, providers:['Duodent','Adental','Eduardo Uribe','Jairo Donado'] },
+    insumos:      { label:'🦷 Insumos odontológicos',     variable:true, providers:['Costadent','Salud Dental','Ortodentales','Adental','Distriimplantes'] },
     envios:       { label:'📦 Envíos laboratorio',        providers:['Servientregas','Domicilio Santa Marta'] },
     // ── Personal ─────────────────────────────────────────────────
     nomina:       { label:'👥 Nómina empleadas',          providers:['Sandry Karina Flórez','Zury Saray Peinado','Ambas empleadas'] },
@@ -7444,7 +7840,7 @@ const EXPENSE_CATS = {
        por lo que hace. Meterlo en «Nómina» mezcla dos cosas que se declaran
        distinto y hace imposible saber cuánto cuesta cada una. */
     honorarios:   { label:'🩺 Honorarios especialistas',  providers:['Diana Valencia'] },
-    pasajes:      { label:'🚌 Pasajes especialistas',     providers:['Diana Valencia'] },
+    pasajes:      { label:'🚌 Pasajes especialistas',     variable:true, providers:['Diana Valencia'] },
     capacitacion: { label:'📚 Capacitación / Formación',  providers:[] },
     // ── Operativos ────────────────────────────────────────────────
     servicios:    { label:'⚡ Servicios públicos',        providers:['Air-e (electricidad)','Essmar (agua)','Movistar Internet','Movistar Móvil'] },
@@ -7459,9 +7855,255 @@ const EXPENSE_CATS = {
     // ── Financieros ───────────────────────────────────────────────
     tarjetas:     { label:'💳 Pago tarjetas de crédito', providers:['TC Falabella','TC Éxito','TC Bancoomeva Visa','TC Bancoomeva Mastercard','TC AV Villas'], tcSplit:true },
     impuesto:     { label:'🏛️ 4×1000 bancario',          providers:['Bancolombia'] },
+    /* Lo que el banco cobra por existir: cuota de manejo, chequera, retiros en
+       cajero, comisión de Bold. Aparece sola en la conciliación —el banco lo
+       descuenta sin avisar— y hasta hoy no tenía dónde ir sin volverse «Varios».
+       Es carga fija: se paga haya o no haya pacientes. */
+    cobrosbanco:  { label:'🏦 Cuota de manejo y cobros del banco', providers:['Bancolombia','Bold'] },
+    /* Lo que falta al contar el cajón. Es una pérdida de verdad, así que tiene
+       que pesar en el resultado del mes: si sólo moviera el saldo, el efectivo
+       cuadraría y el mes mentiría. No lleva `variable` porque un faltante no
+       sube ni baja con los pacientes — no es un costo de atender, es un hueco. */
+    faltante:     { label:'🔎 Faltante de caja',          providers:[] },
     // ── Varios ────────────────────────────────────────────────────
     varios:       { label:'📋 Varios / Otros',           providers:[] },
 };
+
+/* Las categorías de verdad: lo guardado encima de lo de fábrica. Se lee de la
+   base —no del equipo— para que los dos computadores vean la misma lista.
+
+   Devuelve TODAS, incluida la que ella retiró, porque los gastos de agosto
+   tienen que poder seguir diciendo «🧪 Laboratorio» y no un código suelto.
+   Para las listas donde se escoge está getCategoriasActivas().             */
+function getCategorias() {
+    const guardado = DB.get('gxcats');
+    if (!guardado || typeof guardado !== 'object' || !Object.keys(guardado).length) return CATS_BASE;
+    const salida = {};
+    Object.keys({ ...CATS_BASE, ...guardado }).forEach(id => {
+        salida[id] = { ...(CATS_BASE[id] || {}), ...(guardado[id] || {}) };
+    });
+    return salida;
+}
+
+/* Sólo las que sigue usando. Es la lista de la casilla «categoría» en Gastos:
+   si nunca alquila laboratorio, no tiene por qué seguir estorbando ahí.
+   Retirarla no la borra — los gastos ya anotados con ella siguen intactos. */
+function getCategoriasActivas() {
+    const activas = {};
+    Object.entries(getCategorias()).forEach(([id, c]) => { if (c.activo !== false) activas[id] = c; });
+    return activas;
+}
+
+/* Las que suben y bajan con la cantidad de pacientes. Sale de la lista viva,
+   no de un renglón escrito aquí: lo que ella marque en Configuración es lo
+   que cuenta. No sirven para repartir «carga fija» entre tratamientos,
+   porque no son carga fija. */
+function catsVariables() {
+    return Object.entries(getCategorias()).filter(([, c]) => c.variable).map(([id]) => id);
+}
+
+/* Los nombres, para escribirlos en los textos que le explican las cifras. Salen
+   de lo que ella marcó, no de una lista escrita aquí: si mañana marca otra
+   categoría, el texto la nombra solo. */
+function nombresCatsVariables() {
+    const cats = getCategorias();
+    const nn = catsVariables()
+        .map(id => (cats[id]?.label || '').replace(/[^\p{L}\p{N} \/]/gu, '').trim().toLowerCase())
+        .filter(Boolean);
+    if (!nn.length) return '';
+    return nn.length === 1 ? nn[0] : nn.slice(0, -1).join(', ') + ' y ' + nn[nn.length - 1];
+}
+
+/* ══ Categorías de gastos, editables desde Configuración ═══════════════════
+   Antes las 19 categorías, sus ~30 proveedores y sus 5 tarjetas vivían
+   escritos dentro del programa: para agregar una había que pedírmelo. Ahora
+   se dibujan solas desde la lista, igual que el equipo y las empleadas.
+
+   Los proveedores viajan en un data- de la tarjeta mientras ella edita, y se
+   leen al guardar. Así «↺ Descartar» de verdad descarta: si se guardaran al
+   picar el ✕ no habría manera de arrepentirse.                            */
+const _catEsc  = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const _catProvs = id => {
+    const t = document.querySelector(`[data-cat-id="${id}"]`);
+    try { return JSON.parse(t?.dataset.catProvs || '[]'); } catch (e) { return []; }
+};
+
+function _catTarjeta(id, c, esNueva) {
+    const off   = c.activo === false;
+    const provs = Array.isArray(c.providers) ? c.providers : [];
+    /* Las explicaciones sólo van en la categoría que está estrenando. Repetirlas
+       en las 19 que ya conoce convertía la sección en 12 pantallas de teléfono
+       de puro texto igual, y la que necesitaba leer se perdía entre las otras. */
+    const ayuda = t => esNueva ? `<span class="hint">${t}</span>` : '';
+    return `
+    <div class="eq-card${off ? ' eq-off' : ''}" data-cat-id="${id}"${esNueva ? ' data-cat-nueva="1"' : ''}
+         data-cat-provs="${_catEsc(JSON.stringify(provs))}">
+        <div class="eq-body">
+            <div class="fg eq-wide">
+                <label>Nombre de la categoría</label>
+                <input type="text" class="fc" id="cat-label-${id}" value="${_catEsc(c.label)}"
+                       placeholder="Ej: 🦷 Insumos odontológicos">
+                ${ayuda('Puede ponerle un dibujito al principio — se copia y se pega, o se escoge del teclado del teléfono.')}
+            </div>
+            <div class="cat-var">
+                <input type="checkbox" id="cat-var-${id}"${c.variable ? ' checked' : ''}>
+                <label for="cat-var-${id}">Sube y baja con la cantidad de pacientes
+                    ${ayuda('Márquelo si gasta más en esto cuando atiende más. Sin marcar = se paga igual todos los meses y entra a la carga fija.')}
+                </label>
+            </div>
+            <div class="fg eq-wide">
+                <label>Proveedores — a quién le compra</label>
+                <div class="prov-chips" id="cat-chips-${id}">${_catChips(id, provs)}</div>
+                <div class="prov-add">
+                    <input type="text" class="fc" id="cat-prov-${id}" placeholder="Nombre del proveedor"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();agregarProveedor('${id}')}">
+                    <button type="button" onclick="agregarProveedor('${id}')">+ Agregar</button>
+                </div>
+                ${ayuda('Salen como sugerencia al anotar un gasto de esta categoría. Puede dejarla sin ninguno.')}
+            </div>
+        </div>
+        <div class="eq-side">
+            ${off
+                ? `<button type="button" class="eq-btn eq-back" onclick="reactivarCategoria('${id}')">La vuelvo a usar</button>`
+                : `<button type="button" class="eq-btn" onclick="retirarCategoria('${id}')">No la uso</button>`}
+        </div>
+    </div>`;
+}
+
+function _catChips(id, provs) {
+    if (!provs.length) return `<div class="prov-none">Todavía no le ha puesto proveedores a esta categoría.</div>`;
+    return provs.map((p, i) =>
+        `<span class="prov-chip"><span>${_catEsc(p)}</span>` +
+        `<button type="button" title="Quitar" onclick="quitarProveedor('${id}',${i})">✕</button></span>`).join('');
+}
+
+function _catPintarChips(id, provs) {
+    const tarjeta = document.querySelector(`[data-cat-id="${id}"]`);
+    if (tarjeta) tarjeta.dataset.catProvs = JSON.stringify(provs);
+    const caja = g('cat-chips-' + id);
+    if (caja) caja.innerHTML = _catChips(id, provs);
+}
+
+function agregarProveedor(id) {
+    const casilla = g('cat-prov-' + id);
+    const nombre  = (casilla?.value || '').trim();
+    if (!nombre) { toast('Escriba el nombre del proveedor', 'error'); return; }
+    const provs = _catProvs(id);
+    if (provs.some(p => p.toLowerCase() === nombre.toLowerCase())) {
+        toast(`«${nombre}» ya está en esta categoría`, 'error'); return;
+    }
+    _catPintarChips(id, [...provs, nombre]);
+    casilla.value = '';
+    casilla.focus();
+}
+
+function quitarProveedor(id, i) {
+    const provs = _catProvs(id);
+    if (i < 0 || i >= provs.length) return;
+    _catPintarChips(id, provs.filter((_, j) => j !== i));
+}
+
+function renderCategoriasCfg() {
+    const caja = g('cfg-cats');
+    if (!caja) return;
+    const act = [], off = [];
+    Object.entries(getCategorias()).forEach(([id, c]) => (c.activo === false ? off : act).push([id, c]));
+    caja.innerHTML = act.map(([id, c]) => _catTarjeta(id, c, false)).join('')
+        || `<p class="hint" style="margin-bottom:10px">No le queda ninguna categoría en uso.</p>`;
+    g('cfg-cats-retiradas').innerHTML = !off.length ? '' :
+        `<div class="eq-hdr-off">Ya no las usa (${off.length}) — los gastos anotados con ellas siguen intactos</div>` +
+        off.map(([id, c]) => _catTarjeta(id, c, false)).join('');
+}
+
+function abrirCategoriaNueva() {
+    const id = 'cat' + Date.now().toString(36);
+    g('cfg-cats').insertAdjacentHTML('beforeend', _catTarjeta(id, { label:'', providers:[] }, true));
+    const casilla = g('cat-label-' + id);
+    if (casilla) { casilla.scrollIntoView({ behavior:'smooth', block:'center' }); casilla.focus(); }
+}
+
+/* Igual que el equipo y las empleadas: si algo está mal devuelve null y NO se
+   guarda NADA, para no dejar la lista a medias. */
+function leerCategoriasDeLaPantalla() {
+    const base = getCategorias();
+    const tarjetas = [...document.querySelectorAll('#page-config [data-cat-id]')];
+    if (!tarjetas.length) return null;
+
+    const salida = {}, vistos = new Set();
+    for (const t of tarjetas) {
+        const id     = t.dataset.catId;
+        const nueva  = t.dataset.catNueva === '1';
+        const label  = (gv('cat-label-' + id) || '').trim();
+        if (!label) {
+            abrirSeccionDe(g('cat-label-' + id));
+            toast(nueva ? 'A la categoría nueva le falta el nombre.'
+                        : 'Ninguna categoría se puede quedar sin nombre.', 'error', 5000);
+            return null;
+        }
+        const clave = _sinTildes(label);
+        if (vistos.has(clave)) {
+            abrirSeccionDe(g('cat-label-' + id));
+            toast(`Hay dos categorías llamadas «${label}». Póngales nombres distintos.`, 'error', 6000);
+            return null;
+        }
+        vistos.add(clave);
+        salida[id] = { ...(base[id] || {}), label,
+                       variable:  !!g('cat-var-' + id)?.checked,
+                       providers: _catProvs(id) };
+        if (nueva) salida[id].activo = true;
+    }
+    return salida;
+}
+
+function retirarCategoria(id) {
+    const c = getCategorias()[id];
+    if (!c) return;
+    const usados = (DB.get('gx') || []).filter(x => x && x.cat === id).length;
+    if (!confirm(
+        `«${c.label}» deja de salir en la lista al anotar un gasto.\n\n` +
+        `NO se borra nada: ${usados ? `los ${usados} gastos ya anotados con ella siguen` : 'todo lo anotado sigue'}\n` +
+        `exactamente igual, y los informes de los meses pasados la siguen\n` +
+        `nombrando. Si la vuelve a necesitar, se reactiva con un botón.\n\n` +
+        `¿Retirar «${c.label}»?`
+    )) return;
+    _guardarCategorias({ [id]: { activo:false } }, `«${c.label}» ya no sale en la lista. Nada de lo anotado cambió.`);
+}
+
+function reactivarCategoria(id) {
+    const c = getCategorias()[id];
+    if (!c) return;
+    _guardarCategorias({ [id]: { activo:true } }, `«${c.label}» vuelve a salir en la lista.`);
+}
+
+/* Guarda lo que hay en pantalla más un retoque puntual (retirar/reactivar) en
+   una sola pasada, para que un cambio a medio escribir no se pierda. */
+function _guardarCategorias(retoque, mensaje) {
+    const leido = leerCategoriasDeLaPantalla();
+    if (!leido) return;
+    Object.entries(retoque || {}).forEach(([id, campos]) => {
+        leido[id] = { ...(getCategorias()[id] || {}), ...(leido[id] || {}), ...campos };
+    });
+    DB.set('gxcats', leido);
+    renderCategoriasCfg();
+    refrescarCatsEnGastos();
+    if (mensaje) toast('✅ ' + mensaje, 'success', 7000);
+}
+
+/* Repinta SÓLO la casilla de categorías de Gastos, no el formulario entero:
+   initGastos() también le pone la fecha de hoy y vuelve la forma de pago a
+   efectivo, y eso le borraría un gasto a medio escribir. */
+function refrescarCatsEnGastos() {
+    ['gx-cat', 'ext-cat'].forEach(sel => {
+        const casilla = g(sel);
+        if (!casilla) return;
+        const escogido = casilla.value;
+        casilla.innerHTML = '<option value="">— Selecciona —</option>' +
+            Object.entries(getCategoriasActivas()).map(([id, c]) =>
+                `<option value="${id}">${c.label}</option>`).join('');
+        if (escogido && getCategoriasActivas()[escogido]) casilla.value = escogido;
+    });
+}
 
 const GX_PM_LBL = { efectivo:'Efectivo', banco:'Bancolombia', transferencia:'Transferencia', mixto:'Mixto',
                     tc_fala:'TC Falabella', tc_bcom:'TC Bancoomeva', avvillas:'TC AV Villas', otro:'Otro',
@@ -7476,7 +8118,7 @@ let gxCurrentPM = 'efectivo';
 function initGastos() {
     const sel = g('gx-cat');
     sel.innerHTML = '<option value="">— Selecciona —</option>' +
-        Object.entries(EXPENSE_CATS).map(([id,c]) =>
+        Object.entries(getCategoriasActivas()).map(([id,c]) =>
             `<option value="${id}">${c.label}</option>`
         ).join('');
     sv('gx-date', todayISO());
@@ -7496,7 +8138,7 @@ function initGastos() {
 
 function onGxCatChange() {
     const catId = gv('gx-cat');
-    const cat   = EXPENSE_CATS[catId];
+    const cat   = getCategorias()[catId];
     const ps    = cat?.providers || [];
     g('gx-prov').innerHTML = '<option value="">— Selecciona —</option>' +
         ps.map(p=>`<option value="${p}">${p}</option>`).join('') +
@@ -7587,7 +8229,10 @@ function saveGx() {
     if (!amount) { toast('Ingresa el monto del gasto','error'); return; }
     const gxDate = gv('gx-date') || todayISO();
     if (gxDate !== todayISO() && !gv('gx-notes').trim()) { toast('Escribe el motivo del registro tardío','error'); g('gx-notes')?.focus(); return; }
-    const cat  = EXPENSE_CATS[catId];
+    // Sólo el efectivo descuadra un arqueo: lo del banco no se cuenta con la mano.
+    // El mes cerrado sí se mueve con cualquier gasto, se pague como se pague.
+    if (!avisarSiElPeriodoEstaCerrado(gxDate, gxCurrentPM === 'efectivo' || gxCurrentPM === 'mixto')) return;
+    const cat  = getCategorias()[catId];
     const prov = provRaw==='otro' ? gv('gx-prov-otro').trim() : provRaw;
     const notes = gv('gx-notes').trim();
     // TC split (personal vs clínica)
@@ -8606,8 +9251,8 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
             💡 <strong>Carga fija</strong>: el arriendo, los sueldos y los servicios se pagan haya o no pacientes,
             así que cada tratamiento del mes carga con su pedacito. ${fmt(R.cargaFijaTotal)} de carga fija
             ÷ <strong>${denomTrat} tratamientos</strong> (${overheadSrc}) = <strong>${fmt(overheadPorTrat)} cada uno</strong>.
-            ${R.gastosVariables>0?`El laboratorio, los insumos y los pasajes del especialista no entran aquí
-            (${fmt(R.gastosVariables)}): esos suben y bajan con cada tratamiento, no son carga fija.`:''}
+            ${R.gastosVariables>0?`Lo que usted marcó como que sube y baja —${nombresCatsVariables()}— no entra aquí
+            (${fmt(R.gastosVariables)}): eso se mueve con cada tratamiento, no es carga fija.`:''}
             El <strong>margen neto</strong> es lo que queda después de restarla: si sale en rojo,
             ese tratamiento no alcanza a pagar lo que le toca.${avgTrats===0?' · <em>En Configuración → «Promedio de tratamientos al mes» puede poner su número real y la cuenta queda más fiel.</em>':''}
             ${(!hasMat && !sinCosto)?' · <em>Ponle a cada tratamiento su costo de material en Catálogo → ✎ Editar, y este cuadro te dice cuánto deja de verdad.</em>':''}
@@ -8951,11 +9596,11 @@ function ponerAlDiaLosHonorarios() {
         const pasaje = (x.amount || 0) - honor;
         x.amount   = honor;
         x.cat      = 'honorarios';
-        x.catLabel = EXPENSE_CATS.honorarios.label;
+        x.catLabel = getCategorias().honorarios.label;
         x.desc     = `Honorarios ${docs[docId].name} — semana ${sem[1]} al ${sem[2]}`;
         if (pasaje > 0) {
             nuevos.push({ ...x, id: 'gx' + Date.now() + '_' + (separados++),
-                amount: pasaje, cat: 'pasajes', catLabel: EXPENSE_CATS.pasajes.label,
+                amount: pasaje, cat: 'pasajes', catLabel: getCategorias().pasajes.label,
                 desc: `Pasajes ${docs[docId].name} — semana ${sem[1]} al ${sem[2]}` });
         }
     });
@@ -8973,7 +9618,7 @@ function ponerAlDiaLosHonorarios() {
         if (emps.some(n => n && t.includes(n.split(' ')[0]))) return;   // es de una empleada
         const doc = Object.values(docs).find(dc => dc.name && t.includes(dc.name.toLowerCase()));
         if (!doc) return;
-        x.cat = 'pasajes'; x.catLabel = EXPENSE_CATS.pasajes.label;
+        x.cat = 'pasajes'; x.catLabel = getCategorias().pasajes.label;
         sueltos++;
     });
 
@@ -12513,6 +13158,7 @@ function saveAjuste() {
     const amount = parseFloat(g('cj-amount').value) || 0;
     const desc   = g('cj-desc').value.trim();
     if (!amount) { toast('Ingresa el monto','error'); return; }
+    if (!avisarSiElPeriodoEstaCerrado(todayISO(), cajaBucketSel === 'efectivo')) return;
     const aj = { id:'aj'+Date.now(), date:todayISO(), bucket:cajaBucketSel, type:cajaTipoSel, amount, desc, createdAt:new Date().toISOString() };
     const list = DB.get('aj') || [];
     list.push(aj);
@@ -12766,9 +13412,10 @@ function renderCaja() {
     const allAj = DB.get('aj') || [];
     const today = todayISO();
 
-    const inEf   = allTx.filter(t=>t.payMethod==='efectivo').reduce((s,t)=>s+t.price,0);
-    const outEf  = allGx.filter(gx=>gx.paySource==='efectivo').reduce((s,gx)=>s+gx.amount,0);
-    const ajEf   = allAj.filter(aj=>aj.bucket==='efectivo').reduce((s,aj)=>s+(aj.type==='in'?aj.amount:-aj.amount),0);
+    /* El efectivo sale de efectivoHasta() y no de una cuenta propia: el arqueo
+       está en esta misma pantalla y dos cuentas separadas se contradicen solas. */
+    const ef     = efectivoHasta(null);
+    const inEf   = ef.entro, outEf = ef.salio, ajEf = ef.ajustes;
 
     const inBan  = allTx.filter(t=>t.payMethod==='banco').reduce((s,t)=>s+t.price,0);
     const outBan = allGx.filter(gx=>gx.paySource==='banco').reduce((s,gx)=>s+gx.amount,0);
@@ -12805,7 +13452,641 @@ function renderCaja() {
         : 'Cesantías · Prima · Vacaciones';
 
     // Movimientos: delegar a función separada
+    renderCierre();
+    renderConcil();
     renderCajaMovs();
+}
+
+/* ══ CIERRE DE CAJA — el arqueo del efectivo ══════════════════════════════
+   Sandry cuenta el cajón al terminar el día y teclea lo que hay. La app
+   compara contra lo que debería haber, y la diferencia NO se esconde:
+
+     · Si FALTA, se anota como gasto en efectivo en «Faltante de caja». Así
+       el cajón baja y el resultado del mes se entera. Un faltante es una
+       pérdida de verdad; dejarlo como simple ajuste cuadraría el efectivo
+       y le mentiría al mes —los ajustes no pasan por calcResultadoMes—.
+     · Si SOBRA, casi siempre es un cobro que nadie registró. Se avisa y se
+       pide confirmación, para que lo busquen antes de aceptar plata caída
+       del cielo. Si aun así se acepta, va como ajuste: no es un ingreso de
+       la clínica mientras no aparezca el cobro que lo explica.
+
+   Sólo efectivo. El banco y Bold no se cuentan con la mano, se cuadran
+   contra el extracto —Bold entra días después, el 4×1000 lo descuentan sin
+   avisar—; un arqueo diario del banco sólo daría diferencias falsas.     */
+
+function getCierres() { return DB.get('cierres') || []; }
+function cierreDe(fecha) { return getCierres().find(c => c.fecha === fecha) || null; }
+function diaEstaCerrado(fecha) { return !!cierreDe(fecha); }
+
+/* Una sola cuenta del efectivo para toda la app: la tarjeta de arriba y el
+   arqueo salen de aquí. Vivían como dos cuentas separadas y bastaba que una
+   cambiara para que la misma pantalla se contradijera sola.
+   `hasta` corta en una fecha; sin ella da el saldo de hoy.
+   Los cobros marcados «pago recibido en período anterior» no entran: esa
+   plata ya estaba, y es justo lo que el formulario le promete a la Dra.
+
+   `sinCierreDe` saca los apuntes que nacieron al cerrar ESE mismo día. Es para
+   recontar: si Sandry cierra el 5, la app anota el faltante de $10.000 con
+   fecha 5; al volver a contar el mismo día, ese apunte ya estaría restando y
+   la app esperaría $10.000 menos, así que un faltante de $5.000 salía como
+   sobrante de $5.000 — el letrero decía lo contrario de la verdad. Los cierres
+   de días anteriores SÍ se dejan: esa plata se perdió de verdad y ya no está
+   en el cajón. */
+function efectivoHasta(hasta, sinCierreDe) {
+    const cfg   = DB.get('config') || DEFAULTS;
+    const cabe  = r => (!hasta || (r.date || '') <= hasta)
+                    && (!sinCierreDe || r.cierreFecha !== sinCierreDe);
+    const inicial = parseFloat(cfg.ef) || 0;
+    const entro = (DB.get('tx') || [])
+        .filter(t => t.payMethod === 'efectivo' && !t.pagoPrevio && cabe(t))
+        .reduce((s, t) => s + (t.price || 0), 0);
+    const salio = (DB.get('gx') || [])
+        .filter(x => x.paySource === 'efectivo' && cabe(x))
+        .reduce((s, x) => s + (x.amount || 0), 0);
+    const ajustes = (DB.get('aj') || [])
+        .filter(a => a.bucket === 'efectivo' && cabe(a))
+        .reduce((s, a) => s + (a.type === 'in' ? a.amount : -a.amount), 0);
+    return { inicial, entro, salio, ajustes, saldo: inicial + entro - salio + ajustes };
+}
+
+function efectivoDelDia(fecha, sinCierreDe) {
+    const esDia = r => (r.date || '') === fecha
+                    && (!sinCierreDe || r.cierreFecha !== sinCierreDe);
+    const entro = (DB.get('tx') || [])
+        .filter(t => t.payMethod === 'efectivo' && !t.pagoPrevio && esDia(t))
+        .reduce((s, t) => s + (t.price || 0), 0);
+    const salio = (DB.get('gx') || [])
+        .filter(x => x.paySource === 'efectivo' && esDia(x))
+        .reduce((s, x) => s + (x.amount || 0), 0);
+    const ajustes = (DB.get('aj') || [])
+        .filter(a => a.bucket === 'efectivo' && esDia(a))
+        .reduce((s, a) => s + (a.type === 'in' ? a.amount : -a.amount), 0);
+    return { entro, salio, ajustes };
+}
+
+/* Quién puede cerrar: las empleadas activas y la casa. «La casa» son los que
+   no cobran comisión —la titular—, y sale de Configuración, no escrito aquí:
+   si mañana entra otra empleada, aparece sola en la lista. */
+function quienesCierran() {
+    const lista = Object.values(DB.get('empleadas') || {})
+        .filter(e => e.activo !== false)
+        .map(e => ({ id: e.id, name: e.shortName || e.name }));
+    Object.entries(getDoctores()).forEach(([id, d]) => {
+        if (d.activo === false || (d.tipo || 'porcentaje') !== 'ninguna') return;
+        if (!lista.some(x => x.id === id)) lista.push({ id, name: d.name });
+    });
+    return lista;
+}
+
+function renderCierre() {
+    if (!g('cc-fecha')) return;
+    if (!g('cc-fecha').value) g('cc-fecha').value = colISO();
+    const fecha = g('cc-fecha').value;
+
+    // La lista de quién contó se rearma sólo si cambió, para no borrar lo escogido
+    const sel   = g('cc-quien');
+    const gente = quienesCierran();
+    const firma = gente.map(p => p.id).join('|');
+    if (sel.dataset.firma !== firma) {
+        const antes = sel.value;
+        sel.innerHTML = gente.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        sel.dataset.firma = firma;
+        if (antes && gente.some(p => p.id === antes)) sel.value = antes;
+    }
+
+    const acum = efectivoHasta(fecha, fecha);
+    const dia  = efectivoDelDia(fecha, fecha);
+    const ayer = acum.saldo - (dia.entro - dia.salio + dia.ajustes);
+    g('cc-esperado').textContent = fmt(acum.saldo);
+    g('cc-esperado').style.color = acum.saldo < 0 ? 'var(--danger)' : '';
+
+    /* Un cajón no puede deber plata. Si sale en negativo no es que falte: es
+       que hay salidas anotadas antes de la entrada que las pagó —el traslado
+       del banco al cajón está puesto en otra fecha—. Arquear así daría un
+       «sobrante» enorme y falso, así que se dice en la cara en vez de dejarla
+       pelear con un número imposible. */
+    g('cc-esperado-detalle').textContent =
+        acum.saldo < 0
+        ? 'El cajón no puede tener menos de $0. Falta registrar de dónde salió esa plata '
+        + '(casi siempre un retiro del banco anotado en otra fecha). Cuadre ese día antes de arquear.'
+        : `Venía ${fmt(ayer)} · entró ${fmt(dia.entro)} · salió −${fmt(dia.salio)}`
+          + (dia.ajustes ? ` · ajustes ${dia.ajustes < 0 ? '−' : '+'}${fmt(Math.abs(dia.ajustes))}` : '');
+    g('cc-esperado-detalle').style.color = acum.saldo < 0 ? 'var(--danger)' : '';
+
+    const ya  = cierreDe(fecha);
+    const est = g('cc-estado');
+    if (ya) {
+        const q = ya.dif === 0 ? 'cuadró' : (ya.dif < 0 ? 'faltaron ' : 'sobraron ') + fmt(Math.abs(ya.dif));
+        est.textContent = `Cerrado por ${ya.quienNombre} · ${q}`;
+        est.style.color = ya.dif === 0 ? 'var(--success)' : 'var(--danger)';
+    } else {
+        est.textContent = 'Sin cerrar';
+        est.style.color = 'var(--muted)';
+    }
+
+    renderCierreDif();
+    renderCierresLista();
+}
+
+function renderCierreDif() {
+    const caja = g('cc-dif-box');
+    if (!caja) return;
+    const txt = (g('cc-contado').value || '').trim();
+    if (txt === '') { caja.style.display = 'none'; return; }
+
+    const contado  = parseFloat(txt) || 0;
+    const fechaDif = g('cc-fecha').value;
+    const esperado = efectivoHasta(fechaDif, fechaDif).saldo;
+    const dif      = contado - esperado;
+    caja.style.display = 'block';
+
+    if (dif === 0) {
+        caja.style.background = 'rgba(94,140,106,.10)';
+        caja.style.borderLeft = '4px solid var(--success)';
+        g('cc-dif-titulo').textContent  = '✅ Cuadró exacto';
+        g('cc-dif-monto').textContent   = '$0';
+        g('cc-dif-monto').style.color   = 'var(--success)';
+        g('cc-dif-texto').textContent   = 'El cajón tiene justo lo que la app dice. Se guarda el cierre y ya.';
+    } else if (dif < 0) {
+        caja.style.background = 'rgba(160,57,62,.09)';
+        caja.style.borderLeft = '4px solid var(--danger)';
+        g('cc-dif-titulo').textContent  = '⚠️ Falta plata';
+        g('cc-dif-monto').textContent   = '−' + fmt(Math.abs(dif));
+        g('cc-dif-monto').style.color   = 'var(--danger)';
+        g('cc-dif-texto').innerHTML     =
+            `Se va a anotar como <strong>gasto en efectivo</strong> en «🔎 Faltante de caja». `
+          + `El cajón baja y <strong>el resultado del mes se entera</strong>, porque un faltante es una pérdida de verdad.`;
+    } else {
+        caja.style.background = 'rgba(184,134,11,.10)';
+        caja.style.borderLeft = '4px solid var(--warning)';
+        g('cc-dif-titulo').textContent  = '⚠️ Sobra plata';
+        g('cc-dif-monto').textContent   = '+' + fmt(dif);
+        g('cc-dif-monto').style.color   = 'var(--warning)';
+        g('cc-dif-texto').innerHTML     =
+            `Casi siempre es <strong>un cobro que no se registró</strong>. Búsquelo antes de guardar: `
+          + `si lo anota, el sobrante desaparece solo y la producción del mes queda completa.`;
+    }
+}
+
+function guardarCierre() {
+    const fecha = g('cc-fecha').value;
+    if (!fecha) { toast('Escoge el día que se cierra', 'error'); return; }
+
+    const txt = (g('cc-contado').value || '').trim();
+    if (txt === '') { toast('Cuenta el cajón y teclea lo que hay', 'error'); return; }
+    const contado = parseFloat(txt);
+    if (!Number.isFinite(contado) || contado < 0) { toast('Lo contado no puede ser negativo', 'error'); return; }
+
+    const quien = g('cc-quien').value;
+    if (!quien) { toast('Falta quién contó', 'error'); return; }
+    const quienNombre = g('cc-quien').selectedOptions[0].text;
+
+    const esperado = efectivoHasta(fecha, fecha).saldo;
+    const dif      = contado - esperado;
+
+    /* Aquí sí se frena. Guardar contra un esperado negativo inventaría un
+       «sobrante» del tamaño del error y lo metería al cajón como plata que
+       entró: quedaría peor que antes y sin rastro de por qué. */
+    if (esperado < 0) {
+        const dia = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+        alert(`No se puede arquear el ${dia}.\n\n`
+            + `La app dice que el cajón tenía ${fmt(esperado)}, y un cajón no puede deber plata.\n\n`
+            + `Falta anotar de dónde salió ese efectivo —casi siempre un retiro del banco puesto en otra fecha—. `
+            + `Cuadre ese día primero y vuelva.`);
+        return;
+    }
+
+    if (cierreDe(fecha) &&
+        !confirm(`Ese día ya se cerró.\n\n¿Reemplazar el cierre anterior?`)) return;
+
+    if (dif > 0 &&
+        !confirm(`Sobran ${fmt(dif)}.\n\nCasi siempre es un cobro sin registrar. `
+               + `Si lo anota, el sobrante desaparece solo.\n\n¿Guardar el sobrante de todos modos?`)) return;
+
+    /* Un cierre reemplazado se lleva sus propios apuntes. Si no, corregir un
+       conteo mal tecleado dejaría el faltante viejo sumando para siempre. */
+    borrarApuntesDelCierre(fecha);
+
+    const nota = (g('cc-nota').value || '').trim();
+    const sello = Date.now();
+    let gxId = null, ajId = null;
+
+    if (dif < 0) {
+        const cats = getCategorias();
+        gxId = 'gx' + sello;
+        DB.set('gx', [...(DB.get('gx') || []), {
+            id: gxId, date: fecha, cat: 'faltante',
+            catLabel: cats.faltante?.label || '🔎 Faltante de caja',
+            provider: '', desc: `Faltante en el cierre de caja — contó ${quienNombre}` + (nota ? ` · ${nota}` : ''),
+            amount: Math.abs(dif), paySource: 'efectivo', fixed: false,
+            cierreFecha: fecha, createdAt: sello,
+        }]);
+    } else if (dif > 0) {
+        ajId = 'cjmov' + sello;
+        DB.set('aj', [...(DB.get('aj') || []), {
+            id: ajId, date: fecha, bucket: 'efectivo', type: 'in', amount: dif,
+            desc: `Sobrante en el cierre de caja — contó ${quienNombre}` + (nota ? ` · ${nota}` : ''),
+            cierreFecha: fecha, createdAt: new Date().toISOString(),
+        }]);
+    }
+
+    DB.set('cierres', [...getCierres().filter(c => c.fecha !== fecha), {
+        fecha, esperado, contado, dif, quien, quienNombre, nota,
+        gxId, ajId, createdAt: new Date().toISOString(),
+    }]);
+
+    g('cc-contado').value = '';
+    g('cc-nota').value    = '';
+    toast(dif === 0 ? 'Caja cerrada — cuadró exacto'
+                    : `Caja cerrada — ${dif < 0 ? 'faltaron' : 'sobraron'} ${fmt(Math.abs(dif))}`,
+          dif === 0 ? 'success' : 'error');
+    renderCaja();
+}
+
+/* Se borra por el apunte que el cierre creó, guardado en el propio cierre.
+   Buscarlo por fecha y categoría borraría un faltante que ella hubiera
+   anotado a mano el mismo día, y la regla 7 dice que no se borran datos. */
+function borrarApuntesDelCierre(fecha) {
+    const viejo = cierreDe(fecha);
+    if (!viejo) return;
+    if (viejo.gxId) DB.set('gx', (DB.get('gx') || []).filter(x => x.id !== viejo.gxId));
+    if (viejo.ajId) DB.set('aj', (DB.get('aj') || []).filter(a => a.id !== viejo.ajId));
+}
+
+function renderCierresLista() {
+    const cont = g('cc-lista');
+    if (!cont) return;
+    const lista = getCierres().slice().sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 10);
+    if (!lista.length) {
+        cont.innerHTML = `<p style="margin:0;font-size:11.5px;color:var(--muted);text-align:center">Todavía no se ha cerrado ningún día.</p>`;
+        return;
+    }
+    cont.innerHTML =
+        `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:8px">Últimos cierres</div>`
+      + lista.map(c => {
+            const dia = new Date(c.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+            const col = c.dif === 0 ? 'var(--success)' : c.dif < 0 ? 'var(--danger)' : 'var(--warning)';
+            const val = c.dif === 0 ? 'cuadró' : (c.dif < 0 ? '−' : '+') + fmt(Math.abs(c.dif));
+            return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:12px"><strong>${dia}</strong> · contó ${c.quienNombre}${c.nota ? ` · <span style="color:var(--muted)">${c.nota}</span>` : ''}</span>
+                <span style="font-size:12.5px;font-weight:800;color:${col};white-space:nowrap;font-variant-numeric:tabular-nums">${val}</span>
+            </div>`;
+        }).join('');
+}
+
+/* El día cerrado no se bloquea —ella registra cosas días después y un bloqueo
+   la dejaría atrapada—: se avisa, y queda la constancia de que se reabrió. */
+function avisarSiElDiaEstaCerrado(fecha) {
+    const c = cierreDe(fecha);
+    if (!c) return true;
+    const dia = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+    return confirm(`El ${dia} ya tiene la caja cerrada (contó ${c.quienNombre}).\n\n`
+                 + `Si anota esto, el cierre de ese día deja de cuadrar y toca volverlo a hacer.\n\n`
+                 + `¿Anotarlo de todos modos?`);
+}
+
+/* ══ CONCILIACIÓN BANCARIA ════════════════════════════════════════════════
+   El efectivo se cuenta con la mano; el banco no. Aquí se compara lo que dice
+   la app contra el extracto de Bancolombia, una vez al mes.
+
+   Por qué mensual y no diario: Bold consigna días después y el 4×1000 lo
+   descuentan sin avisar. Cuadrar el banco a diario daría diferencias falsas
+   todos los días, y en dos semanas nadie le creería al reporte.
+
+   Tres cosas explican una diferencia, y sólo la tercera es plata nueva:
+     1. EN TRÁNSITO — la app ya lo anotó, el banco todavía no lo refleja.
+        Se destilda y deja de contar; el mes siguiente aparecerá solo.
+     2. Lo que el banco cobró y la app nunca supo (cuota de manejo, 4×1000).
+        Eso es un GASTO de verdad y por eso se anota como gx: si sólo moviera
+        el saldo, el banco cuadraría y el resultado del mes mentiría —igual
+        que con el faltante de caja—.
+     3. Lo que el banco abonó y la app no sabía. Va como ajuste, no como
+        producción: nadie atendió un paciente para ganárselo.                */
+
+function getConcils() { return DB.get('concil') || []; }
+function concilDe(mes) { return getConcils().find(c => c.mes === mes) || null; }
+
+/* Gemela de efectivoHasta(), para que la tarjeta del banco y la conciliación
+   no puedan contradecirse. `hasta` corta en una fecha. */
+function bancoHasta(hasta) {
+    const cfg  = DB.get('config') || DEFAULTS;
+    const cabe = r => !hasta || (r.date || '') <= hasta;
+    const inicial = parseFloat(cfg.banco) || 0;
+    const entro = (DB.get('tx') || [])
+        .filter(t => t.payMethod === 'banco' && !t.pagoPrevio && cabe(t))
+        .reduce((s, t) => s + (t.price || 0), 0);
+    const salio = (DB.get('gx') || [])
+        .filter(x => x.paySource === 'banco' && cabe(x))
+        .reduce((s, x) => s + (x.amount || 0), 0);
+    const ajustes = (DB.get('aj') || [])
+        .filter(a => a.bucket === 'banco' && cabe(a))
+        .reduce((s, a) => s + (a.type === 'in' ? a.amount : -a.amount), 0);
+    return { inicial, entro, salio, ajustes, saldo: inicial + entro - salio + ajustes };
+}
+
+function ultimoDiaDelMes(mes) {
+    const [a, m] = mes.split('-').map(Number);
+    return `${mes}-${String(new Date(a, m, 0).getDate()).padStart(2, '0')}`;
+}
+
+function nombreDelMes(mes) {
+    return new Date(mes + '-15T12:00:00')
+        .toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+}
+
+/* Sólo la primera letra. El CSS `capitalize` escribe «Agosto De 2026». */
+function conMayuscula(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+
+/* Los meses que existen en los datos, del más nuevo al más viejo. Sale de lo
+   registrado y no de una lista escrita aquí: en septiembre aparece solo. */
+function mesesConDatos() {
+    const set = new Set();
+    ['tx', 'gx', 'aj'].forEach(k => (DB.get(k) || []).forEach(r => {
+        if (r.date && r.date.length >= 7) set.add(r.date.slice(0, 7));
+    }));
+    if (!set.size) set.add(todayISO().slice(0, 7));
+    return [...set].sort().reverse();
+}
+
+/* Los movimientos de banco del mes, en una sola lista para tildar contra el
+   extracto. Los cobros marcados «pago recibido en período anterior» quedan
+   fuera por la misma razón que en el efectivo: esa plata ya estaba. */
+function movsBancoDelMes(mes) {
+    const esDelMes = r => (r.date || '').slice(0, 7) === mes;
+    const lista = [];
+    (DB.get('tx') || []).filter(t => t.payMethod === 'banco' && !t.pagoPrevio && esDelMes(t))
+        .forEach(t => lista.push({ id: t.id, date: t.date, dir: 'in', amt: t.price || 0,
+            desc: t.treatName || 'Cobro', sub: t.patient || t.docName || '' }));
+    (DB.get('gx') || []).filter(x => x.paySource === 'banco' && esDelMes(x))
+        .forEach(x => lista.push({ id: x.id, date: x.date, dir: 'out', amt: x.amount || 0,
+            desc: x.catLabel || 'Gasto', sub: x.provider || x.desc || '' }));
+    (DB.get('aj') || []).filter(a => a.bucket === 'banco' && esDelMes(a))
+        .forEach(a => lista.push({ id: a.id, date: a.date, dir: a.type === 'in' ? 'in' : 'out',
+            amt: a.amount || 0, desc: a.desc || 'Movimiento', sub: 'Ajuste' }));
+    return lista.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+}
+
+/* Lo destildado: la app lo tiene y el extracto todavía no. Para comparar con
+   el extracto hay que deshacerlo — quitar lo que entró, devolver lo que salió. */
+function _transitoNeto(mes) {
+    const pend = new Set(_concilTransito[mes] || []);
+    return movsBancoDelMes(mes)
+        .filter(m => pend.has(m.id))
+        .reduce((s, m) => s + (m.dir === 'in' ? -m.amt : m.amt), 0);
+}
+
+/* Lo que ella va destildando vive en memoria hasta que guarda. Si recarga sin
+   guardar se pierde, y está bien: no es un dato del negocio, es un borrador. */
+let _concilTransito = {};
+
+function renderConcil() {
+    if (!g('cb-mes')) return;
+
+    const meses = mesesConDatos();
+    const sel   = g('cb-mes');
+    const firma = meses.join('|');
+    if (sel.dataset.firma !== firma) {
+        const antes = sel.value;
+        sel.innerHTML = meses.map(m => `<option value="${m}">${conMayuscula(nombreDelMes(m))}</option>`).join('');
+        sel.dataset.firma = firma;
+        sel.value = (antes && meses.includes(antes)) ? antes : meses[0];
+    }
+    const mes   = sel.value;
+    const corte = ultimoDiaDelMes(mes);
+
+    // Quién revisó: la misma gente que puede cerrar la caja, de Configuración
+    const selQ  = g('cb-quien');
+    const gente = quienesCierran();
+    const fQ    = gente.map(p => p.id).join('|');
+    if (selQ.dataset.firma !== fQ) {
+        const antes = selQ.value;
+        selQ.innerHTML = gente.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        selQ.dataset.firma = fQ;
+        if (antes && gente.some(p => p.id === antes)) selQ.value = antes;
+    }
+
+    const ya = concilDe(mes);
+    if (_concilTransito[mes] === undefined) _concilTransito[mes] = ya ? (ya.enTransito || []).slice() : [];
+    if (ya && g('cb-extracto').value === '') g('cb-extracto').value = ya.saldoExtracto;
+
+    const ban = bancoHasta(corte);
+    const delMes = movsBancoDelMes(mes);
+    const entroMes = delMes.filter(m => m.dir === 'in').reduce((s, m) => s + m.amt, 0);
+    const salioMes = delMes.filter(m => m.dir === 'out').reduce((s, m) => s + m.amt, 0);
+    g('cb-saldo-app').textContent = fmt(ban.saldo);
+    g('cb-saldo-detalle').textContent =
+        `Al ${new Date(corte + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}`
+      + ` · en el mes entró ${fmt(entroMes)} y salió −${fmt(salioMes)}`;
+
+    const est = g('cb-estado');
+    if (ya) {
+        est.textContent = ya.difFinal === 0
+            ? `Conciliado por ${ya.quienNombre} · cuadró`
+            : `Conciliado por ${ya.quienNombre} · quedaron ${fmt(Math.abs(ya.difFinal))} sin explicar`;
+        est.style.color = ya.difFinal === 0 ? 'var(--success)' : 'var(--danger)';
+    } else {
+        est.textContent = 'Sin conciliar';
+        est.style.color = 'var(--muted)';
+    }
+
+    renderConcilLista(mes);
+    renderConcilDif();
+    renderConcilHist();
+}
+
+function renderConcilLista(mes) {
+    const cont = g('cb-lista');
+    if (!cont) return;
+    const movs = movsBancoDelMes(mes);
+    if (!movs.length) {
+        cont.innerHTML = `<p style="margin:0;font-size:11.5px;color:var(--muted);text-align:center;padding:10px 0">Este mes no tiene movimientos de banco.</p>`;
+        return;
+    }
+    const pend = new Set(_concilTransito[mes] || []);
+    cont.innerHTML =
+        `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:4px">Movimientos del mes</div>`
+      + `<p style="margin:0 0 10px;font-size:11px;line-height:1.6;color:var(--muted)">Destilde lo que <strong>todavía no aparece</strong> en el extracto. Lo destildado deja de contar aquí y le saldrá el mes que viene.</p>`
+      + movs.map(m => {
+            const dia = new Date(m.date + 'T12:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+            const col = m.dir === 'in' ? 'var(--success)' : 'var(--danger)';
+            const enTransito = pend.has(m.id);
+            return `<label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;opacity:${enTransito ? '.45' : '1'}">
+                <input type="checkbox" ${enTransito ? '' : 'checked'} onchange="toggleTransito('${mes}','${m.id}')" style="width:17px;height:17px;flex:none">
+                <span style="flex:none;font-size:11px;color:var(--muted);width:52px">${dia}</span>
+                <span style="flex:1;min-width:0;font-size:12px"><span style="font-weight:600">${m.desc}</span>${m.sub ? `<span style="color:var(--muted)"> · ${m.sub}</span>` : ''}</span>
+                <span style="flex:none;font-size:12.5px;font-weight:700;color:${col};font-variant-numeric:tabular-nums">${m.dir === 'in' ? '+' : '−'}${fmt(m.amt)}</span>
+            </label>`;
+        }).join('');
+}
+
+function toggleTransito(mes, id) {
+    const lista = _concilTransito[mes] || (_concilTransito[mes] = []);
+    const i = lista.indexOf(id);
+    if (i >= 0) lista.splice(i, 1); else lista.push(id);
+    renderConcilLista(mes);
+    renderConcilDif();
+}
+
+function renderConcilDif() {
+    const caja = g('cb-dif-box');
+    if (!caja) return;
+    const mes = g('cb-mes').value;
+    const txt = (g('cb-extracto').value || '').trim();
+    g('cb-btn-cobro').style.display = 'none';
+    if (txt === '') { caja.style.display = 'none'; return; }
+
+    const extracto = parseFloat(txt) || 0;
+    const saldoApp = bancoHasta(ultimoDiaDelMes(mes)).saldo;
+    const transito = _transitoNeto(mes);
+    const ajustado = saldoApp + transito;   // la app, puesta en los términos del extracto
+    const dif      = extracto - ajustado;
+    caja.style.display = 'block';
+
+    const detTransito = transito
+        ? ` (después de descontar ${fmt(Math.abs(transito))} que todavía no le aparece al banco)`
+        : '';
+
+    if (dif === 0) {
+        caja.style.background = 'rgba(94,140,106,.10)';
+        caja.style.borderLeft = '4px solid var(--success)';
+        g('cb-dif-titulo').textContent = '✅ Cuadró';
+        g('cb-dif-monto').textContent  = '$0';
+        g('cb-dif-monto').style.color  = 'var(--success)';
+        g('cb-dif-texto').innerHTML    = `La app y Bancolombia dicen lo mismo${detTransito}. Guarde la conciliación y el mes queda respaldado.`;
+    } else {
+        const leQuitaron = dif < 0;
+        caja.style.background = 'rgba(160,57,62,.09)';
+        caja.style.borderLeft = '4px solid var(--danger)';
+        g('cb-dif-titulo').textContent = leQuitaron ? '⚠️ El banco tiene menos' : '⚠️ El banco tiene más';
+        g('cb-dif-monto').textContent  = (leQuitaron ? '−' : '+') + fmt(Math.abs(dif));
+        g('cb-dif-monto').style.color  = 'var(--danger)';
+        g('cb-dif-texto').innerHTML    = leQuitaron
+            ? `Bancolombia tiene <strong>${fmt(Math.abs(dif))} menos</strong> de lo que dice la app${detTransito}. `
+            + `Casi siempre es algo que <strong>el banco cobró sin avisar</strong>: cuota de manejo, 4×1000, comisión de Bold. `
+            + `Anótelo y <strong>el resultado del mes se entera</strong> — hoy ese gasto no está pesando en ningún lado.`
+            : `Bancolombia tiene <strong>${fmt(dif)} más</strong> de lo que dice la app${detTransito}. `
+            + `O entró un pago que nadie registró, o el banco le abonó algo. Búsquelo primero: si es un pago de paciente, `
+            + `anótelo en Registrar y esta diferencia desaparece sola.`;
+        g('cb-btn-cobro').style.display = '';
+        g('cb-btn-cobro').textContent = leQuitaron
+            ? '➕ Anotar lo que el banco cobró'
+            : '➕ Anotar lo que el banco abonó';
+    }
+}
+
+function abrirCobroBanco() {
+    const mes = g('cb-mes').value;
+    const extracto = parseFloat(g('cb-extracto').value) || 0;
+    const dif = extracto - (bancoHasta(ultimoDiaDelMes(mes)).saldo + _transitoNeto(mes));
+    const leQuitaron = dif < 0;
+
+    g('cb-cobro-titulo').textContent = leQuitaron
+        ? 'Lo que el banco cobró y la app no sabía'
+        : 'Lo que el banco abonó y la app no sabía';
+    sv('cb-cobro-fecha', ultimoDiaDelMes(mes));
+    sv('cb-cobro-monto', String(Math.abs(dif)));
+    sv('cb-cobro-desc', '');
+
+    /* Sólo el cobro necesita categoría: es un gasto y tiene que caer en alguna
+       parte del resultado. El abono va como ajuste y no tiene categoría. */
+    g('cb-cobro-cat-grp').style.display = leQuitaron ? '' : 'none';
+    if (leQuitaron) {
+        const cats = getCategoriasActivas();
+        g('cb-cobro-cat').innerHTML = Object.entries(cats)
+            .map(([id, c]) => `<option value="${id}">${c.label}</option>`).join('');
+        if (cats.cobrosbanco) g('cb-cobro-cat').value = 'cobrosbanco';
+    }
+    g('cb-cobro-form').style.display = '';
+    g('cb-cobro-form').dataset.dir = leQuitaron ? 'out' : 'in';
+}
+
+function cerrarCobroBanco() { g('cb-cobro-form').style.display = 'none'; }
+
+function guardarCobroBanco() {
+    const fecha = gv('cb-cobro-fecha');
+    const monto = parseFloat(gv('cb-cobro-monto')) || 0;
+    const desc  = gv('cb-cobro-desc').trim();
+    const dir   = g('cb-cobro-form').dataset.dir;
+    if (!fecha) { toast('Falta la fecha', 'error'); return; }
+    if (monto <= 0) { toast('El monto tiene que ser mayor que cero', 'error'); return; }
+
+    const sello = Date.now();
+    if (dir === 'out') {
+        const catId = gv('cb-cobro-cat');
+        const cats  = getCategorias();
+        DB.set('gx', [...(DB.get('gx') || []), {
+            id: 'gx' + sello, date: fecha, catId, cat: catId,
+            catLabel: cats[catId]?.label || catId,
+            provider: 'Bancolombia', desc: desc || 'Cobro del banco (visto en la conciliación)',
+            amount: monto, paySource: 'banco', fixed: false,
+            concilMes: g('cb-mes').value, createdAt: sello,
+        }]);
+    } else {
+        /* Ajuste y no cobro: nadie atendió a un paciente para ganarse esto, así
+           que no puede inflar la producción del mes. */
+        DB.set('aj', [...(DB.get('aj') || []), {
+            id: 'cbmov' + sello, date: fecha, bucket: 'banco', type: 'in', amount: monto,
+            desc: desc || 'Abono del banco (visto en la conciliación)',
+            concilMes: g('cb-mes').value, createdAt: new Date().toISOString(),
+        }]);
+    }
+    cerrarCobroBanco();
+    toast('Anotado — vuelva a mirar la diferencia', 'success');
+    renderCaja();
+}
+
+function guardarConcil() {
+    const mes = gv('cb-mes');
+    const txt = (gv('cb-extracto') || '').trim();
+    if (txt === '') { toast('Teclee el saldo del extracto', 'error'); return; }
+    const extracto = parseFloat(txt);
+    if (!Number.isFinite(extracto)) { toast('El saldo del extracto no se entiende', 'error'); return; }
+
+    const quien = gv('cb-quien');
+    if (!quien) { toast('Falta quién lo revisó', 'error'); return; }
+    const quienNombre = g('cb-quien').selectedOptions[0].text;
+
+    const saldoApp  = bancoHasta(ultimoDiaDelMes(mes)).saldo;
+    const transito  = _transitoNeto(mes);
+    const difFinal  = extracto - (saldoApp + transito);
+
+    if (difFinal !== 0 &&
+        !confirm(`Quedan ${fmt(Math.abs(difFinal))} sin explicar.\n\n`
+               + `Puede guardarla así y seguir buscando, pero el mes queda con una diferencia abierta.\n\n`
+               + `¿Guardar de todos modos?`)) return;
+
+    DB.set('concil', [...getConcils().filter(c => c.mes !== mes), {
+        mes, corte: ultimoDiaDelMes(mes), saldoApp, saldoExtracto: extracto,
+        enTransito: (_concilTransito[mes] || []).slice(), transito, difFinal,
+        quien, quienNombre, nota: gv('cb-nota').trim(),
+        createdAt: new Date().toISOString(),
+    }]);
+
+    sv('cb-nota', '');
+    toast(difFinal === 0 ? 'Conciliación guardada — cuadró'
+                         : `Guardada — quedaron ${fmt(Math.abs(difFinal))} sin explicar`,
+          difFinal === 0 ? 'success' : 'error');
+    renderCaja();
+}
+
+function renderConcilHist() {
+    const cont = g('cb-hist');
+    if (!cont) return;
+    const lista = getConcils().slice().sort((a, b) => b.mes.localeCompare(a.mes)).slice(0, 12);
+    if (!lista.length) {
+        cont.innerHTML = `<p style="margin:0;font-size:11.5px;color:var(--muted);text-align:center">Todavía no se ha conciliado ningún mes.</p>`;
+        return;
+    }
+    cont.innerHTML =
+        `<div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:8px">Meses conciliados</div>`
+      + lista.map(c => {
+            const col = c.difFinal === 0 ? 'var(--success)' : 'var(--danger)';
+            const val = c.difFinal === 0 ? 'cuadró' : (c.difFinal < 0 ? '−' : '+') + fmt(Math.abs(c.difFinal));
+            return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)">
+                <span style="font-size:12px"><strong>${conMayuscula(nombreDelMes(c.mes))}</strong> · revisó ${c.quienNombre}${c.nota ? ` · ${c.nota}` : ''}</span>
+                <span style="font-size:12.5px;font-weight:800;color:${col};white-space:nowrap">${val}</span>
+            </div>`;
+        }).join('');
 }
 
 function cajaMvmtRango(rango) {
@@ -12946,9 +14227,8 @@ function addCajaMov(pm, type, amount, desc, date, sourceId) {
    La regla, de aquí en adelante: cada costo entra UNA vez y por UNA sola
    puerta. Lo que Configuración ya dice no se vuelve a sumar desde Gastos. */
 
-/* Las categorías que suben y bajan con la cantidad de pacientes. No sirven
-   para repartir «carga fija» entre tratamientos, porque no son carga fija. */
-const CATS_VARIABLES = ['lab', 'insumos', 'pasajes'];
+/* Cuáles suben y bajan con la cantidad de pacientes ya no se decide aquí: lo
+   marca ella en Configuración → 🏷️ Categorías de gastos. Ver catsVariables(). */
 
 function calcResultadoMes(txs, gxs) {
     const cfg  = DB.get('config') || DEFAULTS;
@@ -13034,14 +14314,30 @@ function calcResultadoMes(txs, gxs) {
     /* Para repartir entre tratamientos sólo sirve lo que NO cambia con el
        número de pacientes. El laboratorio, los insumos y los pasajes del
        especialista sí cambian, así que salen. */
-    const gastosVariables = sum(otrosGx.filter(gx => CATS_VARIABLES.includes(gx.cat)));
+    const catsVar         = catsVariables();
+    const gastosVariables = sum(otrosGx.filter(gx => catsVar.includes(gx.cat)));
     const cargaFijaTotal  = totalFijos - gastosVariables;
 
-    /* Cuánto hay que producir para no perder ni ganar. Cada peso cobrado
-       deja sólo lo que sobra después del honorario del especialista, así
-       que los fijos se tapan con esa tajada, no con el peso entero. */
-    const tajada   = prod > 0 ? margenBruto / prod : 0;
-    const equilibrio = tajada > 0 ? Math.round(totalFijos / tajada) : totalFijos;
+    /* Cuánto hay que producir para no perder ni ganar.
+
+       LO FIJO Y LO VARIABLE NO SE MEZCLAN, y aquí se estaban mezclando: la
+       cuenta era `totalFijos / tajada`, y totalFijos lleva adentro el
+       laboratorio, los insumos y los pasajes. O sea que trataba como carga
+       fija una plata que sube cuando ella atiende más — y por eso daba un
+       piso más bajo del real. Con los números de agosto: decía $16.843.182
+       cuando el de verdad es $17.402.520. $559.338 que ella creía tener
+       tapados y no lo estaban.
+
+       La cuenta correcta tiene cada cosa de un solo lado:
+         · arriba  → SÓLO la carga fija, la que se paga haya o no pacientes;
+         · abajo   → lo que deja cada peso cobrado después de pagar TODO lo
+                     que se mueve con él: el honorario, el material del
+                     tratamiento y lo que ella marcó como que sube y baja.
+
+       El resultado del mes no se mueve ni un peso con esto —cambiar algo de
+       bolsillo no cambia lo que costó—; lo que se corrige es el piso. */
+    const tajada     = prod > 0 ? (margenBruto - gastosVariables) / prod : 0;
+    const equilibrio = tajada > 0 ? Math.round(cargaFijaTotal / tajada) : cargaFijaTotal;
 
     /* Lo que se dejó por fuera de «los demás gastos», partido en tres, para
        poder decirle EN LA PANTALLA cuál renglón fue y por qué. Un total
@@ -13302,8 +14598,8 @@ function renderSaludMes() {
               una tajada se va en el honorario del especialista, así que hay
               que producir bastante más que los fijos para taparlos. */''}
         ${fijos>0?`<span>🎯 Con <strong>${fmt(puntoEq)}</strong> en cada día que atienda no pierde ni gana
-            (hay que producir ${fmt(R.equilibrio)} en el mes para tapar ${fmt(fijos)},
-             porque parte de lo que entra se va en honorarios)</span>`:''}
+            (hay que producir ${fmt(R.equilibrio)} en el mes para tapar ${fmt(R.cargaFijaTotal)} de carga fija,
+             porque de cada peso que entra una parte se va en honorarios y en lo que sube y baja)</span>`:''}
     </div>
     ` : `<div style="padding:10px 18px;border-top:1px solid ${titleColor}22;font-size:12px;color:var(--muted)">Sin producción registrada este mes todavía.</div>`}`;
 }
@@ -13464,6 +14760,315 @@ function saveNewTreatment() {
 /* ================================================================
    PRINT & WHATSAPP
 ================================================================ */
+
+/* ══ CIERRE DE MES Y ACTA ═════════════════════════════════════════════════
+   El resultado de un mes es un número vivo: la app lo recalcula cada vez que
+   abre. Si en noviembre alguien corrige un cobro de agosto, agosto cambia —y
+   el comparativo queda mintiendo, porque compararía contra un mes que ya no es
+   el que se cerró—.
+
+   Cerrar el mes le toma la FOTO. Esa foto es la que compara y la que dice el
+   acta que se firma. Firman dos: quien prepara y quien aprueba. Ése es el
+   control de verdad —que no sea la misma persona—, y es lo único del acta que
+   no puede hacer la app sola.
+
+   El mes cerrado NO se bloquea, por lo mismo que el día: ella registra cosas
+   tarde. Se avisa, y queda dicho que el acta dejó de coincidir.           */
+
+function getCierresMes() { return DB.get('cierresMes') || []; }
+function cierreMesDe(mes) { return getCierresMes().find(c => c.mes === mes) || null; }
+
+/* Los números del mes calculados AHORA, no la foto. Es lo que se propone
+   congelar, y también lo que se compara contra la foto para avisar si el mes
+   se movió después de firmado. */
+function fotoDelMes(mes) {
+    const tx = (DB.get('tx') || []).filter(t => (t.date || '').slice(0, 7) === mes);
+    const gx = (DB.get('gx') || []).filter(x => (x.date || '').slice(0, 7) === mes);
+    const R  = calcResultadoMes(tx, gx);
+    const corte = ultimoDiaDelMes(mes);
+    const cc = getCierres().filter(c => (c.fecha || '').slice(0, 7) === mes);
+    const cb = concilDe(mes);
+    return {
+        mes,
+        prod: R.prod, honorarios: R.honorarios, materiales: R.materiales,
+        margenBruto: R.margenBruto, arriendo: R.arriendo, sueldos: R.sueldos,
+        otrosGastos: R.otrosGastos, parafiscales: R.parafiscales,
+        totalFijos: R.totalFijos, cargaFijaTotal: R.cargaFijaTotal,
+        gastosVariables: R.gastosVariables, resultado: R.resultado,
+        equilibrio: R.equilibrio,
+        nTx: tx.length, nGx: gx.length,
+        efectivo: efectivoHasta(corte).saldo,
+        banco: bancoHasta(corte).saldo,
+        conciliado: !!cb && cb.difFinal === 0,
+        difConcil: cb ? cb.difFinal : null,
+        nCierresDia: cc.length,
+        diasFaltantes: cc.filter(c => c.dif !== 0).length,
+    };
+}
+
+/* Las filas del acta y de la pantalla salen de aquí, una sola vez, para que el
+   papel firmado y lo que ella ve no puedan decir cosas distintas.
+
+   Lo fijo y lo variable van en renglones separados a propósito: el punto de
+   equilibrio se saca SÓLO de la carga fija, así que si el acta sumara las dos
+   cosas en una línea llamada «carga fija», el que divida a mano no le daría el
+   equilibrio impreso al pie. `totalFijos` ya trae lo variable adentro. */
+function renglonesDelMes(f) {
+    const otrosFijos = (f.otrosGastos || 0) - (f.gastosVariables || 0);
+    return [
+        { k: 'Producción del mes',            v: f.prod,           fuerte: true },
+        { k: 'Honorarios de especialistas',   v: -f.honorarios },
+        { k: 'Materiales de los tratamientos',v: -f.materiales },
+        { k: 'Margen bruto',                  v: f.margenBruto,    fuerte: true, sep: true },
+        { k: 'Arriendo',                      v: -f.arriendo },
+        { k: 'Sueldos de empleadas',          v: -f.sueldos },
+        { k: 'Seguridad social y parafiscales', v: -f.parafiscales },
+        { k: 'Otros gastos fijos',            v: -otrosFijos },
+        { k: 'Total carga fija',              v: -f.cargaFijaTotal, fuerte: true, sep: true },
+        { k: 'Gastos variables',              v: -f.gastosVariables },
+        { k: 'RESULTADO DEL MES',             v: f.resultado,      total: true },
+    ];
+}
+
+function renderCierreMes() {
+    if (!g('cm-mes')) return;
+
+    const meses = mesesConDatos();
+    const sel   = g('cm-mes');
+    if (sel.dataset.firma !== meses.join('|')) {
+        const antes = sel.value;
+        sel.innerHTML = meses.map(m => `<option value="${m}">${conMayuscula(nombreDelMes(m))}</option>`).join('');
+        sel.dataset.firma = meses.join('|');
+        /* Un mes se cierra cuando ya terminó. El 1 de septiembre ella entra aquí
+           a cerrar AGOSTO, no septiembre: por eso arranca en el último mes que ya
+           se acabó, y sólo cae en el mes en curso si no hay ninguno anterior. */
+        const enCurso   = todayISO().slice(0, 7);
+        const terminado = meses.find(m => m < enCurso);
+        sel.value = (antes && meses.includes(antes)) ? antes
+                  : (terminado || (meses.includes(enCurso) ? enCurso : meses[0]));
+    }
+    const mes = sel.value;
+
+    const gente = quienesCierran();
+    [['cm-preparo', 0], ['cm-aprobo', gente.length - 1]].forEach(([id, porDefecto]) => {
+        const s = g(id), f = gente.map(p => p.id).join('|');
+        if (s.dataset.firma !== f) {
+            const antes = s.value;
+            s.innerHTML = gente.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            s.dataset.firma = f;
+            s.value = (antes && gente.some(p => p.id === antes)) ? antes
+                    : (gente[porDefecto] ? gente[porDefecto].id : '');
+        }
+    });
+
+    const f  = fotoDelMes(mes);
+    const ya = cierreMesDe(mes);
+    if (ya && !g('cm-nota').value) g('cm-nota').value = ya.nota || '';
+
+    // Tabla: si el mes está cerrado se muestra la foto, no el cálculo de hoy
+    const mostrar = ya || f;
+    g('cm-tabla').innerHTML = renglonesDelMes(mostrar).map(r => {
+        const col = r.total ? (r.v < 0 ? 'var(--danger)' : 'var(--success)') : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:${r.total ? '11px 0' : '7px 0'};${r.sep ? 'border-top:1.5px solid var(--line);' : ''}${r.total ? 'border-top:2px solid var(--line);' : ''}">
+            <span style="font-size:${r.total ? '13px' : '12.5px'};font-weight:${r.total || r.fuerte ? '800' : '500'}">${r.k}</span>
+            <span style="font-size:${r.total ? '17px' : '13px'};font-weight:${r.total || r.fuerte ? '800' : '600'};font-variant-numeric:tabular-nums;${col ? `color:${col}` : ''}">${fmt(r.v)}</span>
+        </div>`;
+    }).join('')
+    + `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.9;color:var(--muted)">
+         Punto de equilibrio: <strong style="color:var(--text)">${fmt(mostrar.equilibrio)}</strong> ·
+         Efectivo al cierre: <strong style="color:var(--text)">${fmt(mostrar.efectivo)}</strong> ·
+         Banco al cierre: <strong style="color:var(--text)">${fmt(mostrar.banco)}</strong><br>
+         ${mostrar.nTx} cobros · ${mostrar.nGx} gastos · ${mostrar.nCierresDia} día${mostrar.nCierresDia === 1 ? '' : 's'} con caja arqueada
+       </div>`;
+
+    // Estado y avisos
+    const est = g('cm-estado');
+    if (ya) {
+        const movido = Math.abs(f.resultado - ya.resultado) > 0;
+        est.textContent = movido ? 'Cerrado · pero el mes se movió después' : 'Cerrado';
+        est.style.color = movido ? 'var(--danger)' : 'var(--success)';
+    } else {
+        est.textContent = 'Sin cerrar';
+        est.style.color = 'var(--muted)';
+    }
+
+    const av = g('cm-aviso');
+    const pendientes = [];
+    if (!f.conciliado) pendientes.push(f.difConcil === null
+        ? 'El banco de este mes <strong>todavía no se ha conciliado</strong> contra el extracto de Bancolombia.'
+        : `La conciliación del banco quedó con <strong>${fmt(Math.abs(f.difConcil))} sin explicar</strong>.`);
+    if (!f.nCierresDia) pendientes.push('Este mes <strong>no tiene ningún día con la caja arqueada</strong>.');
+    if (ya && Math.abs(f.resultado - ya.resultado) > 0) pendientes.push(
+        `El acta se firmó con un resultado de <strong>${fmt(ya.resultado)}</strong> y hoy la app calcula `
+      + `<strong>${fmt(f.resultado)}</strong>. Alguien registró algo de este mes después de cerrarlo: `
+      + 'vuelva a cerrar para que el acta y la app digan lo mismo.');
+
+    if (pendientes.length) {
+        av.style.display  = 'block';
+        av.style.background = 'rgba(184,134,11,.10)';
+        av.style.borderLeft = '4px solid var(--warning)';
+        av.innerHTML = '<strong>Antes de cerrar, ojo con esto:</strong><ul style="margin:6px 0 0;padding-left:18px">'
+                     + pendientes.map(p => `<li style="margin-bottom:3px">${p}</li>`).join('') + '</ul>';
+    } else {
+        av.style.display = 'none';
+    }
+
+    g('cm-btn-acta').style.display = ya ? '' : 'none';
+    renderComparativo();
+}
+
+function guardarCierreMes() {
+    const mes = gv('cm-mes');
+    const preparo = gv('cm-preparo'), aprobo = gv('cm-aprobo');
+    if (!preparo || !aprobo) { toast('Faltan las dos personas que firman', 'error'); return; }
+
+    /* Que firme la misma persona no se prohíbe —hoy es una clínica de una sola
+       dueña y a veces no hay quién más—, pero se dice, porque un control que
+       revisa y aprueba la misma mano no es un control. */
+    if (preparo === aprobo &&
+        !confirm('La misma persona prepara y aprueba.\n\n'
+               + 'El acta sirve más si la revisa alguien distinto de quien la hizo.\n\n'
+               + '¿Cerrar el mes así?')) return;
+
+    if (cierreMesDe(mes) &&
+        !confirm(`${conMayuscula(nombreDelMes(mes))} ya estaba cerrado.\n\n`
+               + 'Se le vuelve a tomar la foto con los números de hoy y el acta anterior deja de valer.\n\n'
+               + '¿Volver a cerrarlo?')) return;
+
+    const gente = quienesCierran();
+    const nom = id => (gente.find(p => p.id === id) || {}).name || id;
+
+    DB.set('cierresMes', [...getCierresMes().filter(c => c.mes !== mes), {
+        ...fotoDelMes(mes),
+        nota: gv('cm-nota').trim(),
+        preparo, preparoNombre: nom(preparo),
+        aprobo,  aprobNombre:   nom(aprobo),
+        createdAt: new Date().toISOString(),
+    }]);
+
+    toast(`${conMayuscula(nombreDelMes(mes))} cerrado — ya puede imprimir el acta`, 'success');
+    renderCierreMes();
+}
+
+function printActaMes() {
+    const mes = gv('cm-mes');
+    const c   = cierreMesDe(mes);
+    if (!c) { toast('Primero cierre el mes', 'error'); return; }
+
+    const filas = renglonesDelMes(c).map(r => `<tr${r.total ? ' class="total-row"' : ''}>
+        <td${r.fuerte || r.total ? ' style="font-weight:800"' : ''}>${r.k}</td>
+        <td class="amt"${r.fuerte || r.total ? ' style="font-weight:800"' : ''}>${fmt(r.v)}</td></tr>`).join('');
+
+    const firmado = new Date(c.createdAt).toLocaleDateString('es-CO',
+        { day: 'numeric', month: 'long', year: 'numeric' });
+
+    printDoc(`Acta de cierre — ${nombreDelMes(mes)}`, `
+        <h2>Acta de cierre contable</h2>
+        <div class="doc-subtitle">Mes de ${nombreDelMes(mes)} · elaborada el ${firmado}</div>
+
+        <p style="margin:10px 0;line-height:1.55">
+            Se deja constancia de que los movimientos del mes de <strong>${nombreDelMes(mes)}</strong>
+            fueron revisados y cerrados con las cifras que se relacionan a continuación.
+            El mes registra <strong>${c.nTx} cobros</strong> y <strong>${c.nGx} gastos</strong>.
+        </p>
+
+        <table>
+            <thead><tr><th>Concepto</th><th class="amt">Valor</th></tr></thead>
+            <tbody>${filas}</tbody>
+        </table>
+
+        <div class="saldo-block">
+            <div class="saldo-row"><span>Punto de equilibrio del mes</span><span>${fmt(c.equilibrio)}</span></div>
+            <div class="saldo-row"><span>Efectivo en caja al cierre</span><span>${fmt(c.efectivo)}</span></div>
+            <div class="saldo-row"><span>Saldo en Bancolombia al cierre</span><span>${fmt(c.banco)}</span></div>
+        </div>
+
+        <p style="margin:10px 0;line-height:1.55;font-size:10.5px">
+            Caja: ${c.nCierresDia
+                ? `se contó el efectivo en <strong>${c.nCierresDia}</strong> día${c.nCierresDia === 1 ? '' : 's'} del mes`
+                  + (!c.diasFaltantes    ? (c.nCierresDia === 1 ? ', y cuadró.' : ', y todos cuadraron.')
+                     : c.nCierresDia === 1 ? ', y no cuadró.'
+                     : `, y <strong>${c.diasFaltantes}</strong> de ellos no cuadr${c.diasFaltantes === 1 ? 'ó' : 'aron'}.`)
+                : '<strong>no se contó el efectivo</strong> ningún día del mes.'}
+            Banco: ${c.conciliado
+                ? 'conciliado contra el extracto de Bancolombia, sin diferencias.'
+                : (c.difConcil === null
+                    ? '<strong>no conciliado</strong> contra el extracto a la fecha de esta acta.'
+                    : `conciliado con una diferencia de <strong>${fmt(Math.abs(c.difConcil))}</strong> sin explicar.`)}
+        </p>
+
+        ${c.nota ? `<p style="margin:10px 0;line-height:1.55"><strong>Observación:</strong> ${eh(c.nota)}</p>` : ''}
+
+        <div class="sign-block">
+            <div class="sign-line">${eh(c.preparoNombre)}<br>Preparó</div>
+            <div class="sign-line">${eh(c.aprobNombre)}<br>Aprobó</div>
+        </div>`);
+}
+
+/* ══ COMPARATIVO MES A MES ═══════════════════════════════════════════════
+   Los meses cerrados se comparan con su foto: así el pasado no se mueve por
+   un ajuste hecho hoy. Los que no se han cerrado se calculan al vuelo y salen
+   marcados como provisionales, para que ella sepa cuál número puede cambiar. */
+function renderComparativo() {
+    const cont = g('cm-comparativo');
+    if (!cont) return;
+
+    const meses = mesesConDatos().slice(0, 13).reverse();   // del más viejo al más nuevo
+    const filas = meses.map(m => {
+        const cerrado = cierreMesDe(m);
+        return { mes: m, cerrado: !!cerrado, ...(cerrado || fotoDelMes(m)) };
+    });
+    if (!filas.length) {
+        cont.innerHTML = `<p style="margin:0;font-size:11.5px;color:var(--muted);text-align:center">Todavía no hay meses para comparar.</p>`;
+        return;
+    }
+
+    const variacion = (hoy, antes) => {
+        if (antes === undefined || antes === null) return '';
+        const d = hoy - antes;
+        if (d === 0) return `<span style="color:var(--muted)">=</span>`;
+        return `<span style="color:${d > 0 ? 'var(--success)' : 'var(--danger)'};font-weight:700">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d))}</span>`;
+    };
+
+    cont.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>
+            <th style="text-align:left;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">Mes</th>
+            <th style="text-align:right;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">Producción</th>
+            <th style="text-align:right;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">Honorarios</th>
+            <th style="text-align:right;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">Carga fija</th>
+            <th style="text-align:right;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">Resultado</th>
+            <th style="text-align:right;padding:8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1.5px solid var(--line)">vs mes anterior</th>
+        </tr></thead>
+        <tbody>${filas.map((f, i) => {
+            const ant = i > 0 ? filas[i - 1] : null;
+            return `<tr>
+                <td style="padding:9px 6px;border-bottom:1px solid var(--line)">
+                    <strong style="text-transform:none">${conMayuscula(nombreDelMes(f.mes))}</strong>
+                    ${f.cerrado ? '<span style="font-size:10px;color:var(--success);font-weight:700"> · cerrado</span>'
+                                : '<span style="font-size:10px;color:var(--warning);font-weight:700"> · provisional</span>'}
+                </td>
+                <td style="padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(f.prod)}</td>
+                <td style="padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(f.honorarios)}</td>
+                <td style="padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(f.cargaFijaTotal)}</td>
+                <td style="padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:800;color:${f.resultado < 0 ? 'var(--danger)' : 'var(--success)'}">${fmt(f.resultado)}</td>
+                <td style="padding:9px 6px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap">${ant ? variacion(f.resultado, ant.resultado) : '<span style="color:var(--muted)">—</span>'}</td>
+            </tr>`;
+        }).join('')}</tbody></table>`;
+}
+
+/* Un solo aviso para los dos candados. El del mes manda: es el que tiene un
+   papel firmado detrás. Si el mes está cerrado no se pregunta también por el
+   día — dos ventanas seguidas y deja de leerlas. */
+function avisarSiElPeriodoEstaCerrado(fecha, tocaElCajon) {
+    const cm = cierreMesDe((fecha || '').slice(0, 7));
+    if (cm) {
+        return confirm(`${conMayuscula(nombreDelMes(cm.mes))} ya está cerrado `
+                     + `(acta preparada por ${cm.preparoNombre}, aprobada por ${cm.aprobNombre}).\n\n`
+                     + `Si anota esto, el acta firmada deja de coincidir con la app y el comparativo cambia.\n\n`
+                     + `¿Anotarlo de todos modos?`);
+    }
+    return tocaElCajon ? avisarSiElDiaEstaCerrado(fecha) : true;
+}
 
 function printDoc(title, bodyHTML) {
     const cfg = DB.get('config') || DEFAULTS;
@@ -14467,7 +16072,7 @@ function openExtractoModal() {
     // Poblar categorías
     const sel = g('ext-cat');
     sel.innerHTML = '<option value="">— Categoría —</option>' +
-        Object.entries(EXPENSE_CATS).map(([id,c])=>`<option value="${id}">${c.label}</option>`).join('');
+        Object.entries(getCategoriasActivas()).map(([id,c])=>`<option value="${id}">${c.label}</option>`).join('');
     // Bolsillo default según PM
     g('ext-bolsillo').value = 'banco';
     setExtTipo('clinica');
@@ -14515,7 +16120,7 @@ function addExtractoCargo() {
     if (_extTipo === 'clinica') {
         const catId = gv('ext-cat');
         if (!catId) { toast('Selecciona la categoría', 'error'); return; }
-        const cat = EXPENSE_CATS[catId];
+        const cat = getCategorias()[catId];
         cargo = { tipo:'clinica', catId, catLabel:cat?.label||catId, desc:gv('ext-desc').trim(), monto, bolsillo };
     } else {
         const nota = gv('ext-nota').trim();

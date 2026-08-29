@@ -399,6 +399,75 @@
         .form-section.cfg-cerrada .fsh { border-bottom:none; }
         .form-section.cfg-cerrada .fsb { display:none; }
         .form-section.cfg-cerrada .fsh-chev { transform:rotate(-90deg); }
+
+        /* ── Manual contable ──────────────────────────────────────────────
+           Se consulta cuando ella no sabe qué hacer, no se lee de corrido.
+           Por eso: todo cerrado de entrada, un buscador arriba, y cada
+           sección se abre sola. Usa <details> nativo — no hay estado que
+           guardar ni JS que se pueda dañar. */
+        .man-buscar { position:relative; margin-bottom:14px; }
+        .man-buscar input { width:100%; padding:12px 14px 12px 40px; font-size:14px;
+                    border:1px solid var(--border); border-radius:var(--radius-sm);
+                    background:var(--white); color:var(--text); }
+        .man-buscar input:focus { outline:none; border-color:var(--bronze); }
+        .man-buscar .man-lupa { position:absolute; left:14px; top:50%; transform:translateY(-50%);
+                    font-size:15px; opacity:.55; pointer-events:none; }
+        .man-nada { display:none; padding:18px; text-align:center; color:var(--muted); font-size:13px; }
+        .man-sec { background:var(--white); border:1px solid var(--border);
+                    border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+        .man-sec[open] { box-shadow:var(--shadow-sm); }
+        .man-sec > summary { list-style:none; cursor:pointer; user-select:none;
+                    padding:16px 18px; display:flex; align-items:center; gap:12px;
+                    font-size:14px; font-weight:800; color:var(--dark); }
+        .man-sec > summary::-webkit-details-marker { display:none; }
+        .man-sec > summary:hover { background:var(--bg); }
+        .man-sec > summary .man-ico { font-size:20px; flex-shrink:0; }
+        .man-sec > summary .man-sub { display:block; font-size:12px; font-weight:500;
+                    color:var(--muted); margin-top:3px; }
+        .man-sec > summary .man-chev { margin-left:auto; flex-shrink:0; display:flex;
+                    align-items:center; justify-content:center; width:28px; height:28px;
+                    border-radius:50%; background:var(--bg); border:1px solid var(--border);
+                    font-size:15px; line-height:1; color:var(--bronze);
+                    transform:rotate(-90deg); transition:transform .18s ease; }
+        .man-sec[open] > summary .man-chev { transform:rotate(0deg); }
+        .man-sec[open] > summary { border-bottom:1px solid var(--border); }
+        .man-cuerpo { padding:18px 20px 22px; font-size:13.5px; line-height:1.65; color:var(--text); }
+        .man-cuerpo p { margin:0 0 12px; }
+        .man-cuerpo h4 { font-size:13.5px; font-weight:800; color:var(--bronze);
+                    margin:20px 0 8px; }
+        .man-cuerpo h4:first-child { margin-top:0; }
+        .man-cuerpo ul, .man-cuerpo ol { margin:0 0 12px; padding-left:20px; }
+        .man-cuerpo li { margin-bottom:6px; }
+        .man-cuerpo strong { color:var(--dark); }
+        .man-cuerpo table { width:100%; border-collapse:collapse; margin:0 0 14px; font-size:12.5px; }
+        .man-cuerpo th, .man-cuerpo td { padding:8px 10px; border:1px solid var(--border);
+                    text-align:left; vertical-align:top; }
+        .man-cuerpo th { background:var(--bg); font-weight:700; color:var(--dark); }
+        .man-caja { background:var(--bg); border-radius:var(--radius-sm); padding:12px 14px;
+                    margin:0 0 14px; font-family:ui-monospace,Menlo,Consolas,monospace;
+                    font-size:12.5px; line-height:1.8; white-space:pre-wrap; color:var(--dark); }
+        .man-ojo { background:rgba(184,134,11,.09); border-left:3px solid var(--warning);
+                    border-radius:var(--radius-sm); padding:12px 14px; margin:0 0 14px; }
+        .man-ojo p:last-child { margin-bottom:0; }
+        .man-tip { background:rgba(153,119,113,.08); border-left:3px solid var(--bronze);
+                    border-radius:var(--radius-sm); padding:12px 14px; margin:0 0 14px; }
+        .man-tip p:last-child { margin-bottom:0; }
+        .man-glo { border-bottom:1px solid var(--border); padding:9px 0; }
+        .man-glo:last-child { border-bottom:none; }
+        .man-glo b { color:var(--bronze); }
+
+        /* Salud de la clínica: la cuenta de dónde sale «le queda» se pliega.
+           Sin esto Safari y Chrome le pintan un triangulito negro al lado
+           del 🧮 y se ven dos flechas donde debería haber una. */
+        #db-salud summary::-webkit-details-marker { display:none; }
+        #db-salud summary::marker { content:''; }
+        #db-salud summary:hover { background:rgba(0,0,0,.03); }
+        /* La flechita, no un emoji: a 12px un 🧮 se ve como una manchita y no
+           dice «esto se abre». */
+        #db-salud summary .sal-chev { display:inline-block; width:14px; text-align:center;
+                    transform:rotate(-90deg); transition:transform .18s ease; }
+        #db-salud details[open] > summary .sal-chev { transform:rotate(0deg); }
+
         /* Desglose de un doctor en Reportes: picar la fila y ver de dónde
            sale cada peso, incluida la plata que quedó escrita en las notas. */
         .rd-fila { cursor:pointer; }
@@ -1317,6 +1386,9 @@
             <div class="nav-item active" data-page="config" onclick="navigate('config')">
                 <span class="ni-icon">⚙️</span><span class="ni-lbl">Configuración</span>
             </div>
+            <div class="nav-item" data-page="manual" onclick="navigate('manual')">
+                <span class="ni-icon">📖</span><span class="ni-lbl">Manual contable</span>
+            </div>
         </nav>
 
         <div class="sb-footer">
@@ -1338,6 +1410,354 @@
                 <div class="db-section">
                     <div id="anulaciones-list"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- =================================================
+             MANUAL CONTABLE — la pantalla que se consulta
+             cuando no se sabe qué hacer. Es el mismo texto de
+             MANUAL_CONTABLE.md, aquí adentro para que no haya
+             que ir a buscar un archivo.
+        =================================================== -->
+        <div id="page-manual" class="hidden">
+            <div class="page-header">
+                <div class="ph-left">
+                    <h1>📖 Manual contable</h1>
+                    <p>Cómo se llevan las cuentas de la clínica, y dónde va cada cosa en la app</p>
+                </div>
+            </div>
+            <div class="page-content">
+
+                <div class="alert alert-info" style="margin-bottom:14px">
+                    💡 No hay que leerlo de corrido. Busque lo que necesita, o toque
+                    el título de una sección para abrirla. Cada una se entiende sola.
+                </div>
+
+                <div class="man-buscar">
+                    <span class="man-lupa">🔍</span>
+                    <input type="text" id="man-q" oninput="buscarEnManual(this.value)"
+                           placeholder="Buscar… por ejemplo: pasajes, Diana, prima, saldo, punto de equilibrio">
+                </div>
+                <div class="man-nada" id="man-nada">
+                    No encontré esa palabra en el manual. Pruebe con otra,
+                    o borre la búsqueda para ver todas las secciones.
+                </div>
+
+                <!-- 1 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🧱</span>
+                        <div>Las cuatro palabras que hay que separar
+                            <span class="man-sub">Ingreso · costo · gasto fijo · utilidad</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Casi todos los enredos de contabilidad de un consultorio salen de meter
+                        en la misma bolsa cosas que no son lo mismo. Estas cuatro son las que más
+                        se confunden.</p>
+
+                        <h4>Ingreso</h4>
+                        <p>Plata que entra <strong>y es suya</strong>. Un tratamiento cobrado es ingreso.</p>
+                        <p>Ojo, porque no todo lo que entra al cajón es ingreso. Si un vecino le
+                        pasa $15.000 para el recibo del agua que van a pagar entre varios, ese
+                        dinero entró, pero nunca fue suyo: usted es apenas el que junta y paga.
+                        Eso no es ingreso, es un <strong>recobro</strong>.</p>
+                        <div class="man-tip"><p><strong>Regla para saber:</strong> ¿si el negocio cerrara
+                        mañana, esa plata se la quedaría usted? Si sí, es ingreso. Si tocaría
+                        devolverla o entregarla, no lo es.</p></div>
+
+                        <h4>Costo</h4>
+                        <p>Lo que le cuesta <strong>producir ese tratamiento en particular</strong>.
+                        Si no hace el tratamiento, no existe el costo.</p>
+                        <p>La resina que gastó, el trabajo que le facturó el laboratorio, el
+                        honorario de la especialista que lo hizo. Si Diana no atiende a nadie
+                        esta semana, no hay honorario que pagarle.</p>
+
+                        <h4>Gasto fijo</h4>
+                        <p>Lo que se paga <strong>haya o no haya pacientes</strong>. El arriendo,
+                        el internet, el sueldo de Sandry, la luz.</p>
+                        <p>Esta es la diferencia que de verdad importa, y es la que le dice cuánto
+                        tiene que producir para no perder. Sus fijos son $5.000.000 al mes.
+                        Trabajando 26 días, son <strong>$192.308 diarios sólo para quedar en
+                        ceros</strong> — ese número se lo muestra el Panel del día, y no es un
+                        adorno: es el piso.</p>
+
+                        <h4>Utilidad</h4>
+                        <p>Lo que sobra al final: ingresos − costos − gastos fijos.</p>
+                        <p>No es «lo que hay en el cajón». En el cajón puede haber plata que ya
+                        tiene dueño: los honorarios de Diana que todavía no le ha pagado están
+                        ahí y no son suyos.</p>
+                    </div>
+                </details>
+
+                <!-- 2 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">👥</span>
+                        <div>Empleada o especialista: por qué no da lo mismo
+                            <span class="man-sub">Sandry y Zury no se anotan igual que Diana, Nay y Rafael</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Es la distinción más cara de equivocar, y hasta agosto la app las tenía
+                        juntas en «Nómina».</p>
+                        <table>
+                            <tr><th></th><th>Empleada<br>(Sandry, Zury)</th><th>Especialista<br>(Diana, Nay, Rafael)</th></tr>
+                            <tr><td>Qué recibe</td><td>Sueldo fijo</td><td>Honorario por lo que hizo</td></tr>
+                            <tr><td>¿Si no viene nadie?</td><td>Cobra igual</td><td>No cobra</td></tr>
+                            <tr><td>Prestaciones<br>(cesantías, prima, vacaciones)</td><td>Sí, usted las debe</td><td>No</td></tr>
+                            <tr><td>Seguridad social</td><td>La paga usted como empleador</td><td>La paga cada uno</td></tr>
+                            <tr><td>En la app</td><td>👥 Nómina empleadas</td><td>🩺 Honorarios especialistas</td></tr>
+                            <tr><td>Es</td><td>Gasto fijo</td><td>Costo</td></tr>
+                        </table>
+                        <p>Meterlos juntos hacía dos daños: le inflaba los gastos fijos con plata
+                        que en realidad sube y baja con la producción, y le escondía cuánto
+                        cuesta de verdad tener empleadas —que es justo el número que hay que
+                        mirar para las prestaciones de diciembre—.</p>
+                        <div class="man-ojo"><p>⚠️ <strong>Esto sí consúltelo con su contadora.</strong>
+                        En Colombia, pagarle a una persona que no es empleada un auxilio
+                        <strong>periódico y fijo</strong> puede ser tomado como indicio de
+                        «contrato realidad»: que en el papel es contratista pero en los hechos
+                        es empleada, con todo lo que eso arrastra. El auxilio de Diana es semanal
+                        y variable, que ayuda. Yo le organizo los libros — la parte laboral y
+                        tributaria la confirma con su contadora. Ahí no me meto.</p></div>
+                    </div>
+                </details>
+
+                <!-- 3 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🚌</span>
+                        <div>El honorario y los pasajes van aparte
+                            <span class="man-sub">Cómo registrar el auxilio de transporte de Diana</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>La respuesta corta: <strong>aparte, siempre</strong>.</p>
+                        <p><strong>El honorario</strong> es el 35% de lo que produjo. Sube si produce
+                        más, baja si produce menos. Es la paga por el trabajo.</p>
+                        <p><strong>El auxilio de transporte</strong> son los pasajes. No depende de lo
+                        que produjo — depende de cuántos días vino. Es un apoyo, no una paga.</p>
+                        <p>Mezclarlos rompe dos cosas a la vez:</p>
+                        <ol>
+                            <li><strong>El porcentaje deja de ser verdad.</strong> Si le pasa $163.000
+                            y anota todo como honorario, parece que le pagó un porcentaje que no es
+                            el pactado. Después nadie entiende por qué.</li>
+                            <li><strong>No puede negociar a ciegas.</strong> Si mañana quiere revisar
+                            el 35%, necesita saber cuánto es honorario puro. Y si quiere saber cuánto
+                            le cuestan los pasajes al mes, necesita el otro número limpio.</li>
+                        </ol>
+                        <h4>Cómo se registra, paso a paso</h4>
+                        <p>Cuando le pague a Diana, haga <strong>dos renglones en Gastos</strong>, no uno:</p>
+                        <table>
+                            <tr><th></th><th>Categoría</th><th>Monto</th><th>Descripción</th></tr>
+                            <tr><td>1</td><td>🩺 Honorarios especialistas</td><td>lo que dé el 35%</td>
+                                <td>Honorarios Diana Valencia — semana 24 al 29</td></tr>
+                            <tr><td>2</td><td>🚌 Pasajes especialistas</td><td>lo que sean los pasajes</td>
+                                <td>Pasajes Diana Valencia — semana 24 al 29</td></tr>
+                        </table>
+                        <p>Sale el mismo dinero del bolsillo. Pero ahora usted puede mirar el mes y
+                        decir «Diana me costó $X de honorarios y $Y de pasajes», que son dos
+                        decisiones distintas.</p>
+                        <div class="man-tip"><p><strong>Lo que ya está hecho:</strong> los tres pagos de
+                        agosto venían pegados —uno decía literalmente «Honararios de la semana 18 al
+                        22 6 pasajes»— y quedaron separados. De agosto: <strong>$460.250 de
+                        honorarios y $165.500 de pasajes.</strong> El total de gastos no cambió ni un
+                        peso; sólo quedó dicho qué es qué.</p></div>
+                    </div>
+                </details>
+
+                <!-- 4 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🔒</span>
+                        <div>La regla de oro: la historia no se reescribe
+                            <span class="man-sub">Por qué cambiar un porcentaje hoy no toca lo de agosto</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Esta es la que sostiene todo lo demás, y la app la respeta en todas partes.</p>
+                        <p><strong>Cuando algo se registra, se guarda con los números de ESE día.</strong></p>
+                        <p>Si hoy le sube el porcentaje a Nay del 55% al 60%, los tratamientos de
+                        agosto <strong>siguen liquidados al 55%</strong>. Si le sube el sueldo a
+                        Sandry, la quincena que ya le pagó <strong>sigue diciendo lo que le
+                        pagó</strong>.</p>
+                        <p>Por qué importa: el recibo de agosto tiene que seguir diciendo lo mismo
+                        en diciembre. Si cambiar una cifra hoy reescribiera el pasado, sus libros
+                        no servirían para nada — ni para una discusión con un doctor, ni para una
+                        declaración, ni para saber si el mes pasado le fue bien.</p>
+                        <p>Lo mismo con el nombre: cuando le paga una quincena a una empleada, el
+                        nombre se copia al recibo. Aunque después la borre de la lista, el pago
+                        de agosto sigue diciendo a quién se le pagó.</p>
+                    </div>
+                </details>
+
+                <!-- 5 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">📋</span>
+                        <div>Cuando el paciente queda debiendo
+                            <span class="man-sub">El plan de tratamiento y el botón de Reportes</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p><strong>El problema:</strong> el tratamiento de Hugo López vale $530.000 y
+                        sólo pagó $330.000. Si usted registra únicamente los $330.000, la deuda
+                        <strong>desaparece de los libros</strong>. No hay dónde verla, no hay a quién
+                        cobrarle, y en diciembre no va a acordarse.</p>
+                        <p><strong>La solución:</strong> un <strong>plan de tratamiento</strong>, que
+                        es la cuenta corriente del paciente:</p>
+                        <div class="man-caja">Total acordado    $530.000
+Ya pagó           $330.000   ← el cobro del 25 de agosto
+Saldo             $200.000   ← esto es lo que le deben</div>
+                        <p>Cada vez que abone, se registra el abono y el saldo baja solo. Cuando
+                        llegue a $0, el plan se marca completado.</p>
+                        <h4>Cómo se hace, en un clic</h4>
+                        <p>Vaya a <strong>Reportes → Por doctor</strong> y pique la fila del doctor.
+                        Los cobros donde el porcentaje no cuadra salen con un aviso rosado que dice
+                        cuánto quedó debiendo, y debajo un botón
+                        <strong>«📋 Pasarlo a plan de tratamiento»</strong>. Un clic y el plan queda
+                        armado, con el paciente, el doctor, el total y lo que ya pagó.</p>
+                        <div class="man-tip"><p><strong>Un detalle que le ahorra plata:</strong> en estos
+                        planes el honorario de la doctora <strong>ya está pagado completo</strong>.
+                        Sabemos que el tratamiento vale $530.000 precisamente porque sus $185.500 son
+                        el 35% de esa cifra. Así que cuando Hugo pague los $200.000 que faltan, esa
+                        plata entra como ingreso suyo y <strong>no vuelve a causar honorario</strong>.
+                        Si lo causara, Diana terminaría cobrando el 48% de ese tratamiento en vez del
+                        35%. La app ya lo tiene en cuenta y se lo escribe en el cobro.</p></div>
+                    </div>
+                </details>
+
+                <!-- 6 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">💧</span>
+                        <div>El alquiler y el agua: plata que pasa por su cajón
+                            <span class="man-sub">Lo que entra no siempre es ingreso</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <h4>El alquiler ($700.000 en agosto)</h4>
+                        <p>Usted alquila un espacio. Eso es un ingreso real y suyo — pero
+                        <strong>no es producción odontológica</strong>.</p>
+                        <p>Por qué importa la diferencia: si el alquiler entra mezclado con los
+                        tratamientos, su «producción del mes» dice $11.622.000 cuando la
+                        odontología produjo $10.922.000. Y entonces el promedio por día, la
+                        proyección y la meta quedan todos inflados con plata que va a llegar
+                        igual aunque usted no abra el consultorio.</p>
+                        <p>Van en la misma bolsa de ingresos, pero <strong>contados aparte</strong>.</p>
+
+                        <h4>El agua de Bitico ($15.000)</h4>
+                        <p>Este es distinto y es el que más se presta a error. Usted recibe $15.000
+                        de otro local para pagar entre todos el recibo del agua.</p>
+                        <p><strong>Eso NO es un ingreso.</strong> Es plata ajena que pasa por su
+                        cajón. Se llama <strong>recobro</strong>, y se registra por el
+                        <strong>método neto</strong>:</p>
+                        <ul>
+                            <li>Entra $15.000 → no es ingreso, es una cuenta por pagar</li>
+                            <li>Sale $15.000 al acueducto → no es gasto, se cancela la cuenta</li>
+                            <li><strong>Efecto en su utilidad: cero</strong></li>
+                        </ul>
+                        <p>Si lo anota como ingreso y como gasto, sus dos números quedan inflados en
+                        $15.000 y su utilidad da igual. No es «grave» —la utilidad no cambia— pero
+                        le ensucia la producción, y si algún día ese recobro crece, le va a
+                        distorsionar todo.</p>
+                    </div>
+                </details>
+
+                <!-- 7 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">💰</span>
+                        <div>Cómo leer el «Te queda» del Panel
+                            <span class="man-sub">Y por qué no es la plata que hay en el cajón</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>El número grande del Panel del día se calcula así:</p>
+                        <div class="man-caja">Le queda = Todo lo que entró en el mes
+           − Costos fijos
+           − Honorarios que todavía debe
+           − Gastos registrados</div>
+                        <p>En el Panel puede picar <strong>«De dónde sale ese número»</strong> y le
+                        muestra la cuenta renglón por renglón, con lo que significa cada uno.</p>
+                        <p><strong>«Honorarios que todavía debe»</strong> son los de los
+                        especialistas, ya causados y sin pagar. Están en el cajón pero no son suyos.</p>
+
+                        <h4>Por qué el número de agosto bajó dos veces</h4>
+                        <p>Agosto empezó diciendo <strong>−$73.380</strong> y terminó diciendo
+                        <strong>−$1.349.800</strong>. <strong>La app no perdió plata: dejó de
+                        contar mal.</strong> Fueron dos cosas:</p>
+                        <ol>
+                            <li><strong>Aparecieron los $290.000 de Diana.</strong> Sus honorarios
+                            estaban escritos dentro de una nota de texto, donde ningún cálculo los
+                            veía. Ahora están donde deben, y esa deuda ya se ve.</li>
+                            <li><strong>Se quitó una ganancia que nunca existió ($986.420).</strong>
+                            Cuando usted saca plata de Bancolombia para tener efectivo, eso deja
+                            dos anotaciones: una salida del banco y una entrada al efectivo. La
+                            cuenta sumaba la entrada y no restaba la salida, así que la misma plata
+                            cambiada de bolsillo se veía como si la clínica hubiera ganado
+                            $986.420. Los traslados entre bolsillos ya no entran aquí.</li>
+                        </ol>
+                        <p>El alquiler y el recobro del agua sí son plata que entró de verdad, y
+                        siguen contando — entran por su lado, dentro del primer renglón.</p>
+                        <div class="man-ojo"><p>⚠️ <strong>Una advertencia sobre este número.</strong>
+                        Cuando usted pague una comisión desde la pantalla de Comisiones, «Te queda»
+                        va a <strong>subir</strong> —porque deja de estar pendiente— aunque la plata
+                        sí salió del cajón. Es confuso y viene de antes de estos cambios. Se lo digo
+                        para que no se asuste ni se confíe: <strong>para saber cuánta plata tiene,
+                        mire Caja, no «Te queda».</strong> Queda anotado para arreglarlo.</p></div>
+                    </div>
+                </details>
+
+                <!-- 8 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">❓</span>
+                        <div>Lo que falta por definir
+                            <span class="man-sub">Cinco datos que sólo usted sabe</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Estas cinco quedaron conservadoras a propósito: cuando no hay certeza, la
+                        app deja la deuda <strong>visible</strong> en vez de darla por pagada. Un
+                        error que se ve es mejor que un acierto adivinado.</p>
+                        <ol>
+                            <li><strong>Mariangel Angel (14 de agosto)</strong> — el cobro entró en
+                            <strong>$0</strong> y aun así paga <strong>$17.500</strong> de honorario.
+                            ¿Fue cortesía y Diana igual cobra, o se le olvidó ponerle el precio?</li>
+                            <li><strong>El pago del 15 de agosto ($80.000)</strong> — la nota dice
+                            «10 Pasajes consulta». ¿Fueron sólo pasajes, o ahí adentro iban también
+                            los $17.500 de Mariangel? Por ahora quedó como sólo pasajes, así que esos
+                            $17.500 le siguen figurando como deuda.</li>
+                            <li><strong>Pedro Granados (4 de agosto)</strong> — ese cobro paga a dos
+                            personas: $32.000 a Sandry y <strong>$28.000 a Diana</strong>. La app sólo
+                            tiene un campo de honorario por cobro, así que los $28.000 de Diana siguen
+                            dentro de la nota. ¿Se los pagó ya en el giro de esa semana?</li>
+                            <li><strong>Gladys Martínez</strong> — abono de $150.000 con comisión de
+                            $125.000. Eso cuadra con un tratamiento de $250.000. ¿Quedó debiendo
+                            $100.000, o la regularización alveolar ya está completa?</li>
+                            <li><strong>Sandry al 20%</strong> — ¿ese es el trato real cuando ella
+                            hace una limpieza?</li>
+                        </ol>
+                        <p>Y falta pasar a plan de tratamiento a <strong>Osmar Piso, Ismael
+                        Pertuz</strong> y los demás que han abonado. Con el botón de Reportes eso ya
+                        es rápido.</p>
+                    </div>
+                </details>
+
+                <!-- 9 ─────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">📚</span>
+                        <div>Glosario
+                            <span class="man-sub">Qué quiere decir cada palabra rara</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <div class="man-glo"><b>Abono</b> — pago parcial de un tratamiento. Baja el saldo del plan.</div>
+                        <div class="man-glo"><b>Auxilio de transporte</b> — apoyo para pasajes. No es paga por trabajo y va aparte del honorario.</div>
+                        <div class="man-glo"><b>Base implícita</b> — cuánto tendría que valer un tratamiento para que el honorario pagado dé el porcentaje pactado. Si es mayor que lo cobrado, casi siempre el paciente quedó debiendo la diferencia.</div>
+                        <div class="man-glo"><b>Carga fija</b> — el pedacito de arriendo, sueldos y servicios que le toca a cada tratamiento del mes. Los costos fijos repartidos entre los tratamientos.</div>
+                        <div class="man-glo"><b>Causación</b> — anotar algo cuando <em>ocurre</em>, no cuando se paga. El tratamiento del 25 se anota el 25, aunque le paguen en septiembre.</div>
+                        <div class="man-glo"><b>Comisión / honorario</b> — lo que se lleva el especialista. En su clínica es un % de lo cobrado (Nay 55%, Diana y Rafael 35%, Sandry 20%).</div>
+                        <div class="man-glo"><b>Costo fijo</b> — se paga haya o no pacientes. Arriendo, sueldos, luz.</div>
+                        <div class="man-glo"><b>Costo variable</b> — sube y baja con la producción. Insumos, laboratorio, honorarios.</div>
+                        <div class="man-glo"><b>Cuenta por cobrar</b> — plata que le deben. El saldo de un plan.</div>
+                        <div class="man-glo"><b>Cuenta por pagar</b> — plata que usted debe. Los $290.000 de Diana.</div>
+                        <div class="man-glo"><b>Margen bruto</b> — lo que deja un tratamiento después de restarle sus costos propios (insumos, laboratorio, honorario).</div>
+                        <div class="man-glo"><b>Margen neto</b> — el margen bruto menos la carga fija. Si sale en rojo, ese tratamiento no alcanza a pagar lo que le toca.</div>
+                        <div class="man-glo"><b>Prestaciones sociales</b> — cesantías, intereses, prima, vacaciones. Se le deben a las <strong>empleadas</strong>, no a los especialistas.</div>
+                        <div class="man-glo"><b>Producción</b> — el valor de los tratamientos hechos en el mes. No es lo que entró al cajón: incluye lo que quedó a crédito.</div>
+                        <div class="man-glo"><b>Provisión</b> — plata que se aparta hoy para algo que se debe pagar después, como la prima de diciembre.</div>
+                        <div class="man-glo"><b>Punto de equilibrio</b> — cuánto hay que producir para no perder ni ganar. El suyo: <strong>$192.308 por día</strong>.</div>
+                        <div class="man-glo"><b>Recobro</b> — plata de terceros que pasa por su cajón. El agua de Bitico. No es ingreso ni gasto.</div>
+                        <div class="man-glo"><b>Utilidad</b> — lo que sobra. Ingresos − costos − gastos.</div>
+                    </div>
+                </details>
+
             </div>
         </div>
 
@@ -1568,7 +1988,7 @@
                             <div class="fg">
                                 <label>Promedio de tratamientos al mes</label>
                                 <input type="number" class="fc" id="cfg-avgtrats" placeholder="0" min="1">
-                                <span class="hint">Número real de citas/procedimientos que hace la clínica en un mes típico — se usa para calcular el overhead por tratamiento en Rentabilidad</span>
+                                <span class="hint">Cuántas citas o procedimientos hace la clínica en un mes normal. Sirve para repartir los costos fijos entre los tratamientos y saber cuánto deja cada uno (Reportes → Rentabilidad)</span>
                             </div>
                         </div>
                     </div>
@@ -3818,6 +4238,41 @@ function abrirSeccionDe(elemento) {
     _cfgRecordar();
     try { elemento.scrollIntoView({ behavior:'smooth', block:'center' }); } catch (e) {}
     if (typeof elemento.focus === 'function') { try { elemento.focus({ preventScroll:true }); } catch (e) {} }
+}
+
+/* ── Manual contable: buscar ──────────────────────────────────────────
+   El manual se consulta con una duda concreta —«¿y los pasajes dónde
+   van?»— no se lee de corrido. Escribir la palabra deja a la vista sólo
+   las secciones que la mencionan, ya abiertas.
+
+   Se comparan las dos cadenas sin tildes: ella escribe «produccion» y
+   el texto dice «producción». Buscar literal no encontraría nada y
+   parecería que el manual no lo trae. */
+const _sinTildes = s => String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+function buscarEnManual(q) {
+    const secs = [...document.querySelectorAll('#page-manual .man-sec')];
+    const aviso = document.getElementById('man-nada');
+    const t = _sinTildes(q).trim();
+
+    if (!t) {
+        secs.forEach(s => { s.style.display = ''; s.open = false; });
+        if (aviso) aviso.style.display = 'none';
+        return;
+    }
+    /* Varias palabras = todas tienen que estar, en cualquier orden.
+       «pasajes diana» encuentra la sección aunque no vayan pegadas. */
+    const palabras = t.split(/\s+/);
+    let hallados = 0;
+    secs.forEach(s => {
+        const texto = _sinTildes(s.textContent);
+        const sirve = palabras.every(p => texto.includes(p));
+        s.style.display = sirve ? '' : 'none';
+        s.open = sirve;
+        if (sirve) hallados++;
+    });
+    if (aviso) aviso.style.display = hallados ? 'none' : 'block';
 }
 
 /* ── Configuración: guardar ── */
@@ -7403,7 +7858,10 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
     const avgTrats     = parseInt(cfg.avgTrats)||0;
     const denomTrat    = avgTrats > 0 ? avgTrats : nTrat;
     const overheadPorTrat = denomTrat>0 ? Math.round(costosFijos/denomTrat) : 0;
-    const overheadSrc  = avgTrats>0 ? `configurado (${avgTrats} tto/mes)` : `este mes (${nTrat} tto)`;
+    /* Sin paréntesis propios: quien lo usa decide si van entre paréntesis o
+       después de un punto. Traerlos puestos dejaba «(este mes (81 tto))». */
+    const overheadSrc  = avgTrats>0 ? `el número que usted configuró, ${avgTrats} al mes`
+                                    : `los ${nTrat} que lleva este mes`;
     const margenPct    = prod>0 ? Math.round(margenBruto/prod*100) : 0;
 
     // Colores semáforo
@@ -7502,9 +7960,9 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
                     <div style="font-size:11px;color:var(--muted);margin-top:4px">de cada $100 cobrado, $${margenPct} queda en la clínica antes de gastos fijos</div>
                 </div>
                 <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
-                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Overhead por tratamiento</div>
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Cada tratamiento carga con</div>
                     <div style="font-size:24px;font-weight:800;color:var(--dark)">${denomTrat>0?fmt(overheadPorTrat):'—'}</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:4px">${fmt(costosFijos)} costos fijos ÷ ${denomTrat} tto <span style="color:${avgTrats>0?'var(--success)':'var(--bronze)'}">· ${overheadSrc}</span></div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px">de arriendo, sueldos y servicios<br>${fmt(costosFijos)} de costos fijos ÷ ${denomTrat} tratamientos <span style="color:${avgTrats>0?'var(--success)':'var(--bronze)'}">· ${overheadSrc}</span></div>
                 </div>
                 <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Utilidad antes de retiro</div>
@@ -7519,7 +7977,7 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
     <div class="db-section">
         <div class="db-sec-hdr">
             <h3>🦷 ¿Cuánto te deja cada tratamiento?</h3>
-            <span style="font-size:11px;color:var(--muted)">Overhead por tto: ${fmt(overheadPorTrat)} · Margen neto = margen bruto − overhead</span>
+            <span style="font-size:11px;color:var(--muted)">Carga fija por tratamiento: ${fmt(overheadPorTrat)} · Margen neto = margen bruto − carga fija</span>
         </div>
         ${sinCosto ? `
         <div style="margin:14px 18px 0;padding:12px 14px;background:rgba(191,155,92,.10);border:1px solid rgba(191,155,92,.35);border-radius:var(--radius-sm)">
@@ -7548,13 +8006,17 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
                 <th>Comisión</th>
                 ${hasMat?'<th style="color:var(--bronze)">🧴 Materiales</th>':''}
                 <th>Margen bruto</th>
-                <th style="color:var(--muted)">Overhead</th>
+                <th style="color:var(--muted)">Carga fija</th>
                 <th>Margen neto</th>
             </tr></thead>
             <tbody>${tratRows}</tbody>
         </table></div>
         <div style="padding:10px 18px;font-size:11px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border)">
-            💡 <strong>Overhead</strong> = ${fmt(costosFijos)} costos fijos ÷ <strong>${denomTrat} tratamientos</strong> (${overheadSrc}) = <strong>${fmt(overheadPorTrat)} / tto</strong>.${avgTrats===0?' · <em>Ve a Configuración → "Promedio de tratamientos al mes" para un overhead más realista.</em>':''}
+            💡 <strong>Carga fija</strong>: el arriendo, los sueldos y los servicios se pagan haya o no pacientes,
+            así que cada tratamiento del mes carga con su pedacito. ${fmt(costosFijos)} de costos fijos
+            ÷ <strong>${denomTrat} tratamientos</strong> (${overheadSrc}) = <strong>${fmt(overheadPorTrat)} cada uno</strong>.
+            El <strong>margen neto</strong> es lo que queda después de restarla: si sale en rojo,
+            ese tratamiento no alcanza a pagar lo que le toca.${avgTrats===0?' · <em>En Configuración → «Promedio de tratamientos al mes» puede poner su número real y la cuenta queda más fiel.</em>':''}
             ${(!hasMat && !sinCosto)?' · <em>Ponle a cada tratamiento su costo de material en Catálogo → ✎ Editar, y este cuadro te dice cuánto deja de verdad.</em>':''}
         </div>`}
     </div>
@@ -11479,8 +11941,22 @@ function renderSaludMes() {
     const mesAj  = allAj.filter(a  => a.date && a.date.startsWith(mes));
 
     const prod   = mesTx.filter(t=>!t.pagoPrevio).reduce((s,t) => s + t.price, 0);
-    const alqIn  = mesAj.filter(a => a.type==='in').reduce((s,a) => s+a.amount, 0);
     const gastos = mesGx.reduce((s,gx) => s + gx.amount, 0);
+
+    /* Los ajustes de caja NO entran en esta cuenta, y antes sí entraban.
+       Sumaba las entradas y no restaba las salidas, así que un traslado de
+       un bolsillo a otro —sacar de Bancolombia para tener efectivo— aparecía
+       como ganancia pura. En agosto eso inflaba el resultado en $986.420: la
+       entrada al efectivo se sumaba y la salida del banco, que es la misma
+       plata, no se restaba nunca.
+
+       Y no es cosa de sumar también las salidas. Un ajuste de caja corrige
+       cuánto hay en un bolsillo; esta cuenta dice cuánto GANÓ el mes. Son
+       dos preguntas distintas. Lo que sí es ingreso —el alquiler, el
+       recobro del agua— ya viene por su lado dentro de la producción. */
+    const ajIn   = mesAj.filter(a => a.type==='in').reduce((s,a) => s+a.amount, 0);
+    const ajOut  = mesAj.filter(a => a.type!=='in').reduce((s,a) => s+a.amount, 0);
+    const hayAj  = (ajIn + ajOut) > 0;
     const commPend = mesTx
         .filter(t => ['pending','partial'].includes(t.commStatus))
         .reduce((s,t) => s + (t.commission - (t.commPaidAmount||0)), 0);
@@ -11490,7 +11966,7 @@ function renderSaludMes() {
                    (parseFloat(cfg.zs)||0)+(parseFloat(cfg.zt)||0)+
                    (parseFloat(cfg.ssi)||0)+(parseFloat(cfg.retiro)||0);
     const fijos  = arr + nomina;
-    const queda  = (prod + alqIn) - fijos - commPend - gastos;
+    const queda  = prod - fijos - commPend - gastos;
     const pctFij = fijos > 0 ? Math.min(100, Math.round(prod / fijos * 100)) : 0;
 
     const diasConProd = new Set(mesTx.map(t=>t.date)).size;
@@ -11499,62 +11975,141 @@ function renderSaludMes() {
     const proyeccion  = promDia * DIAS_MES;
     const puntoEq     = Math.ceil(fijos / DIAS_MES);
 
+    /* El veredicto se saca de «lo que queda», no de si la producción tapó los
+       fijos. Decían cosas distintas y salían juntos: el letrero verde
+       «¡Cubriste todos los costos fijos!» encima de un −$363.380 en rojo.
+       Los dos números eran ciertos; la frase escogía el más bonito. La que
+       manda es la de abajo, que es la que ya descontó honorarios y gastos. */
     let icon, titleColor, bg, msg;
     if (fijos === 0) {
         icon='⚙️'; titleColor='#666'; bg='#f5f5f5';
-        msg='Configura el arriendo en ⚙️ Configuración para ver tu salud real';
-    } else if (prod >= fijos) {
+        msg='Ponga el arriendo y los sueldos en ⚙️ Configuración para ver cómo va el mes de verdad';
+    } else if (queda >= 0) {
         icon='✅'; titleColor='#2e7d32'; bg='rgba(76,175,80,.07)';
-        msg='¡Cubriste todos los costos fijos del mes!';
+        msg=`El mes va en verde: ya pagando todo lo del mes, le quedan ${fmt(queda)}`;
+    } else if (prod >= fijos) {
+        icon='⚠️'; titleColor='#B8860B'; bg='rgba(184,134,11,.07)';
+        msg=`Cubrió el arriendo y los sueldos, pero entre gastos y honorarios el mes va corto por ${fmt(-queda)}`;
     } else if (proyeccion >= fijos) {
         icon='📈'; titleColor='#1565c0'; bg='rgba(33,150,243,.07)';
-        msg='Vas bien — mantén el ritmo y cierras el mes en verde';
+        msg='Todavía no cubre el arriendo y los sueldos, pero al ritmo de este mes alcanza';
     } else {
         icon='⚠️'; titleColor='#c62828'; bg='rgba(244,67,54,.06)';
-        msg='Necesitas acelerar — el ritmo actual no cubre los costos del mes';
+        msg='Al ritmo de este mes no alcanza a cubrir el arriendo y los sueldos';
     }
 
-    const mesLbl = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+    /* fmt() de un negativo escupe «$-363.380». Con el signo por delante se
+       lee como plata, no como una resta a medias. */
+    const plata = n => (n < 0 ? '−' : '') + fmt(Math.abs(n));
+
+    /* Un renglón de la cuenta: qué es, cuánto, y para qué sirve saberlo.
+       La explicación va debajo en chiquito porque es la que sobra cuando
+       uno ya sabe, pero es la que hace falta la primera vez. */
+    const renglon = (signo, etiqueta, monto, explica, color) => `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border)">
+            <span style="width:14px;flex-shrink:0;font-weight:800;font-size:14px;color:${color}">${signo}</span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:12.5px;font-weight:700;color:var(--dark)">${etiqueta}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:1px;line-height:1.45">${explica}</div>
+            </div>
+            <div style="font-size:13.5px;font-weight:800;color:${color};white-space:nowrap">${fmt(monto)}</div>
+        </div>`;
+
+    const mesLbl  = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+    /* Si la abre o la cierra, que se quede así. Va sin prefijo dg_ a
+       propósito: es una preferencia de esta pantalla, no un dato de la
+       clínica — si se sincronizara, lo que ella cierre aquí le cerraría
+       la pantalla a Sandry allá. */
+    const abierta = localStorage.getItem('dentalgest_salud_abierta') !== 'no';
+
     el.style.background   = bg;
     el.style.borderColor  = titleColor + '40';
     el.innerHTML = `
-    <div style="padding:14px 18px;border-bottom:1px solid ${titleColor}22">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:24px">${icon}</span>
-                <div>
-                    <div style="font-weight:800;font-size:13px;color:${titleColor};text-transform:uppercase;letter-spacing:.5px">Salud de la clínica — ${mesLbl}</div>
-                    <div style="font-size:12px;color:var(--muted);margin-top:2px">${msg}</div>
+    <div style="padding:16px 18px 14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-size:24px">${icon}</span>
+            <div style="flex:1;min-width:0">
+                <div style="font-weight:800;font-size:13px;color:${titleColor};text-transform:uppercase;letter-spacing:.5px">Salud de la clínica — ${mesLbl}</div>
+                <div style="font-size:12.5px;color:var(--dark);margin-top:3px;line-height:1.45">${msg}</div>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="min-width:150px">
+                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Le queda del mes</div>
+                <div style="font-size:30px;font-weight:800;line-height:1.15;color:${queda>=0?'var(--success)':'var(--danger)'}">${plata(queda)}</div>
+                <div style="font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px">
+                    ${queda >= 0
+                        ? 'Lo que sobra este mes después de pagar todo lo del mes'
+                        : 'Lo que falta este mes para alcanzar a pagar todo lo del mes'}
                 </div>
             </div>
-            <div style="display:flex;gap:18px;flex-wrap:wrap">
-                <div style="text-align:center;min-width:80px">
-                    <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Producción</div>
-                    <div style="font-size:17px;font-weight:800;color:var(--success)">${fmt(prod)}</div>
+            <div style="flex:1;min-width:190px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px">
+                    <span>Arriendo y sueldos ya cubiertos</span>
+                    <strong style="color:${titleColor}">${pctFij}%</strong>
                 </div>
-                <div style="text-align:center;min-width:80px">
-                    <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Costos fijos</div>
-                    <div style="font-size:17px;font-weight:800;color:var(--danger)">${fmt(fijos)}</div>
+                <div style="height:9px;border-radius:6px;background:rgba(0,0,0,.07);overflow:hidden">
+                    <div style="height:100%;width:${pctFij}%;border-radius:6px;background:${titleColor};transition:width .3s ease"></div>
                 </div>
-                <div style="text-align:center;min-width:70px">
-                    <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Fijos cubiertos</div>
-                    <div style="font-size:17px;font-weight:800;color:${titleColor}">${pctFij}%</div>
-                </div>
-                <div style="text-align:center;min-width:90px">
-                    <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Te queda *</div>
-                    <div style="font-size:17px;font-weight:800;color:${queda>=0?'var(--success)':'var(--danger)'}">${queda<0?'−':''}${fmt(Math.abs(queda))}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45">
+                    ${fmt(prod)} de producción contra ${fmt(fijos)} de costos fijos${prod>=fijos?' — ya está tapado':''}
                 </div>
             </div>
         </div>
     </div>
+
+    <details ${abierta?'open':''}
+             ontoggle="try{localStorage.setItem('dentalgest_salud_abierta', this.open?'si':'no')}catch(e){}"
+             style="border-top:1px solid ${titleColor}22">
+        <summary style="list-style:none;cursor:pointer;user-select:none;padding:10px 18px;font-size:12px;font-weight:700;color:${titleColor}">
+            <span class="sal-chev">▾</span> De dónde sale ese número
+        </summary>
+        <div style="padding:2px 18px 14px">
+            ${renglon('+', 'Todo lo que entró en el mes', prod,
+                'Los tratamientos hechos, hayan pagado o no, más lo que cobró de alquiler', 'var(--success)')}
+            ${renglon('−', 'Costos fijos', fijos,
+                'Arriendo y sueldos. Se pagan haya o no haya pacientes', 'var(--danger)')}
+            ${renglon('−', 'Honorarios que todavía debe', commPend,
+                commPend > 0
+                  ? 'De los especialistas, ya causados y sin pagar. Están en el cajón pero no son suyos'
+                  : 'No le debe honorarios de este mes a nadie', 'var(--danger)')}
+            ${renglon('−', 'Gastos registrados', gastos,
+                'Todo lo anotado en Gastos: insumos, servicios, laboratorio, pagos ya hechos', 'var(--danger)')}
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 0 0">
+                <span style="width:14px"></span>
+                <div style="flex:1;font-size:13px;font-weight:800;color:var(--dark)">Le queda del mes</div>
+                <div style="font-size:15px;font-weight:800;color:${queda>=0?'var(--success)':'var(--danger)'}">${plata(queda)}</div>
+            </div>
+
+            ${hayAj ? `
+            <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
+                Los <strong>ajustes de caja</strong> no entran en esta cuenta. Ellos dicen cuánto
+                hay en cada bolsillo; esta cuenta dice cuánto ganó el mes. Sacar plata de
+                Bancolombia para tener efectivo, por ejemplo, no es ganancia: es la misma plata
+                cambiada de sitio. Este mes hubo ${fmt(ajIn)} de entrada y ${fmt(ajOut)} de
+                salida en ajustes — puede verlos en <strong>Caja</strong>.
+            </div>` : ''}
+
+            <div style="margin-top:12px;background:rgba(184,134,11,.09);border-left:3px solid var(--warning);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;color:var(--dark)">
+                ⚠️ <strong>Este no es el dinero que hay en el cajón.</strong> Cuando le pague
+                un honorario a un especialista, este número va a <strong>subir</strong> —porque
+                deja de estar pendiente— aunque la plata sí salió. Para saber cuánto tiene de
+                verdad, mire <strong>Caja</strong>.
+                <a onclick="navigate('manual')" style="cursor:pointer;color:var(--bronze);font-weight:700;text-decoration:underline">Leerlo completo en el Manual →</a>
+            </div>
+        </div>
+    </details>
+
     ${diasConProd > 0 ? `
-    <div style="padding:9px 18px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)">
-        <span>📅 <strong>${diasConProd}</strong> días con producción · promedio <strong>${fmt(promDia)}/día</strong></span>
-        <span>📊 Proyección al mes: <strong style="color:${proyeccion>=fijos?'var(--success)':'#e65100'}">${fmt(proyeccion)}</strong>${proyeccion<fijos?' ⬇ por debajo del punto de equilibrio':' ✓'}</span>
-        ${fijos>0?`<span>🎯 Necesitas mínimo: <strong>${fmt(puntoEq)}/día</strong> para no perder dinero</span>`:''}
+    <div style="padding:10px 18px;border-top:1px solid ${titleColor}22;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted);line-height:1.5">
+        <span>📅 <strong>${diasConProd}</strong> días con pacientes · promedio <strong>${fmt(promDia)}</strong> por día</span>
+        <span>📊 Si sigue a este ritmo, el mes cierra en
+            <strong style="color:${proyeccion>=fijos?'var(--success)':'#e65100'}">${fmt(proyeccion)}</strong>
+            ${proyeccion<fijos?' — por debajo de lo que cuesta tener abierto':' — alcanza para los costos fijos'}</span>
+        ${fijos>0?`<span>🎯 Con <strong>${fmt(puntoEq)}</strong> al día no pierde ni gana (${fmt(fijos)} ÷ ${DIAS_MES} días)</span>`:''}
     </div>
-    ` : `<div style="padding:10px 18px;font-size:12px;color:var(--muted)">Sin producción registrada este mes todavía.</div>`}
-    <div style="padding:4px 18px 8px;font-size:10px;color:var(--muted)">* Lo que queda = Producción + Alquileres − Costos fijos − Comisiones pendientes − Gastos registrados</div>`;
+    ` : `<div style="padding:10px 18px;border-top:1px solid ${titleColor}22;font-size:12px;color:var(--muted)">Sin producción registrada este mes todavía.</div>`}`;
 }
 
 function dashNav(dir) {

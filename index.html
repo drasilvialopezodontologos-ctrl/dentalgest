@@ -1637,6 +1637,38 @@ Saldo           $200.000</div>
                         igual aunque usted no abra el consultorio.</p>
                         <p>Van en la misma bolsa de ingresos, pero <strong>contados aparte</strong>.</p>
 
+                        <h4>Cobros y salidas: no todo lo anotado ahí entró</h4>
+                        <p>En la pantalla de Consultorio #2 hay dos clases de renglón, y
+                        confundirlas fue un error real de agosto:</p>
+                        <ul>
+                            <li><strong>Cobro</strong> — plata que <em>entró</em> por alquilar
+                            el consultorio.</li>
+                            <li><strong>Salida</strong> — plata de ese alquiler que se
+                            <em>usó</em> para pagar algo.</li>
+                        </ul>
+                        <p>El renglón «Completar instalación de aire acondicionado» por $210.000
+                        estaba anotado como si fuera un cobro más. La pantalla decía que en agosto
+                        se cobraron <strong>$910.000</strong> de alquiler cuando entraron
+                        <strong>$700.000</strong>. Los $210.000 no entraron: salieron.</p>
+                        <div class="man-caja">Cobrado           $700.000
+Menos 1 salida   −$210.000
+─────────────────────────
+Quedó             $490.000</div>
+                        <p>Para cambiar un renglón se pica el botón
+                        <strong>↓ salida</strong> / <strong>↑ cobro</strong> que está al lado de
+                        la ✕. Se puede ir y volver las veces que quiera.</p>
+                        <p><strong>Ojo con la tentación de restar el uno del otro.</strong> Una
+                        salida <strong>no cambia la utilidad del mes</strong>, ni un peso. El
+                        alquiler entra completo por Ingresos y el aire acondicionado sale completo
+                        por Gastos: son dos hechos distintos y cada uno tiene su puerta. Si se
+                        netearan, desaparecerían los dos y usted dejaría de ver tanto lo que
+                        alquiló como lo que gastó. Ese renglón está ahí sólo para poder seguirle
+                        el rastro a la plata.</p>
+                        <p>El de julio es lo contrario y por eso se dejó como estaba: los $290.000
+                        de «Recaudo Julio» <strong>sí entraron</strong> — se cobraron precisamente
+                        para poder hacer un pago con ellos. Entró y después salió; la entrada es
+                        real.</p>
+
                         <h4>El agua de Bitico ($15.000)</h4>
                         <p>Este es distinto y es el que más se presta a error. Usted recibe $15.000
                         de otro local para pagar entre todos el recibo del agua.</p>
@@ -3005,7 +3037,7 @@ Saldo           $200.000</div>
                     </div>
                     <div class="metric-card mc-balance">
                         <span class="metric-icon">💵</span>
-                        <div class="metric-label">Ingreso bruto (mes)</div>
+                        <div class="metric-label">Cobrado (mes)</div>
                         <div class="metric-val" id="alq-income"></div>
                         <div class="metric-sub" id="alq-income-sub"></div>
                     </div>
@@ -3085,7 +3117,7 @@ Saldo           $200.000</div>
                     <div class="db-section">
                         <div class="db-sec-hdr">
                             <h3>📋 Historial</h3>
-                            <select class="form-input" id="alq-mes-filter" style="padding:4px 8px;font-size:11px;width:auto;height:auto" onchange="renderAlquilerList()"></select>
+                            <select class="form-input" id="alq-mes-filter" style="padding:4px 8px;font-size:11px;width:auto;height:auto" onchange="renderAlquilerMetrics();renderAlquilerList()"></select>
                         </div>
                         <div id="alq-list"></div>
                     </div>
@@ -3705,6 +3737,7 @@ async function _dgArrancarConSesion() {
     ponerAlDiaElCatalogo();
     ponerAlDiaLasEmpleadas();
     ponerAlDiaLosHonorarios();
+    migrarSalidasDelAlquiler();
     if (caja) caja.style.opacity = '1';
     loadConfig();
 
@@ -8423,6 +8456,30 @@ function ponerAlDiaLosHonorarios() {
                 `${sueltos} renglones de pasaje reclasificados`);
 }
 
+/* Silvia lo vio mirando la pantalla: «completar el aire acondicionado está
+   sumando, y es que ese egreso salió de allí». Tenía razón — esa fila no es
+   un cobro del alquiler, es plata del alquiler que se fue a pagar el aire.
+   Hacía que agosto dijera $910.000 cobrados cuando entraron $700.000.
+
+   Corre una sola vez y deja su marca, porque de aquí en adelante el tipo de
+   fila se cambia con un botón en la pantalla y no quiero que una corrida
+   posterior le deshaga lo que ella decida. Y va estrecha a propósito: sólo
+   filas importadas, sin horas, con «aire acondicionado» en el nombre. No es
+   un clasificador automático; es este caso, que ella misma me señaló. */
+function migrarSalidasDelAlquiler() {
+    if (localStorage.getItem('dentalgest_mig_alq_salidas')) return;
+    const list = DB.get('alq') || [];
+    let n = 0;
+    list.forEach(r => {
+        if (r.tipo || !r.imported || r.hours) return;
+        if (!/aire\s*acondicionado/i.test(_sinTildes(r.tenant || ''))) return;
+        r.tipo = 'salida'; n++;
+    });
+    if (n) { DB.set('alq', list);
+             console.log(`[alquiler] ${n} fila(s) pasaron de cobro a salida`); }
+    localStorage.setItem('dentalgest_mig_alq_salidas', '1');
+}
+
 function ponerAlDiaLasEmpleadas() {
     const guardadas = DB.get('empleadas');
     if (guardadas && Object.keys(guardadas).length) return;
@@ -9519,25 +9576,127 @@ function saveAlquiler() {
     const list = DB.get('alq') || [];
     list.push(rec);
     DB.set('alq', list);
-    const alqDesc = `Alquiler consultorio #2 — ${tenant}`;
-    addCajaMov(rec.payMethod, 'in', total, alqDesc, rec.date, rec.id);
+    /* El alquiler entra por Ingresos, igual que un tratamiento, y de ahí sale
+       solo hacia Caja y hacia la utilidad del mes. Antes esta pantalla sólo
+       dejaba un ajuste de caja: la plata aparecía en el cajón y NO en «le
+       queda del mes». Probado antes de arreglarlo — registrar $80.000 de
+       alquiler movía Caja y dejaba la utilidad clavada en −$3.129.250. Es el
+       mismo agujero de los honorarios guardados como ajustes, por la otra
+       puerta. Agosto cuadra porque la importación sí los metió en Ingresos.
+
+       Va como 'owner': la clínica se lo queda entero, no lleva honorario. */
+    DB.set('tx', (DB.get('tx')||[]).concat([{
+        id: 'tx' + Date.now(), alqId: rec.id, date: rec.date,
+        patient: `Recaudo Alquiler — ${tenant}`,
+        docId: 'silvia', docName: (getDoctores().silvia||{}).name || 'Dra. Silvia López',
+        treatId: '', treatName: 'Alquiler consultorio #2',
+        labCost: 0, matCost: 0, notes: rec.notes,
+        price: total, payMethod: rec.payMethod,
+        commission: 0, commLabel: 'Alquiler — no lleva honorario',
+        commStatus: 'owner', commPaidAmount: 0,
+        createdAt: Date.now()
+    }]));
     sv('alq-hrs',''); sv('alq-steril',''); sv('alq-notes','');
     g('alq-preview').textContent = '$0';
     initAlquiler();
     toast('✅ Alquiler registrado','success');
 }
 
+/* ── Cobros y salidas del alquiler ──────────────────────────────────────
+   Una fila de esta pantalla puede ser dos cosas muy distintas: plata que
+   ENTRÓ por alquilar el consultorio, o plata de ese mismo alquiler que se
+   usó para pagar algo. Se estaban sumando juntas. Agosto decía $910.000
+   cobrados cuando entraron $700.000: los $210.000 que se fueron a
+   completar el aire acondicionado estaban anotados como si fueran un
+   cobro más.
+
+   OJO con la tentación de netear. El gasto NO se resta del ingreso en la
+   cuenta del mes: el alquiler entra completo por Ingresos y el aire sale
+   completo por Gastos. Restar uno del otro escondería los dos. Esta
+   pantalla sólo muestra por dónde se fue la plata, para poder seguirla;
+   no cambia la utilidad ni un peso. */
+const esSalidaAlq = r => r.tipo === 'salida';
+
+/* ¿Dónde vive la plata de una fila de alquiler? Depende de cuándo se
+   registró, y por eso estas dos funciones buscan en los dos sitios en vez
+   de suponer uno:
+
+     · las filas nuevas dejan su ingreso en Ingresos      → tx con alqId
+     · las viejas dejaban sólo un ajuste de caja          → aj con sourceId
+     · las importadas de agosto no dejan ninguno de los dos: su ingreso
+       entró por la importación, sin quedar amarrado a la fila
+
+   Ninguna adivina ni recalcula: quitarPlata se lleva lo que encuentre y
+   devuelve exactamente esos registros, y reponerPlata vuelve a meter esos
+   mismos. Reponer «lo que debería haber» inventaba plata — marcar y
+   desmarcar una fila importada le metía al banco $290.000 que nunca
+   entraron. Se repone lo que se quitó, o no se repone nada. */
+function _quitarPlataAlq(rec) {
+    const txs = DB.get('tx') || [], ajs = DB.get('aj') || [];
+    const guardado = {
+        tx: txs.filter(t => t.alqId === rec.id),
+        aj: ajs.filter(e => e.sourceId === rec.id)
+    };
+    if (guardado.tx.length) DB.set('tx', txs.filter(t => t.alqId    !== rec.id));
+    if (guardado.aj.length) DB.set('aj', ajs.filter(e => e.sourceId !== rec.id));
+    return guardado;
+}
+
+function _reponerPlataAlq(guardado) {
+    if (!guardado) return;
+    if (guardado.tx && guardado.tx.length) DB.set('tx', (DB.get('tx')||[]).concat(guardado.tx));
+    if (guardado.aj && guardado.aj.length) DB.set('aj', (DB.get('aj')||[]).concat(guardado.aj));
+}
+
+function toggleAlqTipo(id) {
+    const list = DB.get('alq') || [];
+    const rec  = list.find(r => r.id === id);
+    if (!rec) return;
+    rec.tipo = esSalidaAlq(rec) ? 'cobro' : 'salida';
+
+    /* Una salida no es un ingreso: es un apunte de a dónde se fue una plata
+       que ya tiene sus dos registros propios —el ingreso donde entró y el
+       gasto en Gastos—. Si además dejara su propio ingreso, la misma plata
+       se contaría dos veces. Así que al marcarla se le quita el suyo, y se
+       guarda tal cual por si ella se arrepiente. */
+    if (esSalidaAlq(rec)) {
+        const guardado = _quitarPlataAlq(rec);
+        if (guardado.tx.length || guardado.aj.length) rec.plataGuardada = guardado;
+    } else if (rec.plataGuardada) {
+        _reponerPlataAlq(rec.plataGuardada);
+        delete rec.plataGuardada;
+    }
+    DB.set('alq', list);
+
+    renderAlquilerMetrics(); renderAlquilerList();
+    toast(esSalidaAlq(rec)
+        ? '↓ Salida: deja de sumar como cobro. El gasto en sí va registrado en Gastos.'
+        : '↑ Cobro: vuelve a sumar al alquiler del mes.');
+}
+
 function renderAlquilerMetrics() {
-    const cfg = DB.get('config') || DEFAULTS;
+    const cfg  = DB.get('config') || DEFAULTS;
     const rate = parseFloat(cfg.alq) || 40000;
-    const mes  = todayISO().slice(0,7);
+    /* El mes lo manda el filtro, no el calendario. Antes estas tres
+       tarjetas iban siempre al mes de hoy mientras la tabla de abajo
+       mostraba el mes escogido: se podía estar viendo julio en la lista
+       con los totales de agosto encima. */
+    const mes  = g('alq-mes-filter')?.value || todayISO().slice(0,7);
     const all  = (DB.get('alq')||[]).filter(r=>r.date.startsWith(mes));
-    const totalHrs    = all.reduce((s,r)=>s+r.hours,0);
-    const totalIncome = all.reduce((s,r)=>s+r.total,0);
+    const cobros  = all.filter(r=>!esSalidaAlq(r));
+    const salidas = all.filter(esSalidaAlq);
+    const totalHrs = cobros.reduce((s,r)=>s+r.hours,0);
+    const totalCob = cobros.reduce((s,r)=>s+r.total,0);
+    const totalSal = salidas.reduce((s,r)=>s+r.total,0);
+
     g('alq-hours').textContent    = totalHrs.toLocaleString('es-CO') + 'h';
-    g('alq-hours-sub').textContent = all.length + ' registro' + (all.length!==1?'s':'') + ' este mes';
-    g('alq-income').textContent   = fmt(totalIncome);
-    g('alq-income-sub').textContent = all.length > 0 ? `Promedio ${fmt(Math.round(totalIncome/all.length))} por registro` : 'Sin registros este mes';
+    g('alq-hours-sub').textContent = cobros.length + ' cobro' + (cobros.length!==1?'s':'')
+        + (salidas.length ? ` · ${salidas.length} salida${salidas.length!==1?'s':''}` : '');
+    g('alq-income').textContent   = fmt(totalCob);
+    g('alq-income-sub').textContent = !all.length ? 'Sin registros este mes'
+        : totalSal > 0
+            ? `De aquí salieron ${fmt(totalSal)} para otros pagos · quedaron ${fmt(totalCob - totalSal)}`
+            : (cobros.length ? `Promedio ${fmt(Math.round(totalCob/cobros.length))} por cobro` : 'Sin cobros este mes');
     g('alq-rate').textContent     = fmt(rate);
 }
 
@@ -9549,27 +9708,49 @@ function renderAlquilerList() {
 
     const rows = [...all].reverse().map(r => {
         const d   = new Date(r.date+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});
-        const time= new Date(r.createdAt).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
-        return `<tr>
+        const sal = esSalidaAlq(r);
+        return `<tr${sal?' style="background:rgba(160,57,62,.04)"':''}>
             <td style="color:var(--muted);white-space:nowrap">${d}</td>
-            <td style="font-size:11px">${eh(r.tenant)}</td>
-            <td style="text-align:center">${r.hours}h</td>
+            <td style="font-size:11px">${sal?'<span style="color:var(--danger);font-weight:700">↓ salida · </span>':''}${eh(r.tenant)}</td>
+            <td style="text-align:center">${sal?'—':r.hours+'h'}</td>
             <td><span class="pm-badge ${GX_PM_CLS[r.payMethod]||'pm-ef'}">${GX_PM_LBL[r.payMethod]||r.payMethod}</span></td>
-            <td style="font-weight:700;color:var(--success);font-variant-numeric:tabular-nums">${fmt(r.total)}</td>
-            <td><button style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit" onclick="deleteAlquiler('${r.id}')">✕</button></td>
+            <td style="font-weight:700;color:${sal?'var(--danger)':'var(--success)'};font-variant-numeric:tabular-nums">${sal?'−':''}${fmt(r.total)}</td>
+            <td style="white-space:nowrap">
+                <button title="${sal?'Volverlo a marcar como un cobro del alquiler':'No fue un cobro: esta plata salió del alquiler para pagar algo'}"
+                    style="background:var(--bg);color:var(--muted);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit;margin-right:4px"
+                    onclick="toggleAlqTipo('${r.id}')">${sal?'↑ cobro':'↓ salida'}</button>
+                <button style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit" onclick="deleteAlquiler('${r.id}')">✕</button>
+            </td>
         </tr>`;
     }).join('');
-    const totalHrs = all.reduce((s,r)=>s+r.hours,0);
-    const totalInc = all.reduce((s,r)=>s+r.total,0);
+    const cobros   = all.filter(r=>!esSalidaAlq(r));
+    const salidas  = all.filter(esSalidaAlq);
+    const totalHrs = cobros.reduce((s,r)=>s+r.hours,0);
+    const totalCob = cobros.reduce((s,r)=>s+r.total,0);
+    const totalSal = salidas.reduce((s,r)=>s+r.total,0);
+    const pie = salidas.length ? `<tr style="background:var(--bg)">
+            <td colspan="2" style="padding:9px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Menos ${salidas.length} salida${salidas.length!==1?'s':''}</td>
+            <td colspan="3" style="padding:9px 14px;font-weight:800;color:var(--danger);font-variant-numeric:tabular-nums">−${fmt(totalSal)}</td><td></td>
+        </tr>
+        <tr style="background:var(--bg)">
+            <td colspan="2" style="padding:9px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Quedó del alquiler</td>
+            <td colspan="3" style="padding:9px 14px;font-weight:800;font-variant-numeric:tabular-nums">${fmt(totalCob-totalSal)}</td><td></td>
+        </tr>` : '';
     el.innerHTML = `<div style="overflow-x:auto"><table class="db-compact-table">
         <thead><tr><th>Fecha</th><th>Arrendatario</th><th>Horas</th><th>Método</th><th>Total</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr style="background:var(--bg)">
-            <td colspan="2" style="padding:9px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">${all.length} registro${all.length!==1?'s':''} · ${totalHrs}h</td>
-            <td colspan="3" style="padding:9px 14px;font-weight:800;color:var(--success);font-variant-numeric:tabular-nums">${fmt(totalInc)}</td>
+            <td colspan="2" style="padding:9px 14px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">${cobros.length} cobro${cobros.length!==1?'s':''} · ${totalHrs}h</td>
+            <td colspan="3" style="padding:9px 14px;font-weight:800;color:var(--success);font-variant-numeric:tabular-nums">${fmt(totalCob)}</td>
             <td></td>
-        </tr></tfoot>
+        </tr>${pie}</tfoot>
     </table></div>`;
+    if (salidas.length) el.insertAdjacentHTML('beforeend',
+        `<p style="margin:10px 2px 0;font-size:11px;color:var(--muted);line-height:1.55">
+            Las <strong style="color:var(--danger)">salidas</strong> son plata del alquiler que se usó para pagar
+            algo. Se muestran aquí para poder seguirle el rastro, pero <strong>no cambian la utilidad del mes</strong>:
+            el alquiler entra completo por Ingresos y el gasto sale completo por Gastos. Restar el uno del otro
+            escondería los dos.</p>`);
 }
 
 function deleteAlquiler(id) {
@@ -9578,11 +9759,18 @@ function deleteAlquiler(id) {
     if (!rec) return;
     showDeleteModal(
         'Anular alquiler',
-        `${rec.tenant} — ${rec.hours}h — ${fmt(rec.total)}\nSe revertirá el ingreso de caja.`,
+        `${rec.tenant} — ${esSalidaAlq(rec)?fmt(rec.total)+' (salida)':rec.hours+'h — '+fmt(rec.total)}\n` +
+        (esSalidaAlq(rec)
+            ? 'Es una salida: no suma como cobro, así que no se mueve ninguna plata.'
+            : 'Se revertirá el ingreso y su movimiento de caja.'),
         (motivo) => {
             logAnulacion('alq','Alquiler',rec,motivo);
             DB.set('alq', alqs.filter(r=>r.id!==id));
-            DB.set('aj', (DB.get('aj')||[]).filter(e=>e.sourceId!==id));
+            /* Se lleva el ingreso viva donde viva —Ingresos o ajuste de
+               caja—. Antes sólo borraba el ajuste: al anular un alquiler
+               registrado desde esta pantalla, la plata se quedaba dentro de
+               la producción del mes sin fila que la respaldara. */
+            _quitarPlataAlq(rec);
             renderAlquilerMetrics(); renderAlquilerList();
             toast('Alquiler anulado — caja actualizada');
         }

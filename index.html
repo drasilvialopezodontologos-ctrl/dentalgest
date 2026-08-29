@@ -3082,6 +3082,67 @@ Devolver no es gastar.</strong></div>
                             </div>
                             <div id="cfg-compartido-aviso" class="alert alert-info" style="margin-top:14px;font-size:13px"></div>
                         </div>
+
+                        <!-- El candado del servidor. Esto NO es de este equipo:
+                             es de la clínica entera, y se pone una sola vez. -->
+                        <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:20px">
+                            <h4 style="margin:0 0 4px;font-size:15px">🔒 El candado del servidor</h4>
+                            <p style="margin:0 0 14px;color:var(--muted);font-size:13px">
+                                Decide si alguien puede leer sus datos <strong>sin</strong> poner correo y contraseña.
+                                Se pone una sola vez y vale para todos los equipos.
+                            </p>
+
+                            <button type="button" class="eq-add" style="margin-bottom:14px"
+                                    onclick="probarCandado()">🔎 Comprobar si el candado está puesto</button>
+                            <div id="cfg-candado-estado" class="alert alert-info" style="font-size:13px">
+                                Apriete el botón y la app le pregunta al servidor.
+                            </div>
+
+                            <details style="margin-top:16px">
+                                <summary style="cursor:pointer;font-size:14px;font-weight:600;padding:6px 0">
+                                    Cómo ponerlo (3 pasos)
+                                </summary>
+                                <div style="font-size:13px;line-height:1.65;padding:10px 0 0">
+                                    <p style="margin:0 0 10px">
+                                        <strong>1.</strong> Antes de nada, haga un respaldo: arriba, en
+                                        <strong>Backup y restauración</strong>. Guarde el archivo.
+                                    </p>
+                                    <p style="margin:0 0 10px">
+                                        <strong>2.</strong> En Supabase entre a <strong>Authentication → Users</strong>.
+                                        Tiene que aparecer su correo. <strong>Si esa lista está vacía, no siga:</strong>
+                                        cree primero el usuario ahí, o se queda por fuera de su propia app.
+                                    </p>
+                                    <p style="margin:0 0 10px">
+                                        <strong>3.</strong> En Supabase entre a <strong>SQL Editor</strong>,
+                                        pegue esto y dele <strong>Run</strong>:
+                                    </p>
+                                    <pre id="cfg-candado-sql" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;font-size:12px;line-height:1.5;margin:0 0 10px">alter table public.data enable row level security;
+
+create policy "solo con cuenta"
+  on public.data
+  for all
+  to authenticated
+  using (true)
+  with check (true);</pre>
+                                    <button type="button" class="eq-add" style="margin-bottom:14px"
+                                            onclick="copiarSqlCandado()">📋 Copiar esto</button>
+                                    <p style="margin:0 0 10px">
+                                        Vuelva aquí y apriete <strong>Comprobar</strong>. Debe decirle que quedó puesto.
+                                    </p>
+                                    <div class="alert alert-warn" style="font-size:13px;margin:0">
+                                        ⚠️ Los dos pedazos van <strong>juntos</strong>, en la misma pegada.
+                                        El primero cierra la puerta y el segundo le da la llave a usted.
+                                        Si corre sólo el primero, la app se abre pero deja de guardar
+                                        en el servidor, y no se ve venir.
+                                    </div>
+                                    <p style="margin:12px 0 0;color:var(--muted)">
+                                        Para quitarlo, si algo sale mal:
+                                        <code>alter table public.data disable row level security;</code>
+                                        — el candado decide quién puede leer, no borra nada.
+                                    </p>
+                                </div>
+                            </details>
+                        </div>
                     </div>
                 </div>
 
@@ -4689,6 +4750,21 @@ const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const _sb = supabase.createClient(_SB_URL, _SB_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, storageKey: 'dg_sesion' }
 });
+/* ── El probador del candado ───────────────────────────────────────────────
+   Éste NO lleva sesión: es un cliente aparte, con la llave pública y nada más.
+   Sirve para preguntarle al servidor lo mismo que le preguntaría un extraño
+   que copiara la llave del código —que está a la vista de cualquiera— y
+   tratara de leer los datos de la clínica.
+
+   Si contesta con las filas, el candado NO está puesto.
+   Si contesta vacío o dice que no, el candado está puesto.
+
+   Sin esto, comprobar el candado obligaba a abrir una ventana de incógnito y
+   fiarse de lo que pasara. Así ella aprieta un botón y la app se lo dice. */
+const _sbAnon = supabase.createClient(_SB_URL, _SB_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+});
+
 let _dgCache = null;
 let _dgSyncing = false;
 
@@ -4699,13 +4775,28 @@ let _dgSyncing = false;
 let _dgOnline    = null;   // null = sin comprobar · true = servidor · false = sólo local
 let _dgLastError = '';
 
+/* «No hay internet» y «el servidor no me deja» se veían iguales en pantalla, y
+   no son lo mismo ni de lejos. Sin internet se espera y vuelve solo; sin
+   permiso puede pasar un día entero guardando en el aire.
+
+   Pasa de verdad al poner el candado (RLS) en Supabase: si la tabla queda
+   cerrada sin la política que deja entrar a quien tiene cuenta, el servidor no
+   contesta con un error de red — contesta «cero filas» y rechaza cada
+   escritura. La app seguiría abriéndose con la copia de este equipo y ella
+   creería que es el internet. Por eso el aviso ahora dice cuál de las dos es. */
+let _dgSinPermiso = false;
+
 function _dgSetOnline(ok, err) {
     const cambio = _dgOnline !== ok;
     _dgOnline = ok;
+    _dgSinPermiso = !ok && !!err && _dgEsErrorDeSesion(err);
     _dgLastError = err ? (err.message || String(err)) : '';
     renderSyncBadge();
     if (cambio && ok === false && document.getElementById('toastArea')) {
-        toast('⚠️ Sin conexión con el servidor — los datos se guardan sólo en este equipo', 'error');
+        toast(_dgSinPermiso
+            ? '🔒 El servidor está respondiendo, pero NO deja guardar. No es el internet: es un permiso. Avísele a quien le maneja la app antes de seguir trabajando.'
+            : '⚠️ Sin conexión con el servidor — los datos se guardan sólo en este equipo',
+            'error', _dgSinPermiso ? 12000 : undefined);
     }
 }
 
@@ -4715,6 +4806,8 @@ function renderSyncBadge() {
     const el = document.getElementById('sync-badge');
     if (!el) return;
     const modo = _dgOnline === true  ? { t:'🟢 Sincronizado',    c:'var(--success,#5E8C6A)', d:'Los cambios se comparten entre equipos.' }
+               : _dgOnline === false && _dgSinPermiso
+                                    ? { t:'🔒 Sin permiso',      c:'var(--danger,#A0393E)',  d:'El servidor contesta pero NO deja guardar. No es el internet — es un permiso del servidor.' }
                : _dgOnline === false ? { t:'🔴 Sólo este equipo', c:'var(--danger,#A0393E)',  d:'Sin servidor: los datos NO se comparten. Haz copias de seguridad.' }
                :                       { t:'⏳ Comprobando…',     c:'var(--muted,#8A7878)',   d:'' };
     el.innerHTML = `<span style="color:${modo.c};font-weight:600">${modo.t}</span>`
@@ -7055,6 +7148,69 @@ function pintarEquipoCompartido() {
               'entra solo y no lo vuelve a pedir. Está bien si el equipo es de una sola persona; ' +
               'préndalo si lo usa más de una o si está a la vista de los pacientes.';
     }
+}
+
+/* ── El candado del servidor ───────────────────────────────────────────────
+   Pregunta al servidor si un desconocido podría leer los datos de la clínica,
+   y lo dice en castellano. Se puede apretar las veces que quiera: sólo lee,
+   no escribe nada, y no toca la sesión de ella. */
+async function probarCandado() {
+    const caja = g('cfg-candado-estado');
+    if (!caja) return;
+    caja.className = 'alert alert-info';
+    caja.innerHTML = '⏳ Preguntándole al servidor…';
+
+    let filas = null, error = null;
+    try {
+        const r = await _sbAnon.from('data').select('key').limit(1);
+        filas = r.data; error = r.error;
+    } catch (e) { error = e; }
+
+    /* Sin internet no se puede concluir nada: decirlo, en vez de dar por
+       bueno un candado que a lo mejor no está. */
+    const esRed = error && !_dgEsErrorDeSesion(error);
+    if (esRed) {
+        caja.className = 'alert alert-warn';
+        caja.innerHTML = '📡 <strong>No se pudo comprobar.</strong> No hay conexión con el servidor ' +
+                         'en este momento. Inténtelo cuando vuelva el internet.';
+        return;
+    }
+
+    const abierto = Array.isArray(filas) && filas.length > 0;
+    if (abierto) {
+        caja.className = 'alert alert-warn';
+        caja.innerHTML =
+            '🔓 <strong>El candado NO está puesto.</strong> Ahora mismo, cualquiera que copie ' +
+            'la dirección de la app puede leer sus datos sin poner correo ni contraseña.' +
+            '<div style="margin-top:8px">Para ponerlo, use el botón de abajo y siga los tres pasos.</div>';
+    } else {
+        caja.className = 'alert alert-info';
+        caja.innerHTML =
+            '🔒 <strong>El candado está puesto.</strong> El servidor no le entrega nada a quien ' +
+            'no haya entrado con su correo y su contraseña. Sus datos están cerrados.';
+    }
+}
+
+/* El SQL que ella pega en Supabase. Va aquí, en un solo lugar, para que sea
+   el mismo que digo en el chat y no haya versiones sueltas dando vueltas.
+   Los dos van JUNTOS a propósito: prender el candado sin poner la llave deja
+   el servidor contestando «cero filas» sin dar error, y la app seguiría
+   abriéndose con la copia local sin guardar nada arriba. */
+const _SQL_CANDADO =
+`alter table public.data enable row level security;
+
+create policy "solo con cuenta"
+  on public.data
+  for all
+  to authenticated
+  using (true)
+  with check (true);`;
+
+function copiarSqlCandado() {
+    navigator.clipboard.writeText(_SQL_CANDADO).then(
+        () => toast('📋 Copiado. Péguelo en el SQL Editor de Supabase y dele Run.', '', 8000),
+        () => toast('No se pudo copiar solo. Selecciónelo con el mouse y cópielo.', 'error', 7000)
+    );
 }
 
 function guardarEquipoCompartido() {

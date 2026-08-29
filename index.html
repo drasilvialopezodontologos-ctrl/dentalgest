@@ -3219,6 +3219,10 @@ create policy "solo con cuenta"
                 </div>
                 <!-- Panel salud del mes -->
                 <div id="db-salud" style="margin-bottom:20px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border)"></div>
+                <!-- Lo que le deben. Vive aquí, en la pantalla que ella abre todos
+                     los días, porque una deuda que hay que ir a buscar se pierde.
+                     Si no debe nadie, no se pinta nada y no estorba. -->
+                <div id="db-cartera" style="margin-bottom:20px"></div>
 
                 <!-- Los cuatro del día van dentro de una sección con título para
                      que también se puedan cerrar. La sección no pinta tarjeta
@@ -3338,10 +3342,14 @@ create policy "solo con cuenta"
                                         <div class="pac-wrap">
                                             <input type="text" class="fc" id="rx-patient" placeholder="Nombre del paciente"
                                                 autocomplete="off"
-                                                oninput="rxPacInput('rx-patient','rx-pac-drop')"
+                                                oninput="rxPacInput('rx-patient','rx-pac-drop');rxAvisoDeuda()"
                                                 onblur="setTimeout(()=>hideRxPacDrop('rx-pac-drop'),160)">
                                             <div id="rx-pac-drop" class="pac-drop"></div>
                                         </div>
+                                        <!-- El único momento en que la deuda se puede cobrar de
+                                             verdad es cuando el paciente está sentado en el sillón.
+                                             Por eso salta aquí, al escribir el nombre. -->
+                                        <div id="rx-deuda-alerta" style="display:none;margin-top:7px"></div>
                                     </div>
                                     <div class="fg">
                                         <label>Fecha</label>
@@ -8341,6 +8349,39 @@ function selectRxPac(inputId, dropId, name) {
     sv(inputId, name);
     const drop = g(dropId);
     if (drop) drop.style.display = 'none';
+    if (inputId === 'rx-patient') rxAvisoDeuda();
+}
+
+/* ── «Este paciente ya debía» ───────────────────────────────────────────────
+   Una deuda anotada no sirve de nada si el paciente vuelve, se atiende, paga
+   lo del día y se va. Ese es el único momento en que la plata se puede
+   recuperar. Así que en cuanto ella escribe el nombre, la deuda salta aquí
+   —antes del precio, antes de la forma de pago—.
+
+   Sólo avisa: no bloquea nada ni cambia el cobro del día. Ella decide si le
+   cobra ahora o no.                                                         */
+function rxAvisoDeuda() {
+    const el = g('rx-deuda-alerta');
+    if (!el) return;
+    const nombre = comoSeEscribe(nombreDelPaciente((gv('rx-patient') || '').trim()) || '');
+    if (nombre.length < 3) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+    const deudas = carteraPendiente().filter(d => comoSeEscribe(d.plan.patient || '') === nombre);
+    if (!deudas.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+    const total = deudas.reduce((s, d) => s + d.debe, 0);
+    const det   = deudas.map(d =>
+        `${eh(d.plan.treatDesc || 'tratamiento')} — <strong>${fmt(d.debe)}</strong>` +
+        (d.dias ? ` <span style="opacity:.75">(hace ${d.dias} día${d.dias!==1?'s':''})</span>` : '')
+    ).join('<br>');
+
+    el.innerHTML =
+        `<div style="background:rgba(160,57,62,.08);border:1.5px solid rgba(160,57,62,.35);border-radius:10px;padding:10px 12px">
+            <div style="font-size:12.5px;font-weight:800;color:var(--danger);margin-bottom:3px">⚠️ Ya debía ${fmt(total)}</div>
+            <div style="font-size:11.5px;color:var(--dark);line-height:1.5">${det}</div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:5px">Está aquí ahora — es el momento de cobrarle. El abono se registra en <strong>Planes de tto.</strong>, no en este formulario.</div>
+        </div>`;
+    el.style.display = '';
 }
 
 function hideRxPacDrop(dropId) {
@@ -9009,17 +9050,33 @@ function toggleRxSaldo() {
     icon.style.display      = _rxSaldoActive ? '' : 'none';
     fields.style.display    = _rxSaldoActive ? '' : 'none';
     if (_rxSaldoActive) {
-        g('rxc-abono').value = '';
-        g('rxc-saldo-display').textContent = fmt(_rxPrecioTotal);
+        g('rxc-deuda').value = '';
+        calcRxSaldo();
+        setTimeout(() => g('rxc-deuda').focus(), 60);
     }
 }
 
+/* El precio de arriba es lo que ENTRÓ hoy; la deuda se suma, no se resta.
+   El tratamiento completo es la suma de los dos, y así se guarda en el plan. */
 function calcRxSaldo() {
-    const abono = parseFloat(g('rxc-abono').value) || 0;
-    const saldo = Math.max(0, _rxPrecioTotal - abono);
+    const deuda = parseFloat(g('rxc-deuda').value) || 0;
+    const total = _rxPrecioTotal + deuda;
     const el    = g('rxc-saldo-display');
-    el.textContent  = fmt(saldo);
-    el.style.color  = saldo > 0 ? 'var(--bronze)' : 'var(--success)';
+    el.textContent = fmt(total);
+    el.style.color = deuda > 0 ? 'var(--bronze)' : 'var(--muted)';
+    const hint = g('rxc-saldo-hint');
+    if (!hint) return;
+    if (deuda > 0) {
+        hint.style.color = 'var(--muted)';
+        hint.innerHTML = `Entraron <strong>${fmt(_rxPrecioTotal)}</strong> y quedan debiendo ` +
+            `<strong style="color:var(--bronze)">${fmt(deuda)}</strong>. Se crea el plan de pago solo, ` +
+            `y la comisión del saldo se causa el día que lo paguen — no hoy.`;
+    } else {
+        /* Escribir cero aquí era la falla vieja: se guardaba sin plan y en
+           silencio. Ahora se ve el aviso antes de confirmar. */
+        hint.style.color = 'var(--danger)';
+        hint.innerHTML = '⚠️ Escribe cuánto quedó debiendo. Si no debe nada, desmarca la casilla.';
+    }
 }
 
 /* seguirConOtro = true cuando ella usa «Guardar y agregar otro tratamiento».
@@ -9031,9 +9088,17 @@ function confirmSaveRx(seguirConOtro) {
     _rxPending.forEach(tx => { if (notaConf) tx.notes = notaConf; });
 
     const crearPlan  = _rxSaldoActive;
-    const abonoHoy   = parseFloat(g('rxc-abono').value) || 0;
-    const totalTto   = _rxPrecioTotal;
-    const saldo      = crearPlan ? Math.max(0, totalTto - abonoHoy) : 0;
+    /* «Precio cobrado» es lo que entró hoy y la casilla pregunta la deuda
+       aparte: el tratamiento completo es la suma. Antes se pedía al revés y
+       la deuda salía cero sin avisar (así se perdió la de Hugo López). */
+    const deudaHoy   = parseFloat(g('rxc-deuda').value) || 0;
+    const abonoHoy   = _rxPrecioTotal;
+    const totalTto   = _rxPrecioTotal + (crearPlan ? deudaHoy : 0);
+    const saldo      = crearPlan ? deudaHoy : 0;
+    if (crearPlan && deudaHoy <= 0) {
+        toast('Escribe cuánto quedó debiendo, o desmarca «saldo pendiente»', 'error');
+        return;   // no se guarda a medias: se corrige y se vuelve a confirmar
+    }
 
     /* ── Lo que se guarda es lo que entró, no el valor del tratamiento ──────
        Antes, al marcar «saldo pendiente», la app metía a la caja el valor
@@ -9209,6 +9274,7 @@ function resetRxOtroTratamiento() {
 function resetRxForm() {
     _rxVisita = null;   // formulario limpio de verdad: la visita se cierra
     sv('rx-doc',''); sv('rx-patient',''); sv('rx-date',todayISO());
+    rxAvisoDeuda();     // se fue el nombre, se va el aviso de su deuda
     sv('rx-price',''); sv('rx-lab',''); sv('rx-mancomm',''); sv('rx-matcost',''); sv('rx-notes',''); sv('rx-override-comm','');
     sv('rx-tooth',''); if(g('rx-diagnosis')) g('rx-diagnosis').value='';
     _rxCatalogPrice = 0; _rxDescType = 'pct';
@@ -14901,6 +14967,7 @@ function confirmarQuedoDebiendo() {
     list.push(plan);
     DB.set('planes', list);
     cerrarQuedoDebiendo();
+    if (g('db-cartera')) renderCartera();   // si lo anotó desde el Panel, que se actualice
     openPatientHistory(t.patient);   // se repinta con el plan ya puesto
     toast(`✅ ${t.patient} debe ${fmt(debe)} — ya quedó en Planes`, 'success');
 }
@@ -16601,8 +16668,113 @@ function dashNav(dir) {
 
 function dashGoToday() { dashDate = todayISO(); renderDashboard(); }
 
+/* ══ LO QUE LE DEBEN ═══════════════════════════════════════════════════════
+   Son DOS cosas distintas y mezclarlas sería mentirle:
+
+   · Cartera: deudas ANOTADAS, con su plan. Plata suya que está afuera. Se
+     cobra.
+   · Sospechosos: cobros donde el honorario del especialista no cuadra con lo
+     que entró. Casi siempre falta plata, pero también puede ser un descuento
+     que ella hizo. Se REVISA, no se cobra.
+
+   Y nunca se suman al resultado del mes. El mes se mide con la plata que
+   entró —es la que paga el arriendo—; esto es aparte. El día que se sumen,
+   la app le dice que tiene plata que no tiene.                             */
+function _diasDesde(iso) {
+    if (!iso) return 0;
+    return Math.max(0, Math.round((Date.now() - new Date(iso + 'T12:00:00')) / 86400000));
+}
+
+function carteraPendiente() {
+    return (DB.get('planes') || [])
+        .filter(p => p.status !== 'cancelled' && p.status !== 'anulado')
+        .map(p => {
+            const pagado = (p.abonos || []).reduce((s, a) => s + (a.amount || 0), 0);
+            const debe   = (p.totalAgreed || 0) - pagado;
+            return debe > 0 ? { plan: p, debe, pagado, dias: _diasDesde(p.date) } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.dias - a.dias);
+}
+
+/* La pista es el honorario: si a la especialista se le pagó el 35% de
+   $530.000 pero sólo entraron $330.000, faltan $200.000. No es infalible
+   —cuando la comisión vino importada de la hoja no se calculó como
+   porcentaje— y por eso esto dice «revisar», nunca «cobrar». */
+function cobrosSospechosos() {
+    const tx     = DB.get('tx') || [];
+    const conPlan = new Set((DB.get('planes') || []).map(p => p.origenTx).filter(Boolean));
+    const out = [];
+    tx.forEach(t => {
+        if (t.splitChild || t.fromPlan || t.type === 'saldo' || t.pagoPrevio) return;
+        if (conPlan.has(t.id) || t.commStatus === 'owner') return;
+        if (!(t.commission > 0)) return;
+        const pct = pctComision(t.docId);
+        if (!pct) return;
+        const base   = Math.round(t.commission / pct);
+        const pagado = _pagadoDeLaVenida(t);
+        const falta  = base - pagado;
+        if (falta >= 10000) out.push({ tx: t, falta, base, pagado, dias: _diasDesde(t.date) });
+    });
+    return out.sort((a, b) => b.dias - a.dias);
+}
+
+function renderCartera() {
+    const el = g('db-cartera');
+    if (!el) return;
+    const deudas = carteraPendiente();
+    const dudas  = cobrosSospechosos();
+    if (!deudas.length && !dudas.length) { el.innerHTML = ''; return; }
+
+    /* Una deuda de ocho días se cobra; una de noventa casi nunca. El número
+       de días es lo que le dice a quién llamar primero. */
+    const colorDias = d => d >= 45 ? 'var(--danger)' : (d >= 15 ? 'var(--bronze)' : 'var(--muted)');
+    const lblDias   = d => d === 0 ? 'hoy' : ('hace ' + d + ' día' + (d !== 1 ? 's' : ''));
+
+    const totalDeuda = deudas.reduce((s, d) => s + d.debe, 0);
+    let html = `<div style="border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden">`;
+
+    if (deudas.length) {
+        html += `<div style="padding:13px 16px;background:rgba(180,140,90,.10);border-bottom:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <span style="font-size:12px;font-weight:800;color:var(--bronze);text-transform:uppercase;letter-spacing:.5px">💰 Le deben</span>
+                <span style="font-size:20px;font-weight:800;color:var(--bronze)">${fmt(totalDeuda)}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${deudas.length} paciente${deudas.length!==1?'s':''} · esta plata no está contada en el resultado del mes</div>
+        </div>`;
+        html += deudas.map(d => `
+            <div onclick="openPatientHistory('${eh(String(d.plan.patient)).replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${eh(d.plan.patient)}</div>
+                    <div style="font-size:11px;color:${colorDias(d.dias)}">${eh(d.plan.treatDesc||'')} · ${lblDias(d.dias)}</div>
+                </div>
+                <div style="font-size:14px;font-weight:800;color:var(--bronze);white-space:nowrap">${fmt(d.debe)}</div>
+            </div>`).join('');
+    }
+
+    if (dudas.length) {
+        html += `<div style="padding:11px 16px;background:rgba(90,130,180,.08);border-bottom:1px solid var(--border)">
+            <div style="font-size:12px;font-weight:800;color:#4A6FA5;text-transform:uppercase;letter-spacing:.5px">🔎 ${dudas.length} cobro${dudas.length!==1?'s':''} para revisar</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">El honorario del especialista no cuadra con lo que entró. Puede que falte plata — o que usted haya hecho un descuento.</div>
+        </div>`;
+        html += dudas.map(d => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${eh(d.tx.patient)}</div>
+                    <div style="font-size:11px;color:${colorDias(d.dias)}">Entraron ${fmt(d.pagado)} de ${fmt(d.base)} · ${lblDias(d.dias)}</div>
+                </div>
+                <div style="font-size:13px;font-weight:800;color:#4A6FA5;white-space:nowrap">${fmt(d.falta)}</div>
+                <button onclick="abrirQuedoDebiendo('${eh(d.tx.id)}')" style="background:var(--bronze);color:white;border:none;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Anotar</button>
+            </div>`).join('');
+    }
+
+    html += `</div>`;
+    el.innerHTML = html;
+}
+
 function renderDashboard() {
     renderSaludMes();
+    renderCartera();
     const cfg   = DB.get('config') || DEFAULTS;
     const allTx = DB.get('tx') || [];
     const allGx = DB.get('gx') || [];
@@ -18473,18 +18645,26 @@ function confirmExtracto() {
                 </div>
                 <span style="font-size:13px;font-weight:600;color:var(--dark)">El paciente quedó con saldo pendiente</span>
             </div>
+            <!-- Antes esta casilla pedía «Recibido hoy» y restaba del precio de
+                 arriba. Eso obligaba a escribir arriba el tratamiento COMPLETO,
+                 aunque el letrero dijera «Precio cobrado» — y si ella escribía
+                 en los dos campos lo que el paciente le entregó, la deuda daba
+                 cero y el plan no se creaba, sin avisar. Así se perdió la deuda
+                 de Hugo López. Ahora se pregunta la deuda directo: el precio de
+                 arriba sigue siendo lo que entró, que es lo que dice el letrero,
+                 y nadie tiene que restar de cabeza. -->
             <div id="rxc-saldo-fields" style="display:none;margin-top:8px;padding:12px 14px;background:rgba(242,209,203,.18);border-radius:10px;border:1.5px dashed #C0959F">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
                     <div>
-                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Recibido hoy</label>
-                        <div class="inp-pre"><span class="pre-lbl">$</span><input type="number" id="rxc-abono" class="fc" oninput="calcRxSaldo()" placeholder="0" min="0"></div>
+                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">¿Cuánto quedó debiendo?</label>
+                        <div class="inp-pre"><span class="pre-lbl">$</span><input type="number" id="rxc-deuda" class="fc" oninput="calcRxSaldo()" placeholder="0" min="0"></div>
                     </div>
                     <div>
-                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Queda debiendo</label>
+                        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Tratamiento completo</label>
                         <div id="rxc-saldo-display" style="font-size:22px;font-weight:800;color:var(--bronze);line-height:1.3">$0</div>
                     </div>
                 </div>
-                <p style="font-size:11px;color:var(--muted);margin:8px 0 0">Se creará un plan de pago automáticamente en el módulo de Planes.</p>
+                <p id="rxc-saldo-hint" style="font-size:11px;color:var(--muted);margin:8px 0 0"></p>
             </div>
         </div>
         <div style="display:flex;gap:10px">

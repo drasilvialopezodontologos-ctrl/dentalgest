@@ -456,6 +456,55 @@
         .man-glo:last-child { border-bottom:none; }
         .man-glo b { color:var(--bronze); }
 
+        /* El manual quedó en dos partes: cómo se usa la app, y cómo se llevan
+           las cuentas. Este renglón separa una de otra. */
+        .man-grupo { margin:22px 0 12px; padding:0 2px; }
+        .man-grupo:first-of-type { margin-top:4px; }
+        .man-grupo b { display:block; font-size:11px; font-weight:800; color:var(--bronze);
+                       text-transform:uppercase; letter-spacing:1.1px; }
+        .man-grupo span { display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+
+        /* ── «Pantallazos» ────────────────────────────────────────────────
+           No son fotos: son la pantalla dibujada con el mismo estilo de la
+           app. Una foto de verdad pesaría casi tanto como la app entera, se
+           vería borrosa en el teléfono, y sobre todo quedaría vieja el día
+           que cambie un precio. Estos se llenan con SUS registros de verdad
+           cada vez que abre el manual (ver initManual). */
+        .man-shot { border:1px solid var(--border); border-radius:12px; overflow:hidden;
+                    margin:0 0 6px; background:var(--white); box-shadow:var(--shadow-sm); }
+        .man-shot-top { display:flex; align-items:center; gap:5px; padding:7px 12px;
+                        background:var(--bg); border-bottom:1px solid var(--border); }
+        .man-shot-top i { width:7px; height:7px; border-radius:50%; background:var(--border); }
+        .man-shot-top b { font-size:10px; font-weight:800; color:var(--muted); margin-left:7px;
+                          text-transform:uppercase; letter-spacing:.7px; }
+        .man-shot-body { padding:13px 14px; font-size:12px; line-height:1.5; color:var(--dark); }
+        .man-pie { font-size:11.5px; color:var(--muted); margin:0 0 15px; padding-left:2px; }
+        .ms-lbl { display:block; font-size:9.5px; font-weight:800; color:var(--muted);
+                  text-transform:uppercase; letter-spacing:.6px; margin-bottom:3px; }
+        .ms-inp { border:1.5px solid var(--border); border-radius:8px; padding:6px 9px;
+                  font-size:12px; background:var(--white); margin-bottom:9px;
+                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ms-inp.gris { color:var(--muted); }
+        .ms-inp.foco { border-color:var(--bronze); box-shadow:0 0 0 3px rgba(153,119,113,.13); }
+        .ms-fila { display:flex; gap:9px; flex-wrap:wrap; }
+        .ms-fila > div { flex:1; min-width:118px; }
+        .ms-btn { display:inline-block; border-radius:8px; padding:6px 13px;
+                  font-size:11.5px; font-weight:700; }
+        .ms-btn.pri { background:var(--bronze); color:#fff; }
+        .ms-btn.gho { background:var(--white); border:1.5px solid var(--border); color:var(--muted); }
+        .ms-chip { display:inline-block; border:1.5px solid var(--border); border-radius:9px;
+                   padding:5px 10px; font-size:11.5px; font-weight:600; margin:0 5px 5px 0; }
+        .ms-chip.on { border-color:var(--bronze); background:rgba(153,119,113,.1); color:var(--bronze); }
+        .ms-tot { display:flex; justify-content:space-between; align-items:center;
+                  padding:6px 0; border-top:1px solid var(--border); font-size:12px; }
+        .ms-tot b { font-weight:800; }
+        .ms-menu { display:flex; align-items:center; gap:9px; padding:6px 9px;
+                   border-radius:8px; font-size:12px; font-weight:600; }
+        .ms-menu.on { background:rgba(153,119,113,.12); color:var(--bronze); }
+        .ms-grupo { font-size:9.5px; font-weight:800; color:var(--muted); letter-spacing:1px;
+                    text-transform:uppercase; margin:11px 0 5px 9px; }
+        .ms-grupo:first-child { margin-top:0; }
+
         /* Salud de la clínica: la cuenta de dónde sale «le queda» se pliega.
            Sin esto Safari y Chrome le pintan un triangulito negro al lado
            del 🧮 y se ven dos flechas donde debería haber una. */
@@ -800,6 +849,20 @@
         .cat-row:hover { background:rgba(242,209,203,.07); }
         .cat-row.editing { background:rgba(242,209,203,.14); }
         .fc-sm { padding:6px 9px !important; font-size:12px !important; }
+        /* El «padding» de arriba lleva !important, así que le ganaba hasta al
+           estilo escrito en la propia casilla: el hueco que .inp-pre le deja al
+           «$» quedaba en 9px y el número se montaba encima del signo. Aquí se le
+           devuelve el hueco, en la medida de una casilla chica. */
+        .inp-pre .fc-sm { padding-left:22px !important; }
+        .inp-suf .fc-sm { padding-right:24px !important; }
+        /* Y con el hueco puesto ya no cabía el número: la casilla mide lo mismo
+           que la celda de sólo lectura, que sólo tiene que mostrar el texto. Al
+           editar se le baja el margen a la celda y se le pone medida mínima a la
+           casilla, para que quepa un precio de siete cifras. */
+        .cat-row.editing td { padding-left:7px; padding-right:7px; }
+        .cat-row.editing .inp-pre .fc-sm { min-width:94px; }
+        .cat-row.editing .inp-suf .fc-sm { min-width:74px; }
+        .cat-row.editing input[type="text"].fc-sm { min-width:200px; }
         .price-cell { font-weight:700; color:var(--dark); font-variant-numeric:tabular-nums; }
         .lab-badge {
             font-size:11px; background:rgba(94,140,106,.1); color:var(--success);
@@ -996,6 +1059,33 @@
         .db-sec-hdr h3 { font-size:13px; font-weight:700; color:var(--dark); }
         .db-sec-lnk { font-size:11px; color:var(--bronze); font-weight:600; cursor:pointer; }
         .db-sec-lnk:hover { color:var(--purp); }
+
+        /* ── Secciones que se pliegan ──────────────────────────────────────
+           Las pantallas largas obligaban a bajar mucho para llegar al final.
+           Tocando el título, la sección se cierra y queda sólo su renglón. */
+        .db-sec-hdr.pleg-hdr { cursor:pointer; user-select:none; gap:10px; }
+        .db-sec-hdr.pleg-hdr h3 { margin-right:auto; }
+        .db-sec-hdr.pleg-hdr:hover { background:rgba(0,0,0,.02); }
+        .pleg-chev { font-size:11px; color:var(--muted); transition:transform .18s ease; flex-shrink:0; }
+        .db-section.pleg-cerrada > *:not(.db-sec-hdr) { display:none; }
+        .db-section.pleg-cerrada .db-sec-hdr { border-bottom:none; }
+        .db-section.pleg-cerrada .pleg-chev { transform:rotate(-90deg); }
+        /* Sección plegable cuyo contenido ya trae sus propias tarjetas: sólo
+           aporta el renglón del título, sin pintar una caja encima de otra. */
+        .db-section.pleg-suelta { background:transparent; box-shadow:none; overflow:visible; }
+        .db-section.pleg-suelta > .db-sec-hdr {
+            background:var(--white); border-radius:var(--radius);
+            box-shadow:var(--shadow-sm); border-bottom:none; margin-bottom:12px;
+        }
+        .db-section.pleg-suelta.pleg-cerrada > .db-sec-hdr { margin-bottom:0; }
+        /* Botonera «abrir todo / cerrar todo» de cada pantalla */
+        .pleg-barra { display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px; }
+        .pleg-barra button {
+            font-family:inherit; font-size:11px; font-weight:600; color:var(--muted);
+            background:var(--white); border:1px solid var(--border);
+            border-radius:99px; padding:5px 13px; cursor:pointer;
+        }
+        .pleg-barra button:hover { color:var(--dark); border-color:var(--bronze); }
 
         .doc-prod-list { padding:4px 0; }
         .doc-prod-row  { display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid rgba(229,213,207,.4); }
@@ -1301,18 +1391,10 @@
         <div class="login-label" id="loginCargando">Abriendo tu consultorio…</div>
 
         <div class="login-label">¿Quién ingresa?</div>
-        <div class="user-grid">
-            <div class="user-btn selected" id="btnSilvia" onclick="selectUser('silvia')">
-                <span class="u-emoji">👩‍⚕️</span>
-                <div class="u-name">Dra. Silvia</div>
-                <div class="u-role">Administradora</div>
-            </div>
-            <div class="user-btn" id="btnSandry" onclick="selectUser('sandry')">
-                <span class="u-emoji">💼</span>
-                <div class="u-name">Sandry</div>
-                <div class="u-role">Administrativa</div>
-            </div>
-        </div>
+        <!-- Los botones salen de la lista de Configuración → Acceso y seguridad.
+             Estaban escritos aquí, fijos, y por eso no había manera de darle
+             entrada a nadie más sin tocar el código. -->
+        <div class="user-grid" id="loginUsuarios"></div>
 
         <div class="login-label">PIN de acceso</div>
         <div class="pin-row">
@@ -1417,7 +1499,7 @@
                 <span class="ni-icon">⚙️</span><span class="ni-lbl">Configuración</span>
             </div>
             <div class="nav-item" data-page="manual" onclick="navigate('manual')">
-                <span class="ni-icon">📖</span><span class="ni-lbl">Manual contable</span>
+                <span class="ni-icon">📖</span><span class="ni-lbl">Manual</span>
             </div>
         </nav>
 
@@ -1452,8 +1534,8 @@
         <div id="page-manual" class="hidden">
             <div class="page-header">
                 <div class="ph-left">
-                    <h1>📖 Manual contable</h1>
-                    <p>Cómo se llevan las cuentas de la clínica, y dónde va cada cosa en la app</p>
+                    <h1>📖 Manual</h1>
+                    <p>Cómo se usa la app, y cómo se llevan las cuentas de la clínica</p>
                 </div>
             </div>
             <div class="page-content">
@@ -1461,17 +1543,629 @@
                 <div class="alert alert-info" style="margin-bottom:14px">
                     💡 No hay que leerlo de corrido. Busque lo que necesita, o toque
                     el título de una sección para abrirla. Cada una se entiende sola.
+                    <strong>La parte 1 enseña a usar la app; la parte 2 explica los números.</strong>
                 </div>
 
                 <div class="man-buscar">
                     <span class="man-lupa">🔍</span>
                     <input type="text" id="man-q" oninput="buscarEnManual(this.value)"
-                           placeholder="Buscar… por ejemplo: pasajes, Diana, prima, saldo, punto de equilibrio">
+                           placeholder="Buscar… por ejemplo: registrar, gasto, PIN, comisión, saldo, punto de equilibrio">
                 </div>
                 <div class="man-nada" id="man-nada">
                     No encontré esa palabra en el manual. Pruebe con otra,
                     o borre la búsqueda para ver todas las secciones.
                 </div>
+
+                <div class="man-grupo"><b>Parte 1 · Cómo se usa la app</b>
+                    <span>El recorrido completo, pantalla por pantalla. Para Sandry.</span></div>
+
+                <!-- A1 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🚪</span>
+                        <div>Lo primero que ve al abrir la app
+                            <span class="man-sub">Las dos puertas: la contraseña y el PIN</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>La app se abre desde el navegador del celular o del computador, en la
+                        dirección de siempre. No hay nada que instalar.</p>
+
+                        <h4>Puerta 1 — el correo y la contraseña</h4>
+                        <p>Sólo la pide <strong>una vez en cada equipo</strong>. Es la que de verdad
+                        protege los datos: sin ella el servidor no entrega nada. Si el equipo es de
+                        la clínica, la Dra. Silvia la escribe una vez y ya no vuelve a aparecer.</p>
+
+                        <h4>Puerta 2 — quién ingresa, y el PIN</h4>
+                        <p>Esta sí sale cada vez. Toque su nombre y escriba sus <strong>cuatro
+                        números</strong>. El PIN no es una contraseña: sirve para que quede claro
+                        quién está usando la app y para que no quede abierta si alguien coge el
+                        celular. Cada persona tiene el suyo.</p>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>Entrar</b></div>
+                            <div class="man-shot-body" style="text-align:center">
+                                <div style="font-size:26px">🦷</div>
+                                <div style="font-weight:800;font-size:15px;color:var(--dark)">DentalGest</div>
+                                <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Consultorio Dra. Silvia López · Santa Marta</div>
+                                <span class="ms-lbl">¿Quién ingresa?</span>
+                                <div style="margin-bottom:11px" id="ms-login-users">
+                                    <span class="ms-chip on">👤 —</span>
+                                </div>
+                                <span class="ms-lbl">PIN de acceso</span>
+                                <div style="display:flex;justify-content:center;gap:7px;margin-bottom:12px">
+                                    <span class="ms-inp" style="width:30px;margin:0;text-align:center">•</span>
+                                    <span class="ms-inp" style="width:30px;margin:0;text-align:center">•</span>
+                                    <span class="ms-inp" style="width:30px;margin:0;text-align:center">•</span>
+                                    <span class="ms-inp" style="width:30px;margin:0;text-align:center">•</span>
+                                </div>
+                                <span class="ms-btn pri">Ingresar →</span>
+                            </div>
+                        </div>
+                        <p class="man-pie">Los nombres de arriba salen de
+                        ⚙️&nbsp;Configuración → Acceso y seguridad. Ahí se agrega gente y se
+                        cambian los PIN.</p>
+
+                        <div class="man-ojo"><p>⚠️ <strong>El PIN no se le presta a nadie.</strong>
+                        Si Zury entra con el PIN de Sandry, todo lo que anote va a quedar a nombre
+                        de Sandry, y el día que haya que revisar un error no se va a saber quién
+                        lo hizo. Cada una entra con el suyo.</p></div>
+
+                        <h4>Y después</h4>
+                        <p>Cae directo en el <strong>🏠 Panel del día</strong>, que es el tablero
+                        principal. De ahí se llega a todo lo demás por el menú de la izquierda
+                        —en el celular, por el botón <strong>☰</strong> de arriba.</p>
+                        <p>Para salir: al final del menú está <strong>⬅️ Cerrar sesión</strong>.
+                        Eso pide el PIN otra vez, pero no borra el equipo. Sólo si toca
+                        «Salir de esta cuenta en este equipo» vuelve a pedir la contraseña.</p>
+                    </div>
+                </details>
+
+                <!-- A2 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🗺️</span>
+                        <div>El menú: qué hay en cada módulo
+                            <span class="man-sub">Los diecisiete botones, explicados en una línea</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>El menú está agrupado por lo que uno va a hacer, no por orden
+                        alfabético. De arriba abajo:</p>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>Menú</b></div>
+                            <div class="man-shot-body" style="max-width:230px">
+                                <div class="ms-grupo">Principal</div>
+                                <div class="ms-menu on">🏠 Panel del día</div>
+                                <div class="ms-grupo">Registro</div>
+                                <div class="ms-menu">➕ Nuevo registro</div>
+                                <div class="ms-menu">🦷 Controles del mes</div>
+                                <div class="ms-menu">🔍 Historial pacientes</div>
+                                <div class="ms-menu">📋 Planes de tto.</div>
+                                <div class="ms-menu">💸 Gastos</div>
+                                <div class="ms-menu">📅 Gastos fijos</div>
+                                <div class="ms-grupo">Finanzas</div>
+                                <div class="ms-menu">🏦 Caja</div>
+                                <div class="ms-menu">💰 Comisiones</div>
+                                <div class="ms-menu">👥 Nómina</div>
+                                <div class="ms-menu">🏢 Consultorio #2</div>
+                                <div class="ms-grupo">Herramientas</div>
+                                <div class="ms-menu">📑 Catálogo</div>
+                                <div class="ms-menu">📅 Cierre de mes</div>
+                                <div class="ms-menu">📊 Reportes</div>
+                                <div class="ms-menu">🗂️ Anulaciones</div>
+                                <div class="ms-menu">⚙️ Configuración</div>
+                                <div class="ms-menu">📖 Manual</div>
+                            </div>
+                        </div>
+
+                        <h4>Los del día a día</h4>
+                        <table>
+                            <tr><th>Módulo</th><th>Para qué</th></tr>
+                            <tr><td>🏠 <strong>Panel del día</strong></td><td>Cómo va el mes y cómo va hoy. Lo primero que se ve.</td></tr>
+                            <tr><td>➕ <strong>Nuevo registro</strong></td><td>Anotar el tratamiento que se acaba de hacer y cobrar.</td></tr>
+                            <tr><td>💸 <strong>Gastos</strong></td><td>Anotar la plata que sale: laboratorio, insumos, servicios.</td></tr>
+                            <tr><td>🏦 <strong>Caja</strong></td><td>Contar el efectivo al cerrar y ver cuánta plata hay en cada bolsillo.</td></tr>
+                            <tr><td>🔍 <strong>Historial pacientes</strong></td><td>Buscar a un paciente y ver todo lo que se le ha hecho y cobrado.</td></tr>
+                        </table>
+
+                        <h4>Los de cada tanto</h4>
+                        <table>
+                            <tr><th>Módulo</th><th>Para qué</th></tr>
+                            <tr><td>🦷 <strong>Controles del mes</strong></td><td>Los pacientes de ortodoncia que toca ver este mes.</td></tr>
+                            <tr><td>📋 <strong>Planes de tto.</strong></td><td>Tratamientos largos que se van pagando por partes. Ahí vive la deuda del paciente.</td></tr>
+                            <tr><td>📅 <strong>Gastos fijos</strong></td><td>Lo que se paga todos los meses igual. Se revisa, no se anota a diario.</td></tr>
+                            <tr><td>💰 <strong>Comisiones</strong></td><td>Cuánto se le debe a cada especialista y marcar cuando ya se le pagó.</td></tr>
+                            <tr><td>👥 <strong>Nómina</strong></td><td>Las quincenas de las empleadas y lo que se les va provisionando.</td></tr>
+                            <tr><td>🏢 <strong>Consultorio #2</strong></td><td>Lo que cobra por alquilar el otro consultorio por horas.</td></tr>
+                        </table>
+
+                        <h4>Los que casi no se tocan</h4>
+                        <table>
+                            <tr><th>Módulo</th><th>Para qué</th></tr>
+                            <tr><td>📑 <strong>Catálogo</strong></td><td>La lista de tratamientos con su precio, su material y su porcentaje.</td></tr>
+                            <tr><td>📅 <strong>Cierre de mes</strong></td><td>Cerrar el mes cuando ya no se va a anotar más nada.</td></tr>
+                            <tr><td>📊 <strong>Reportes</strong></td><td>Los números del mes con gráficas, para mirar con calma.</td></tr>
+                            <tr><td>🗂️ <strong>Anulaciones</strong></td><td>Todo lo que se anuló, con el motivo. Nada se borra: se anula.</td></tr>
+                            <tr><td>⚙️ <strong>Configuración</strong></td><td>Los doctores, las empleadas, el arriendo, los porcentajes, los PIN.</td></tr>
+                        </table>
+
+                        <div class="man-tip"><p><strong>Regla corta:</strong> si entró plata,
+                        va en <strong>➕ Nuevo registro</strong>. Si salió plata, va en
+                        <strong>💸 Gastos</strong>. Casi todo el día se resuelve con esos dos.</p></div>
+                    </div>
+                </details>
+
+                <!-- A3 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🏠</span>
+                        <div>El Panel del día, renglón por renglón
+                            <span class="man-sub">Qué está mirando cuando abre la app</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>El Panel arranca con lo importante arriba y lo demás cerrado, para que
+                        quepa en una pantalla del celular sin bajar.</p>
+
+                        <h4>1. La franja de arriba: cómo va el mes</h4>
+                        <p>Dice <strong>«LE QUEDA DEL MES»</strong> con un número grande. Si está en
+                        rojo con signo menos, el mes todavía no alcanza a pagarse solo. Debajo hay
+                        una barra que se va llenando: es lo que ha producido contra lo que cuesta
+                        el mes.</p>
+                        <p>Tocando <strong>«De dónde sale ese número»</strong> se abre la cuenta
+                        completa, renglón por renglón, con lo que significa cada uno. Ahí no hay
+                        nada que adivinar.</p>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>Panel del día</b></div>
+                            <div class="man-shot-body">
+                                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px">
+                                    <span>◀</span><span id="ms-pan-fecha">—</span><span>▶</span>
+                                </div>
+                                <span class="ms-lbl">Le queda del mes</span>
+                                <div id="ms-pan-queda" style="font-size:21px;font-weight:800;color:var(--dark)">—</div>
+                                <div style="height:7px;border-radius:99px;background:var(--bg);margin:8px 0 5px;overflow:hidden">
+                                    <div id="ms-pan-barra" style="height:100%;width:0%;background:var(--bronze)"></div>
+                                </div>
+                                <div id="ms-pan-sub" style="font-size:11px;color:var(--muted);margin-bottom:11px">—</div>
+                                <div class="ms-menu" style="background:var(--bg);margin-bottom:11px">🧮 De dónde sale ese número ▸</div>
+                                <div class="ms-menu" style="background:var(--bg);margin-bottom:6px">📊 Los números del día ▸</div>
+                                <div class="ms-menu" style="background:var(--bg);margin-bottom:6px">👩‍⚕️ Producción por doctor ▸</div>
+                                <div class="ms-menu" style="background:var(--bg);margin-bottom:6px">🏦 Saldos de caja ▸</div>
+                                <div class="ms-menu" style="background:var(--bg);margin-bottom:6px">🦷 Tratamientos del día ▸</div>
+                                <div class="ms-menu" style="background:var(--bg)">💸 Gastos del día ▸</div>
+                            </div>
+                        </div>
+                        <p class="man-pie">Los números de este dibujo son los suyos de hoy: se
+                        actualizan solos cada vez que abre el manual.</p>
+
+                        <h4>2. Las franjas cerradas</h4>
+                        <p>Cada una se abre tocando su título, y <strong>se queda como usted la
+                        deje</strong>: la app se acuerda. Lo que hay dentro:</p>
+                        <ul>
+                            <li><strong>📊 Los números del día</strong> — lo que se produjo hoy, los
+                            honorarios de hoy, lo que entró al cajón y cuántos pacientes.</li>
+                            <li><strong>👩‍⚕️ Producción por doctor</strong> — cuánto hizo cada uno.</li>
+                            <li><strong>🏦 Saldos de caja</strong> — cuánta plata hay en efectivo, en
+                            Bancolombia y en el datáfono.</li>
+                            <li><strong>🦷 Tratamientos del día</strong> — la lista de lo que se anotó hoy.</li>
+                            <li><strong>💸 Gastos del día</strong> — la lista de lo que salió hoy.</li>
+                        </ul>
+                        <p>Arriba a la derecha están <strong>«Abrir todo»</strong> y
+                        <strong>«Cerrar todo»</strong>, por si quiere verlo completo de una vez.</p>
+
+                        <h4>3. Las flechas de la fecha</h4>
+                        <p>Los triangulitos ◀ ▶ de arriba mueven el día. Sirven para revisar lo de
+                        ayer sin cambiarle nada. <strong>Cambiar el día aquí no cambia la fecha de
+                        lo que anote después</strong>: esa se escoge en cada formulario.</p>
+
+                        <div class="man-ojo"><p>💡 <strong>«Le queda del mes» y «Caja» son números
+                        distintos, y los dos están bien.</strong> El primero dice si el mes dio o no
+                        dio. El segundo dice cuánta plata hay hoy. Están explicados en la parte 2 de
+                        este manual.</p></div>
+                    </div>
+                </details>
+
+                <!-- A4 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🦷</span>
+                        <div>Desde que llega el paciente hasta que queda registrado
+                            <span class="man-sub">El recorrido completo, con un ejemplo de verdad</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Ésta es la operación que más se repite en el día. Se anota
+                        <strong>cuando el paciente ya se atendió y ya pagó</strong>, no antes.</p>
+
+                        <h4>Paso a paso</h4>
+                        <ol>
+                            <li>Menú → <strong>➕ Nuevo registro</strong>.</li>
+                            <li>Arriba hay dos pestañas: deje <strong>🦷 Tratamiento</strong>.
+                            (La otra, 💰 Cobro de saldo anterior, es para cuando viene a pagar algo
+                            de un mes pasado — más abajo se explica.)</li>
+                            <li><strong>Doctor / Especialista</strong> — quién lo atendió. Hasta que
+                            no escoja el doctor, la lista de tratamientos no se abre: cada uno tiene
+                            los suyos.</li>
+                            <li><strong>Tratamiento</strong> — al escogerlo, el
+                            <strong>precio</strong> y el <strong>costo de materiales</strong> se
+                            llenan solos con lo que dice el catálogo.</li>
+                            <li><strong>Paciente</strong> — empiece a escribir el nombre y la app le
+                            sugiere los que ya existen. <strong>Escoja el de la lista</strong> si ya
+                            vino antes, para que no queden dos fichas de la misma persona.</li>
+                            <li><strong>Precio cobrado</strong> — si cobró distinto a lo del
+                            catálogo, córrijalo aquí. Va lo que <em>de verdad</em> se cobró.</li>
+                            <li><strong>Forma de pago</strong> — efectivo, Bancolombia/QR, o
+                            datáfono crédito o débito. Esto decide en qué bolsillo entra la plata,
+                            así que tiene que ser el de verdad.</li>
+                            <li><strong>💾 Registrar</strong>, arriba a la derecha. Sale una
+                            ventanita para confirmar. Revísela y acepte.</li>
+                        </ol>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>➕ Nuevo registro</b></div>
+                            <div class="man-shot-body">
+                                <div style="margin-bottom:10px">
+                                    <span class="ms-chip on">🦷 Tratamiento</span><span class="ms-chip">💰 Cobro de saldo anterior</span>
+                                </div>
+                                <div class="ms-fila">
+                                    <div><span class="ms-lbl">Doctor / Especialista *</span>
+                                         <div class="ms-inp" id="ms-rx-doc">—</div></div>
+                                    <div><span class="ms-lbl">Tratamiento *</span>
+                                         <div class="ms-inp" id="ms-rx-trat">—</div></div>
+                                </div>
+                                <div class="ms-fila">
+                                    <div><span class="ms-lbl">Paciente</span>
+                                         <div class="ms-inp" id="ms-rx-pac">—</div></div>
+                                    <div><span class="ms-lbl">Fecha</span>
+                                         <div class="ms-inp" id="ms-rx-fecha">—</div></div>
+                                </div>
+                                <div class="ms-fila">
+                                    <div><span class="ms-lbl">Precio cobrado *</span>
+                                         <div class="ms-inp foco" id="ms-rx-precio">$ —</div></div>
+                                    <div><span class="ms-lbl">🧴 Costo de materiales</span>
+                                         <div class="ms-inp" id="ms-rx-mat">$ —</div></div>
+                                </div>
+                                <span class="ms-lbl">Forma de pago</span>
+                                <div style="margin-bottom:11px" id="ms-rx-pagos">
+                                    <span class="ms-chip on">💵 Efectivo</span><span class="ms-chip">📱 Bancolombia</span><span class="ms-chip">💳 Crédito</span><span class="ms-chip">🏧 Débito</span>
+                                </div>
+                                <div style="background:var(--bg);border-radius:9px;padding:9px 11px">
+                                    <span class="ms-lbl">Vista previa — comisión</span>
+                                    <div class="ms-tot" style="border:none"><span id="ms-rx-commlbl">Honorario del especialista</span><b id="ms-rx-comm">—</b></div>
+                                </div>
+                                <div style="text-align:right;margin-top:11px">
+                                    <span class="ms-btn gho">↺ Limpiar</span> <span class="ms-btn pri">💾 Registrar</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="man-pie" id="man-ej-rx">Los datos de este dibujo son de un registro
+                        de verdad de la clínica.</p>
+
+                        <h4>La columna de la derecha se llena sola</h4>
+                        <p>Mientras escribe, al lado va apareciendo <strong>cuánto le queda al
+                        doctor y cuánto le queda a la clínica</strong>. No hay que calcular nada a
+                        mano: el porcentaje sale del catálogo. Si el número se ve raro, es que el
+                        porcentaje del catálogo está mal — se arregla en 📑&nbsp;Catálogo, no aquí.</p>
+
+                        <h4>Los casos que se salen de lo normal</h4>
+                        <ul>
+                            <li><strong>Pagó con dos métodos</strong> (parte efectivo, parte
+                            transferencia) → botón <strong>➕ Pago mixto</strong>. Se pone el monto
+                            del segundo método y con qué se pagó.</li>
+                            <li><strong>Le hizo descuento</strong> → botón <strong>🏷️ Descuento</strong>
+                            al lado del precio. Se puede poner en porcentaje o en pesos. Queda
+                            registrado que hubo descuento, que es distinto a bajar el precio a
+                            secas.</li>
+                            <li><strong>Quedó debiendo</strong> → en la ventanita de confirmar,
+                            marque <strong>saldo pendiente</strong> y escriba
+                            <strong>cuánto abonó hoy</strong>. La app guarda lo que entró de verdad
+                            y le abre un plan con la deuda, que después se ve en
+                            📋&nbsp;Planes de tto.</li>
+                            <li><strong>Viene a pagar algo de un mes pasado</strong> → pestaña
+                            <strong>💰 Cobro de saldo anterior</strong>. Entra a la caja pero
+                            <strong>no genera comisión nueva</strong>, porque la comisión de ese
+                            tratamiento ya se contó el día que se hizo.</li>
+                            <li><strong>Había pagado antes de que existiera la app</strong> →
+                            marque <strong>📅 Pago recibido en período anterior</strong>. El
+                            tratamiento queda registrado con su comisión pero no suma a la caja,
+                            porque esa plata ya estaba ahí.</li>
+                        </ul>
+
+                        <div class="man-ojo"><p>⚠️ <strong>Un tratamiento se anota una sola vez.</strong>
+                        Si el paciente vuelve a la siguiente cita a pagar el resto, eso
+                        <em>no</em> es un tratamiento nuevo: es un abono. Anotarlo dos veces infla
+                        la producción del mes y le duplica el honorario al doctor.</p></div>
+
+                        <h4>Y cuando ya quedó anotado</h4>
+                        <p>Abajo, en <strong>«Registros de hoy»</strong>, aparece la lista de lo que
+                        va del día. Es la manera rápida de confirmar que quedó bien y de darse
+                        cuenta si algo se anotó doble.</p>
+                    </div>
+                </details>
+
+                <!-- A5 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">💸</span>
+                        <div>Cómo se anota un gasto
+                            <span class="man-sub">Y las tres cosas que parecen gasto y no lo son</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Menú → <strong>💸 Gastos</strong>. Se anota <strong>el día que llega la
+                        cosa o el servicio</strong>, no el día que se paga. Eso es lo único raro de
+                        esta pantalla, y está explicado abajo.</p>
+
+                        <h4>Paso a paso</h4>
+                        <ol>
+                            <li><strong>Categoría</strong> — de qué se trata. Al escogerla aparecen
+                            los proveedores de esa categoría.</li>
+                            <li><strong>Proveedor</strong> — a quién se le pagó. Si no está en la
+                            lista, escoja <em>otro</em> y escríbalo.</li>
+                            <li><strong>Descripción</strong> — para acordarse en tres meses.
+                            «Factura de junio», «corona del paciente tal».</li>
+                            <li><strong>Monto</strong> y <strong>Fecha</strong>. Si la fecha no es
+                            hoy, la app <strong>obliga a escribir el motivo</strong> en Notas. No es
+                            capricho: un gasto con fecha corrida cambia el resultado de un mes que
+                            ya se revisó.</li>
+                            <li><strong>Pagado con</strong> — efectivo, Bancolombia, mixto, o
+                            <strong>💳 Tarjeta / a crédito</strong>.</li>
+                            <li><strong>💾 Registrar gasto</strong>.</li>
+                        </ol>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>💸 Gastos</b></div>
+                            <div class="man-shot-body">
+                                <div class="ms-fila">
+                                    <div><span class="ms-lbl">Categoría *</span>
+                                         <div class="ms-inp" id="ms-gx-cat">—</div></div>
+                                    <div><span class="ms-lbl">Proveedor / Responsable</span>
+                                         <div class="ms-inp" id="ms-gx-prov">—</div></div>
+                                </div>
+                                <span class="ms-lbl">Descripción</span>
+                                <div class="ms-inp" id="ms-gx-desc">—</div>
+                                <div class="ms-fila">
+                                    <div><span class="ms-lbl">Monto *</span>
+                                         <div class="ms-inp foco" id="ms-gx-monto">$ —</div></div>
+                                    <div><span class="ms-lbl">Fecha</span>
+                                         <div class="ms-inp" id="ms-gx-fecha">—</div></div>
+                                </div>
+                                <span class="ms-lbl">Pagado con</span>
+                                <div style="margin-bottom:11px" id="ms-gx-pagos">
+                                    <span class="ms-chip on">💵 Efectivo</span><span class="ms-chip">🏦 Bancolombia</span><span class="ms-chip">🔀 Mixto</span><span class="ms-chip">💳 Tarjeta</span>
+                                </div>
+                                <div style="text-align:right">
+                                    <span class="ms-btn gho">↺ Limpiar</span> <span class="ms-btn pri">💾 Registrar gasto</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="man-pie" id="man-ej-gx">Los datos de este dibujo son de un gasto
+                        de verdad de la clínica.</p>
+
+                        <h4>Las tres que parecen gasto y no lo son</h4>
+                        <ol>
+                            <li><strong>Pagar la tarjeta de crédito.</strong> El gasto fue lo que
+                            compró, el día que lo compró. Pagar la factura sólo baja una deuda.
+                            <br>→ La compra va aquí, con su categoría de verdad y pago
+                            <strong>💳 Tarjeta / a crédito</strong>. El pago de la factura va en
+                            <strong>🏦 Caja → Ajuste</strong>, como salida de Bancolombia.
+                            <br>→ Lo único que sí es gasto son los <strong>intereses y la cuota de
+                            manejo</strong>.</li>
+                            <li><strong>La quincena de Sandry o de Zury.</strong> El sueldo del mes
+                            ya está contado completo desde ⚙️&nbsp;Configuración. Se anota para
+                            saber cuándo salió la plata del cajón, pero
+                            <strong>no se vuelve a restar</strong> del resultado del mes. La
+                            pantalla misma le avisa cuánto dejó por fuera y por qué.</li>
+                            <li><strong>Sacar plata del banco para tener efectivo.</strong> Eso no
+                            es un gasto: es la misma plata cambiada de bolsillo. Va en
+                            <strong>🏦 Caja → Ajuste</strong>.</li>
+                        </ol>
+
+                        <div class="man-tip"><p><strong>La prueba:</strong> pregúntese si la clínica
+                        se quedó con algo o consumió algo. Si sí, es gasto. Si sólo se movió plata
+                        de un lado a otro, o se bajó una deuda vieja, no lo es.</p></div>
+
+                        <h4>Para revisar lo que ya anotó</h4>
+                        <p>Abajo está el <strong>historial</strong> con botones de
+                        <strong>Hoy · Semana · Q1 · Q2 · Este mes · Mes anterior</strong>, y dos
+                        casillas de fecha para cualquier otro rango. El 🖨️ imprime lo que esté
+                        viendo en ese momento.</p>
+                    </div>
+                </details>
+
+                <!-- A6 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">⚡</span>
+                        <div>Pagar el agua, la luz, el internet
+                            <span class="man-sub">Servicios públicos, arriendo y lo que ya está contado</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <h4>Un recibo de servicios</h4>
+                        <p>Va en <strong>💸 Gastos</strong>, categoría
+                        <strong>⚡ Servicios públicos</strong>. Los proveedores ya están puestos:
+                        <strong>Air-e</strong> (electricidad), <strong>Essmar</strong> (agua),
+                        <strong>Movistar Internet</strong> y <strong>Movistar Móvil</strong>.</p>
+                        <p>En Descripción va el mes del recibo —«factura de julio»— y no el mes en
+                        que lo pagó. Así, cuando dentro de un año quiera comparar la luz de julio
+                        con la de este julio, los dos van a estar donde deben.</p>
+
+                        <div class="man-caja">Categoría   ⚡ Servicios públicos
+Proveedor   Essmar (agua)
+Descripción Factura de julio
+Monto       $ ______
+Pagado con  🏦 Bancolombia</div>
+
+                        <h4>El arriendo y los sueldos NO se anotan aquí</h4>
+                        <p>Ésos viven en <strong>⚙️ Configuración</strong> y desde ahí se cuentan
+                        completos, todos los meses, solos. Si además los anota en Gastos, la app no
+                        los resta dos veces —está preparada para eso— pero sí le va a ensuciar la
+                        lista. Lo que sí conviene anotar es <strong>el día que salió la plata</strong>,
+                        para que la caja cuadre.</p>
+
+                        <h4>El recibo del agua que se reparte</h4>
+                        <p>Si el recibo llega a nombre suyo y otro local le pasa su parte, esa plata
+                        que le entregan <strong>no es un ingreso</strong>: usted apenas junta y
+                        paga. Eso se llama <strong>recobro</strong> y está explicado en la parte 2
+                        del manual, en «Lo que entra no siempre es ingreso».</p>
+
+                        <div class="man-ojo"><p>⚠️ <strong>Un recibo, un renglón.</strong> Si paga
+                        agua y luz en el mismo viaje al banco, son dos gastos, no uno de $X. Cada
+                        uno con su proveedor. Juntarlos hace imposible saber después cuánto se va
+                        en agua.</p></div>
+                    </div>
+                </details>
+
+                <!-- A7 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">💰</span>
+                        <div>Pagarle a los especialistas: las comisiones
+                            <span class="man-sub">Dónde ver cuánto se debe y cómo marcar que ya se pagó</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>La comisión <strong>no se anota a mano nunca</strong>. Nace sola el día
+                        que se registra el tratamiento, con el porcentaje que dice el catálogo. Lo
+                        único que se hace en esta pantalla es <strong>marcar cuándo se pagó</strong>.</p>
+
+                        <h4>Las tres pestañas</h4>
+                        <ul>
+                            <li><strong>⏳ Pendientes</strong> — lo que se le debe hoy a cada
+                            especialista. Ésta es la que se mira.</li>
+                            <li><strong>🔄 Diferidos</strong> — honorarios de tratamientos que el
+                            paciente todavía no ha terminado de pagar.</li>
+                            <li><strong>✅ Pagados</strong> — lo que ya se entregó. Queda ahí para
+                            siempre, como comprobante.</li>
+                        </ul>
+
+                        <div class="man-shot">
+                            <div class="man-shot-top"><i></i><i></i><i></i><b>💰 Comisiones</b></div>
+                            <div class="man-shot-body">
+                                <div style="margin-bottom:11px">
+                                    <span class="ms-chip on">⏳ Pendientes <b id="ms-cm-n">0</b></span><span class="ms-chip">🔄 Diferidos</span><span class="ms-chip">✅ Pagados</span>
+                                </div>
+                                <div class="ms-tot" style="border-top:none"><span id="ms-cm-doc">—</span><b id="ms-cm-monto">—</b></div>
+                                <div style="font-size:11px;color:var(--muted);margin-bottom:9px" id="ms-cm-det">—</div>
+                                <div style="text-align:right"><span class="ms-btn pri">✅ Marcar como pagado</span></div>
+                            </div>
+                        </div>
+                        <p class="man-pie">Lo de arriba es lo que hay pendiente ahora mismo en la
+                        clínica.</p>
+
+                        <h4>Cuando se le paga a un especialista</h4>
+                        <ol>
+                            <li>Entregue la plata.</li>
+                            <li>En <strong>💰 Comisiones → ⏳ Pendientes</strong>, marque
+                            <strong>pagado</strong> lo que le entregó.</li>
+                            <li>Eso baja la plata de <strong>🏦 Caja</strong> —porque salió de
+                            verdad— y <strong>no mueve</strong> «le queda del mes», porque ese
+                            honorario ya estaba contado desde el día del tratamiento.</li>
+                        </ol>
+
+                        <div class="man-ojo"><p>⚠️ <strong>No lo anote además en 💸 Gastos.</strong>
+                        Si lo hace, el honorario queda contado dos veces y el mes va a parecer peor
+                        de lo que fue. La única puerta del honorario es esta pantalla.</p></div>
+
+                        <h4>Una empleada no es un especialista</h4>
+                        <p>Sandry y Zury tienen sueldo y prestaciones: van por
+                        <strong>👥 Nómina</strong>. Diana, Nay, Rafael y Cabeza cobran por lo que
+                        hacen: van por <strong>💰 Comisiones</strong>. Mezclarlas hace imposible
+                        saber cuánto cuesta cada cosa, y se declaran distinto. Está explicado
+                        completo en la parte 2.</p>
+                    </div>
+                </details>
+
+                <!-- A8 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">📆</span>
+                        <div>La rutina del día
+                            <span class="man-sub">Qué hacer al abrir, durante y al cerrar</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <h4>Al abrir</h4>
+                        <ol>
+                            <li>Entre con su PIN.</li>
+                            <li>Mire el <strong>🏠 Panel del día</strong>: cómo viene el mes.</li>
+                            <li>Si atiende ortodoncia, revise <strong>🦷 Controles del mes</strong>
+                            para saber a quién toca ver.</li>
+                        </ol>
+
+                        <h4>Durante el día</h4>
+                        <ul>
+                            <li>Paciente atendido y cobrado → <strong>➕ Nuevo registro</strong>,
+                            en el momento. No lo deje para la tarde: es cuando se pierden.</li>
+                            <li>Llegó algo del laboratorio, o se compró algo →
+                            <strong>💸 Gastos</strong>, el mismo día.</li>
+                            <li>Vino alguien a pagar una deuda vieja → <strong>➕ Nuevo registro →
+                            💰 Cobro de saldo anterior</strong>.</li>
+                        </ul>
+
+                        <h4>Al cerrar</h4>
+                        <ol>
+                            <li>En el Panel, abra <strong>🦷 Tratamientos del día</strong> y
+                            confirme que está todo lo que se atendió.</li>
+                            <li>Vaya a <strong>🏦 Caja</strong> y haga el
+                            <strong>cierre</strong>: cuente el efectivo del cajón y escriba lo que
+                            contó. La app compara con lo que debería haber.</li>
+                            <li>Si falta o sobra, <strong>no lo esconda</strong>: quede como quede,
+                            escríbalo. Un faltante anotado se puede buscar; uno tapado no.</li>
+                        </ol>
+
+                        <div class="man-tip"><p><strong>Por qué el cierre importa:</strong> es el
+                        único momento del día en que la app y la realidad se miran de frente. Si
+                        cuadran, todo lo demás que dice la app es confiable. Si no cuadran, se sabe
+                        el mismo día y no un mes después.</p></div>
+
+                        <h4>Una vez al mes</h4>
+                        <p>Cuando ya no se va a anotar nada más del mes, se hace
+                        <strong>📅 Cierre de mes</strong>. Después de eso la app avisa cada vez que
+                        alguien intente tocar algo de ese mes. No lo prohíbe —a veces toca
+                        corregir— pero avisa.</p>
+                    </div>
+                </details>
+
+                <!-- A9 ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">🧯</span>
+                        <div>Me equivoqué: ¿ahora qué?
+                            <span class="man-sub">Corregir, anular y buscar. Nada se borra.</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Equivocarse es normal. Lo que no se hace nunca es
+                        <strong>borrar</strong>: se <strong>anula</strong>, con el motivo escrito.
+                        Así siempre se puede reconstruir qué pasó.</p>
+
+                        <h4>Anoté un tratamiento mal</h4>
+                        <p>Búsquelo en la lista de <strong>«Registros de hoy»</strong> —o en
+                        <strong>🔍 Historial pacientes</strong> si ya pasó el día— y anúlelo
+                        escribiendo el motivo. Después vuelva a anotarlo bien. El anulado queda
+                        guardado en <strong>🗂️ Anulaciones</strong> y deja de contar en los números.</p>
+
+                        <h4>Anoté un gasto mal</h4>
+                        <p>Igual: en el historial de <strong>💸 Gastos</strong>, anúlelo y vuelva a
+                        anotarlo con la categoría o el monto correcto.</p>
+
+                        <h4>Quedaron dos fichas del mismo paciente</h4>
+                        <p>Pasa cuando se escribe el nombre distinto —«Mary Velasco» y «María
+                        Angélica Velasco». Búsquelas en <strong>🔍 Historial pacientes</strong>.
+                        Para la próxima: <strong>escoja siempre el nombre de la lista que sugiere la
+                        app</strong> en vez de escribirlo entero.</p>
+
+                        <h4>El número del Panel se ve raro</h4>
+                        <p>Antes de asustarse, abra <strong>«De dónde sale ese número»</strong>. Casi
+                        siempre es una de tres: un tratamiento anotado dos veces, un gasto con la
+                        fecha corrida, o un traslado entre bolsillos anotado como gasto.</p>
+
+                        <h4>Salió un aviso de que el mes está cerrado</h4>
+                        <p>Es un aviso, no un candado. Quiere decir que ese mes ya se revisó y se
+                        cerró. Si de verdad hay que corregir algo, se puede — pero avísele a la
+                        Dra. Silvia, porque cambia un número que ella ya dio por bueno.</p>
+
+                        <div class="man-ojo"><p>⚠️ <strong>Nunca borre para «dejarlo limpio».</strong>
+                        Un registro anulado con su motivo vale más que un registro que desapareció:
+                        el segundo no se puede explicar a nadie, ni a la DIAN ni a usted misma en
+                        seis meses.</p></div>
+
+                        <h4>Se fue el internet</h4>
+                        <p>La app sigue funcionando y guarda en el equipo. Cuando vuelva la señal
+                        sincroniza sola. Lo que <strong>no</strong> hay que hacer es anotar lo mismo
+                        otra vez desde otro celular «por si acaso»: eso sí duplica.</p>
+                    </div>
+                </details>
+
+                <div class="man-grupo"><b>Parte 2 · Cómo se llevan las cuentas</b>
+                    <span>El porqué de cada cosa. Para entender los números, no para operar la app.</span></div>
 
                 <!-- 1 ─────────────────────────────────────────── -->
                 <details class="man-sec">
@@ -2086,12 +2780,18 @@ Devolver no es gastar.</strong></div>
                                 <span class="hint">Billetes y monedas físicos en el consultorio</span>
                             </div>
                             <div class="fg">
-                                <label>Cuenta Bancolombia</label>
+                                <label>Cuenta bancaria</label>
                                 <div class="inp-pre">
                                     <span class="pre-lbl">$</span>
                                     <input type="number" class="fc" id="cfg-banco" placeholder="0">
                                 </div>
-                                <span class="hint">Saldo actual — cta. ahorros 77989807431</span>
+                                <span class="hint" id="cfg-banco-hint">Saldo actual</span>
+                            </div>
+                            <div class="fg">
+                                <label>Banco y número de cuenta</label>
+                                <input type="text" class="fc" id="cfg-cuenta" placeholder="Ej: Bancolombia — ahorros 000000000"
+                                    oninput="pintarHintDeCuenta()">
+                                <span class="hint">Para saber de cuál cuenta está hablando la app. Cámbielo cuando quiera.</span>
                             </div>
                             <div class="fg">
                                 <label>Caja menor</label>
@@ -2157,7 +2857,7 @@ Devolver no es gastar.</strong></div>
                                     <span class="pre-lbl">$</span>
                                     <input type="number" class="fc" id="cfg-alq" placeholder="40000">
                                 </div>
-                                <span class="hint">Valor por hora a Dra. María Angélica, Dr. Carlos Mario y otros</span>
+                                <span class="hint">Valor por hora que le cobra a los arrendatarios</span>
                             </div>
                             <div class="fg">
                                 <label>Arriendo local clínica / mes</label>
@@ -2263,6 +2963,23 @@ Devolver no es gastar.</strong></div>
                     </div>
                 </div>
 
+                <!-- ARRENDATARIOS DEL CONSULTORIO #2 -->
+                <div class="form-section">
+                    <div class="fsh">
+                        <span class="fsh-icon">🏢</span>
+                        <div><h3>Consultorio #2 — arrendatarios</h3><p>A quién le alquila el consultorio por horas</p></div>
+                    </div>
+                    <div class="fsb">
+                        <div class="alert alert-info" style="margin-bottom:18px">
+                            💡 Estos nombres son los que salen en la lista de 🏢 Consultorio #2 al anotar
+                            un alquiler. Quitar un nombre <strong>no borra ningún alquiler</strong>: los ya
+                            anotados guardaron el nombre ese día y siguen igual.
+                        </div>
+                        <div id="cfg-arrend"></div>
+                        <button type="button" class="eq-add" onclick="agregarArrendatario()">+ Agregar un arrendatario</button>
+                    </div>
+                </div>
+
                 <!-- ATAJOS -->
                 <div class="form-section">
                     <div class="fsh">
@@ -2319,23 +3036,22 @@ Devolver no es gastar.</strong></div>
                 <div class="form-section">
                     <div class="fsh">
                         <span class="fsh-icon">🔐</span>
-                        <div><h3>Acceso y seguridad</h3><p>PIN de 4 dígitos numéricos para cada usuario</p></div>
+                        <div><h3>Acceso y seguridad</h3><p>Quién puede abrir la app, y con qué PIN</p></div>
                     </div>
                     <div class="fsb">
-                        <div class="form-grid">
-                            <div class="fg">
-                                <label>PIN — Dra. Silvia López</label>
-                                <input type="password" class="fc" id="cfg-ps" maxlength="4" inputmode="numeric"
-                                    placeholder="••••" style="font-size:20px;letter-spacing:8px;text-align:center">
-                                <span class="hint">Dejar vacío para no cambiar el PIN actual</span>
-                            </div>
-                            <div class="fg">
-                                <label>PIN — Sandry Flórez</label>
-                                <input type="password" class="fc" id="cfg-psa" maxlength="4" inputmode="numeric"
-                                    placeholder="••••" style="font-size:20px;letter-spacing:8px;text-align:center">
-                                <span class="hint">Dejar vacío para no cambiar el PIN actual</span>
-                            </div>
+                        <div class="alert alert-info" style="margin-bottom:18px">
+                            💡 Aquí manda usted. Puede <strong>agregar</strong> a alguien, <strong>cambiarle</strong>
+                            el nombre o el PIN, y <strong>quitarle la entrada</strong> a quien ya no deba abrir la app.
+                            Quitar no borra nada: lo que esa persona registró sigue igual, sólo deja de aparecer
+                            en la pantalla de entrada.
                         </div>
+                        <div class="alert alert-warn" style="margin-bottom:18px">
+                            ⚠️ Estar en la <strong>nómina</strong> no da entrada a la app: son dos listas distintas.
+                            Quien no esté aquí no puede abrirla, aunque trabaje con usted.
+                        </div>
+                        <div id="cfg-usuarios"></div>
+                        <div id="cfg-usuarios-retirados"></div>
+                        <button type="button" class="eq-add" onclick="abrirUsuarioNuevo()">+ Darle entrada a alguien</button>
                     </div>
                 </div>
 
@@ -2402,7 +3118,12 @@ Devolver no es gastar.</strong></div>
                 <!-- Panel salud del mes -->
                 <div id="db-salud" style="margin-bottom:20px;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border)"></div>
 
-                <div class="db-grid db-grid-4" style="margin-bottom:20px">
+                <!-- Los cuatro del día van dentro de una sección con título para
+                     que también se puedan cerrar. La sección no pinta tarjeta
+                     propia: las tarjetas ya la traen. -->
+                <div class="db-section pleg-suelta" style="margin-bottom:20px">
+                    <div class="db-sec-hdr"><h3>📊 Los números del día</h3></div>
+                <div class="db-grid db-grid-4">
                     <div class="metric-card mc-income">
                         <span class="metric-icon">💰</span>
                         <div class="metric-label">Producción del día</div>
@@ -2431,6 +3152,7 @@ Devolver no es gastar.</strong></div>
                         </div>
                     </div>
                 </div>
+                </div><!-- /Los números del día -->
                 <div class="db-grid db-grid-2" style="margin-bottom:20px">
                     <div class="db-section">
                         <div class="db-sec-hdr">
@@ -3399,6 +4121,20 @@ Devolver no es gastar.</strong></div>
                     <div id="gf-cal-grid" class="gf-cal-grid"></div>
                 </div>
 
+                <!-- Sin cuentas propias todavía: se explica qué va aquí y qué no.
+                     No reemplaza el calendario; va debajo. -->
+                <div id="gf-cal-vacio" class="alert alert-info" style="display:none;margin:13px 0 0">
+                    <strong>Aquí van las cuentas que llegan cada mes con un monto distinto:</strong>
+                    energía, agua, internet, celular, gas. La app le avisa el día que
+                    vencen y usted marca el monto real cuando llega el recibo.
+                    Agréguelas con <strong>“+ Agregar gasto”</strong>, arriba a la derecha.
+                    <div style="margin-top:7px">
+                        El <strong>arriendo</strong> y los <strong>sueldos</strong> no van aquí:
+                        ya están en Configuración y en Nómina, y si los pone también en este
+                        calendario quedarían contados dos veces.
+                    </div>
+                </div>
+
                 <!-- Leyenda + Gestionar -->
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:13px 2px 4px">
                     <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;align-items:center">
@@ -3477,7 +4213,7 @@ Devolver no es gastar.</strong></div>
 
         <div id="page-alquiler" class="hidden">
             <div class="page-header">
-                <div class="ph-left"><h1>🏢 Consultorio #2</h1><p>Alquiler por hora — Dra. María Angélica y Dr. Carlos Mario</p></div>
+                <div class="ph-left"><h1>🏢 Consultorio #2</h1><p id="alq-sub">Alquiler por hora</p></div>
             </div>
             <div class="page-content">
                 <!-- Métricas del mes -->
@@ -3513,11 +4249,8 @@ Devolver no es gastar.</strong></div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Arrendatario</label>
-                                <select class="form-input" id="alq-tenant" onchange="onAlqTenantChange()">
-                                    <option value="Dra. María Angélica Velasco">Dra. María Angélica Velasco</option>
-                                    <option value="Dr. Carlos Mario Rodríguez">Dr. Carlos Mario Rodríguez</option>
-                                    <option value="otro">Otro…</option>
-                                </select>
+                                <!-- La lista sale de Configuración → Consultorio #2. -->
+                                <select class="form-input" id="alq-tenant" onchange="onAlqTenantChange()"></select>
                             </div>
                             <div id="alq-tenant-otro-wrap" class="form-group hidden">
                                 <label class="form-label">Nombre del arrendatario</label>
@@ -3877,17 +4610,39 @@ const DEFAULTS = {
     smlmv:1750905, arl:0.00522,
     ss:1600000, st:250000, sBrutoQ:0, sSalud:0, sPension:0,
     zs:1400000, zt:250000, zBrutoQ:0, zSalud:0, zPension:0,
-    retiro:0, ssi:0, avgTrats:0,
-    ps:'1234', psa:'5678'
+    retiro:0, ssi:0, avgTrats:0
 };
 
-const USERS = {
-    silvia:{ id:'silvia', name:'Dra. Silvia López', role:'Administradora', emoji:'👩‍⚕️' },
-    sandry:{ id:'sandry', name:'Sandry Flórez',    role:'Administrativa',  emoji:'💼'    }
-};
+/* ══ Quién puede entrar ════════════════════════════════════════════════════
+   Esta lista estaba escrita aquí adentro con dos personas fijas, y los PIN
+   estaban escritos arriba en DEFAULTS. Si entraba alguien más al consultorio
+   no había forma de darle entrada. Ahora es una lista que ella maneja en
+   Configuración → Acceso y seguridad.
+
+   El PIN dice QUIÉN está usando la app, no si puede verla: la puerta de
+   verdad es la cuenta (correo y contraseña). Los PIN que ya existían se
+   traen tal cual estaban; ninguno se inventa aquí.                        */
+const USUARIO_EMOJIS = ['👩‍⚕️','💼','🦷','🩺','📋','👩','🧑','😊'];
+
+function getUsuarios() {
+    const guardados = DB.get('usuarios');
+    if (guardados && Object.keys(guardados).length) return guardados;
+
+    /* Primera vez: se traen las dos que estaban en el código, cada una con el
+       PIN que ella ya tenía puesto en la configuración. */
+    const cfg = DB.get('config') || {};
+    return {
+        silvia:{ id:'silvia', name:'Dra. Silvia López', role:'Administradora', emoji:'👩‍⚕️', pin:cfg.ps  || '', activo:true },
+        sandry:{ id:'sandry', name:'Sandry Flórez',     role:'Administrativa', emoji:'💼',   pin:cfg.psa || '', activo:true }
+    };
+}
+
+function usuariosActivos() {
+    return Object.values(getUsuarios()).filter(u => u.activo !== false);
+}
 
 let currentUser = null;
-let selUser = 'silvia';
+let selUser = '';
 
 /* ── Base de datos (Supabase) ── */
 // ═══════════════════════════════════════════════════════
@@ -4172,10 +4927,23 @@ function toast(msg, type='', ms=3500){
 }
 
 /* ── Login ── */
+function renderLoginUsuarios(){
+    const cont = g('loginUsuarios');
+    if (!cont) return;
+    const lista = usuariosActivos();
+    if (!lista.some(u => u.id === selUser)) selUser = lista.length ? lista[0].id : '';
+    cont.innerHTML = lista.map(u => `
+        <div class="user-btn${u.id === selUser ? ' selected' : ''}" data-usr="${_eqEsc(u.id)}" onclick="selectUser('${u.id}')">
+            <span class="u-emoji">${_eqEsc(u.emoji || '👤')}</span>
+            <div class="u-name">${_eqEsc(u.name)}</div>
+            <div class="u-role">${_eqEsc(u.role || '')}</div>
+        </div>`).join('');
+}
+
 function selectUser(uid){
     selUser=uid;
-    g('btnSilvia').classList.toggle('selected', uid==='silvia');
-    g('btnSandry').classList.toggle('selected', uid==='sandry');
+    document.querySelectorAll('#loginUsuarios .user-btn')
+        .forEach(b => b.classList.toggle('selected', b.dataset.usr === uid));
     clearPin();
     g('loginErr').textContent='';
     g('p0').focus();
@@ -4220,7 +4988,9 @@ const _DG_EQUIPO = 'dentalgest_equipo';
 function _dgEquipoRecuerda() {
     try {
         const u = localStorage.getItem(_DG_EQUIPO);
-        return (u && USERS[u]) ? u : null;
+        const us = getUsuarios();
+        /* A quien ya no tiene entrada, el equipo tampoco lo recuerda. */
+        return (u && us[u] && us[u].activo !== false) ? u : null;
     } catch (e) { return null; }
 }
 function _dgOlvidarEquipo() {
@@ -4313,14 +5083,16 @@ async function _dgArrancarConSesion() {
     ponerAlDiaLosHonorarios();
     ponerAlDiaLosCortes();
     migrarSalidasDelAlquiler();
+    migrarNombresDelAlquiler();
     if (caja) caja.style.opacity = '1';
     loadConfig();
+    renderLoginUsuarios();
 
     /* Equipo conocido: derecho a la app, sin PIN. */
     const recordado = _dgEquipoRecuerda();
     if (recordado) {
         selUser = recordado;
-        currentUser = USERS[recordado];
+        currentUser = getUsuarios()[recordado];
         enterApp();
         return;
     }
@@ -4328,18 +5100,29 @@ async function _dgArrancarConSesion() {
 }
 
 function doLogin(){
+    const u = getUsuarios()[selUser];
+    if(!u){ g('loginErr').textContent='Escoge quién ingresa.'; return; }
+
+    /* Sin PIN puesto todavía, entra sin PIN. Es un seguro contra quedarse
+       afuera: el PIN dice quién es, no si puede — quien llegó hasta aquí ya
+       pasó por la cuenta, que es la puerta de verdad. */
+    if(!u.pin){
+        try { localStorage.setItem(_DG_EQUIPO, u.id); } catch (e) {}
+        currentUser=u; enterApp();
+        toast('⚠️ ' + u.name + ' todavía no tiene PIN. Póngaselo en Configuración → Acceso y seguridad.', '', 9000);
+        return;
+    }
+
     const pin=getPin();
     if(pin.length<4){ g('loginErr').textContent='Ingresa los 4 dígitos del PIN'; return; }
-    const cfg=DB.get('config')||DEFAULTS;
-    const ok = selUser==='silvia' ? cfg.ps : cfg.psa;
-    if(pin===ok){
+    if(pin===u.pin){
         /* De aquí en adelante este equipo ya sabe quién es. */
         const primeraVez = !_dgEquipoRecuerda();
         try { localStorage.setItem(_DG_EQUIPO, selUser); } catch (e) {}
-        currentUser=USERS[selUser];
+        currentUser=u;
         enterApp();
         if (primeraVez) {
-            toast('✅ Listo. En este equipo ya no se vuelve a pedir el PIN. Para entrar como la otra persona: "Cerrar sesión".', '', 9000);
+            toast('✅ Listo. En este equipo ya no se vuelve a pedir el PIN. Para entrar como otra persona: "Cerrar sesión".', '', 9000);
         }
     } else {
         g('loginErr').textContent='PIN incorrecto. Inténtalo de nuevo.';
@@ -4356,7 +5139,9 @@ function doLogout(){
     g('appShell').classList.add('hidden');
     g('loginScreen').classList.remove('cargando-directo');
     g('loginScreen').classList.remove('hidden');
-    clearPin(); selectUser('silvia');
+    clearPin();
+    renderLoginUsuarios();
+    if (selUser) selectUser(selUser);
 }
 
 /* ── PIN — auto-avance ── */
@@ -4767,6 +5552,7 @@ async function navigate(page) {
     if(page==='manual')        initManual();
 
     if(t) envolverTablasAnchas(t);   // tablas anchas: que se deslicen, no que estiren
+    montarPlegables(page);           // y las secciones largas, que se puedan cerrar
 }
 
 /* ── Configuración: cargar ── */
@@ -4780,6 +5566,11 @@ function loadConfig(){
     sv('cfg-ef',     c.ef    ||0);
     sv('cfg-banco',  c.banco ||0);
     sv('cfg-menor',  c.menor ||0);
+    /* El número de cuenta estaba escrito dentro de un texto de la pantalla.
+       La primera vez se trae de ahí para no perderlo; de ahí en adelante es
+       una casilla suya. */
+    sv('cfg-cuenta', c.cuenta != null ? c.cuenta : 'Bancolombia — ahorros 77989807431');
+    pintarHintDeCuenta();
     sv('cfg-inicio', c.inicio||DEFAULTS.inicio);
     sv('cfg-bc',     c.bc    ||DEFAULTS.bc);
     sv('cfg-bd',     c.bd    ||DEFAULTS.bd);
@@ -4793,8 +5584,7 @@ function loadConfig(){
     sv('cfg-retiro',   c.retiro  ||0);
     sv('cfg-ssi',      c.ssi     ||0);
     sv('cfg-avgtrats', c.avgTrats||0);
-    sv('cfg-ps',  '');
-    sv('cfg-psa', '');
+    renderUsuariosCfg();
 
     /* El equipo se dibuja solo desde la lista. Los porcentajes salen en número
        entendible (35, no 0.35) y, si nadie los ha tocado, sale el acuerdo
@@ -4803,6 +5593,7 @@ function loadConfig(){
     renderEmpleadasCfg();
     renderCategoriasCfg();
     renderAtajosCfg();
+    renderArrendatariosCfg();
     montarAcordeonCfg();
 }
 
@@ -4865,6 +5656,105 @@ function cerrarTodaLaConfig() {
     _cfgRecordar();
 }
 
+/* ══ Secciones plegables en el resto de la app ═════════════════════════════
+   Lo mismo que Configuración, pero para las pantallas largas: Panel, Caja,
+   Reportes, Nómina, Alquiler y Cierre de mes. Cada sección con título se abre
+   y se cierra tocando su renglón.
+
+   Arrancan CERRADAS a propósito: al entrar se ve el resumen de arriba y una
+   lista corta de renglones, en vez de tener que bajar media pantalla. Lo que
+   ella abra se queda abierto.
+
+   La memoria va sin el prefijo dg_, igual que la de Configuración: es un gusto
+   de este equipo, no un dato de la clínica. Si se sincronizara, lo que ella
+   cierre aquí le cerraría la pantalla a Sandry allá.                         */
+const PLEGADAS = 'dentalgest_plegadas';
+
+function _plegLee() {
+    try { return JSON.parse(localStorage.getItem(PLEGADAS) || '{}'); }
+    catch (e) { return {}; }
+}
+function _plegGuarda(page, slug, abierta) {
+    const todo = _plegLee();
+    if (!todo[page]) todo[page] = {};
+    todo[page][slug] = abierta;
+    try { localStorage.setItem(PLEGADAS, JSON.stringify(todo)); } catch (e) {}
+}
+
+/* El nombre con que se recuerda cada sección sale de su título, no de su
+   posición: así, agregar una empleada en Nómina no le corre la memoria a las
+   demás. Sin tildes ni emojis, que no sobreviven a un JSON viejo. */
+function _plegSlug(texto, usados) {
+    let s = (texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+            .toLowerCase().slice(0, 28) || 'sec';
+    const base = s;
+    let n = 2;
+    while (usados.has(s)) s = base + '-' + (n++);
+    usados.add(s);
+    return s;
+}
+
+function montarPlegables(page) {
+    const cont = g('page-' + page);
+    if (!cont) return;
+    const secs = [...cont.querySelectorAll('.db-section')]
+        .filter(s => s.querySelector(':scope > .db-sec-hdr > h3'));
+    /* Con una sola sección, cerrarla dejaría la pantalla en blanco. */
+    if (secs.length < 2) return;
+
+    const guardado = _plegLee()[page] || {};
+    const usados = new Set();
+    secs.forEach(sec => {
+        const hdr  = sec.querySelector(':scope > .db-sec-hdr');
+        const slug = _plegSlug(hdr.querySelector('h3').textContent, usados);
+        sec.dataset.pleg = slug;
+        if (!hdr.classList.contains('pleg-hdr')) {
+            hdr.classList.add('pleg-hdr');
+            hdr.setAttribute('role', 'button');
+            hdr.setAttribute('tabindex', '0');
+            hdr.insertAdjacentHTML('beforeend', '<span class="pleg-chev">▾</span>');
+            hdr.addEventListener('click', ev => {
+                /* «Ver comisiones →» lleva a otra pantalla; que no pliegue de paso. */
+                if (ev.target.closest('.db-sec-lnk, a, button, input, select, label')) return;
+                plegarSeccion(page, sec);
+            });
+            hdr.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); plegarSeccion(page, sec); }
+            });
+        }
+        sec.classList.toggle('pleg-cerrada', guardado[slug] !== true);
+    });
+
+    /* La botonera va justo encima de la primera sección, no al principio de la
+       pantalla: así se lee como lo que manda sobre lo de abajo. */
+    const host = cont.querySelector(':scope > .page-content, :scope > .page-body');
+    if (host && !host.querySelector(':scope > .pleg-barra')) {
+        let ancla = secs[0];
+        while (ancla.parentElement && ancla.parentElement !== host) ancla = ancla.parentElement;
+        if (ancla.parentElement === host) ancla.insertAdjacentHTML('beforebegin', `
+            <div class="pleg-barra">
+                <button type="button" onclick="plegarTodo('${page}', true)">Abrir todo</button>
+                <button type="button" onclick="plegarTodo('${page}', false)">Cerrar todo</button>
+            </div>`);
+    }
+}
+
+function plegarSeccion(page, sec) {
+    const cerrada = sec.classList.toggle('pleg-cerrada');
+    _plegGuarda(page, sec.dataset.pleg, !cerrada);
+}
+
+function plegarTodo(page, abrir) {
+    const todo = _plegLee();
+    if (!todo[page]) todo[page] = {};
+    document.querySelectorAll('#page-' + page + ' .db-section[data-pleg]').forEach(sec => {
+        sec.classList.toggle('pleg-cerrada', !abrir);
+        todo[page][sec.dataset.pleg] = abrir;
+    });
+    try { localStorage.setItem(PLEGADAS, JSON.stringify(todo)); } catch (e) {}
+}
+
 /* Un aviso de error no sirve de nada si la casilla que lo causó está escondida
    dentro de una sección cerrada. Antes de avisar, se abre y se lleva a la
    vista. */
@@ -4892,13 +5782,19 @@ const _sinTildes = s => String(s || '').toLowerCase()
 function buscarEnManual(q) {
     const secs = [...document.querySelectorAll('#page-manual .man-sec')];
     const aviso = document.getElementById('man-nada');
+    /* «Parte 1» y «Parte 2» no son secciones buscables. Si se quedaran puestos
+       mientras se busca, quedarían dos títulos de parte flotando encima de un
+       solo resultado, o encima de nada. */
+    const grupos = [...document.querySelectorAll('#page-manual .man-grupo')];
     const t = _sinTildes(q).trim();
 
     if (!t) {
         secs.forEach(s => { s.style.display = ''; s.open = false; });
+        grupos.forEach(gr => gr.style.display = '');
         if (aviso) aviso.style.display = 'none';
         return;
     }
+    grupos.forEach(gr => gr.style.display = 'none');
     /* Varias palabras = todas tienen que estar, en cualquier orden.
        «pasajes diana» encuentra la sección aunque no vayan pegadas. */
     const palabras = t.split(/\s+/);
@@ -4935,6 +5831,7 @@ function buscarEnManual(q) {
    Si las dos pantallas dijeran números distintos del mismo mes volveríamos
    a tener dos versiones de la misma cuenta, que es de lo que se trataba. */
 function initManual() {
+    llenarPantallazosDelManual();
     const cont = g('man-cifras-fijos');
     const glo  = g('man-glo-equil');
     if (!cont && !glo) return;
@@ -5000,13 +5897,134 @@ function initManual() {
     }
 }
 
+/* ══════════════════════════════════════════════════════════
+   LOS «PANTALLAZOS» DEL MANUAL SE LLENAN CON SUS REGISTROS
+   ══════════════════════════════════════════════════════════
+
+   Un manual con datos inventados enseña a usar una app que no es la suya. El
+   día que Sandry busque en la pantalla el nombre que vio en el dibujo y no
+   exista, va a dudar del resto del manual también. Así que los dibujos se
+   llenan con el último tratamiento, el último gasto y la comisión pendiente
+   que de verdad hay guardados.
+
+   Si todavía no hay nada guardado, los guiones se quedan como están: aquí no
+   se escribe ningún precio ni ningún nombre inventado. Un ejemplo mío
+   convertido en «el precio de la clínica» es exactamente el error que ya
+   costó caro una vez.                                                       */
+function llenarPantallazosDelManual() {
+    if (!g('ms-rx-doc')) return;
+
+    const pon = (id, txt) => { const el = g(id); if (el && txt) el.textContent = txt; };
+    const dia = iso => iso
+        ? new Date(iso + 'T12:00:00').toLocaleDateString('es-CO',
+              { day: '2-digit', month: 'short', year: 'numeric' })
+        : '';
+    /* Marca cuál de los botoncitos de forma de pago quedó escogido. */
+    const marcar = (contId, idx) => {
+        const c = g(contId);
+        if (!c || idx < 0) return;
+        [...c.children].forEach((ch, i) => ch.classList.toggle('on', i === idx));
+    };
+
+    /* ── Quién ingresa ── */
+    const users = usuariosActivos();
+    const grid  = g('ms-login-users');
+    if (grid && users.length) {
+        grid.innerHTML = users.slice(0, 3).map((u, i) =>
+            `<span class="ms-chip${i ? '' : ' on'}">${eh(u.emoji || '👤')} ${eh(u.name)}</span>`
+        ).join('');
+    }
+
+    /* ── El Panel del día ── */
+    const mes   = todayISO().slice(0, 7);
+    const mesTx = (DB.get('tx') || []).filter(t  => t.date && t.date.startsWith(mes));
+    const mesGx = (DB.get('gx') || []).filter(gx => gx.date && gx.date.startsWith(mes));
+    const R     = calcResultadoMes(mesTx, mesGx);
+    const costoMes = R.totalFijos + R.honorarios + R.materiales;
+
+    pon('ms-pan-fecha', dia(todayISO()));
+    const queda = g('ms-pan-queda');
+    if (queda) {
+        queda.textContent = fmt(R.resultado);
+        queda.style.color = R.resultado < 0 ? 'var(--danger)' : 'var(--success)';
+    }
+    const barra = g('ms-pan-barra');
+    if (barra && costoMes > 0) {
+        barra.style.width = Math.min(100, Math.round(R.prod / costoMes * 100)) + '%';
+    }
+    if (costoMes > 0) {
+        pon('ms-pan-sub', `${fmt(R.prod)} que entró contra ${fmt(costoMes)} que cuesta el mes`);
+    }
+
+    /* ── Nuevo registro: el último tratamiento anotado ── */
+    const txs = DB.get('tx') || [];
+    const ult = [...txs].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
+    if (ult) {
+        pon('ms-rx-doc',   ult.docName   || '—');
+        pon('ms-rx-trat',  ult.treatName || '—');
+        pon('ms-rx-pac',   ult.patient   || '—');
+        pon('ms-rx-fecha', dia(ult.date));
+        pon('ms-rx-precio', '$ ' + fmt(ult.price || 0).replace('$', '').trim());
+        pon('ms-rx-mat',    '$ ' + fmt(ult.matCost || 0).replace('$', '').trim());
+        pon('ms-rx-comm',   ult.commStatus === 'owner' ? '— (es suyo)' : fmt(ult.commission || 0));
+        if (ult.commLabel) pon('ms-rx-commlbl', ult.commLabel);
+        marcar('ms-rx-pagos', ['efectivo','banco','bold_c','bold_d'].indexOf(ult.payMethod));
+        pon('man-ej-rx', `Éste es un registro de verdad de la clínica: ${ult.patient}, ` +
+                         `atendida por ${ult.docName}, el ${dia(ult.date)}. ` +
+                         `Cambia solo cada vez que abre el manual.`);
+    }
+
+    /* ── Gastos: el último gasto anotado ──
+       De ejemplo sirve uno que tenga TODAS las casillas llenas. Si el último
+       que anotó no tenía proveedor, el dibujo enseñaría un formulario a medias
+       justo donde se está explicando cómo llenarlo. */
+    const gxs   = DB.get('gx') || [];
+    const porFecha = [...gxs].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const ultGx = porFecha.find(x => x.provider && x.desc) || porFecha[0];
+    if (ultGx) {
+        pon('ms-gx-cat',   ultGx.catLabel || '—');
+        pon('ms-gx-prov',  ultGx.provider || '(sin proveedor)');
+        /* Los gastos que se importaron vinieron sin proveedor. Se muestra en
+           gris, como lo que es: una casilla que quedó vacía, no un dato. */
+        g('ms-gx-prov').classList.toggle('gris', !ultGx.provider);
+        pon('ms-gx-desc',  ultGx.desc || ultGx.notes || '(sin descripción)');
+        pon('ms-gx-monto', '$ ' + fmt(ultGx.amount || 0).replace('$', '').trim());
+        pon('ms-gx-fecha', dia(ultGx.date));
+        marcar('ms-gx-pagos', ['efectivo','banco','mixto','otro'].indexOf(ultGx.paySource));
+        pon('man-ej-gx', `Éste es un gasto de verdad de la clínica: ` +
+                         `${ultGx.catLabel}${ultGx.provider ? ' · ' + ultGx.provider : ''}, ` +
+                         `del ${dia(ultGx.date)}.`);
+    }
+
+    /* ── Comisiones: lo que está pendiente ahora mismo ── */
+    const pend = txs.filter(t => ['pending','partial'].includes(t.commStatus)
+                              && (t.commission || 0) > (t.commPaidAmount || 0));
+    if (pend.length) {
+        const porDoc = {};
+        pend.forEach(t => {
+            const k = t.docName || '—';
+            porDoc[k] = porDoc[k] || { monto: 0, n: 0 };
+            porDoc[k].monto += (t.commission || 0) - (t.commPaidAmount || 0);
+            porDoc[k].n++;
+        });
+        const [doc, d] = Object.entries(porDoc).sort((a, b) => b[1].monto - a[1].monto)[0];
+        pon('ms-cm-n',     String(pend.length));
+        pon('ms-cm-doc',   doc);
+        pon('ms-cm-monto', fmt(d.monto));
+        pon('ms-cm-det',   `${d.n} tratamiento${d.n === 1 ? '' : 's'} sin pagar`);
+    }
+}
+
 /* ── Configuración: guardar ── */
 function saveConfig(){
     const prev=DB.get('config')||DEFAULTS;
-    const ps =gv('cfg-ps').trim();
-    const psa=gv('cfg-psa').trim();
-    if(ps  && !/^\d{4}$/.test(ps)){ abrirSeccionDe(g('cfg-ps'));  toast('PIN de Silvia: debe tener exactamente 4 dígitos','error'); return; }
-    if(psa && !/^\d{4}$/.test(psa)){ abrirSeccionDe(g('cfg-psa')); toast('PIN de Sandry: debe tener exactamente 4 dígitos','error'); return; }
+    /* Quién abre la app: se revisa antes de guardar nada. */
+    const usuarios = leerUsuariosDeLaPantalla();
+    if (usuarios === null && document.querySelector('#page-config [data-usr-id]')) return;
+
+    /* Y los arrendatarios del Consultorio #2. */
+    const arrendatarios = leerArrendatariosDeLaPantalla();
+    if (arrendatarios === null && g('cfg-arrend')) return;
 
     /* ── El equipo ──
        Se revisa ANTES de guardar nada: si hay algo mal escrito se avisa y no
@@ -5035,6 +6053,7 @@ function saveConfig(){
         ef:     parseFloat(gv('cfg-ef'))    ||0,
         banco:  parseFloat(gv('cfg-banco')) ||0,
         menor:  parseFloat(gv('cfg-menor')) ||0,
+        cuenta: (gv('cfg-cuenta')||'').trim(),
         inicio: gv('cfg-inicio')||DEFAULTS.inicio,
         bc:     parseFloat(gv('cfg-bc'))    ||DEFAULTS.bc,
         bd:     parseFloat(gv('cfg-bd'))    ||DEFAULTS.bd,
@@ -5053,8 +6072,10 @@ function saveConfig(){
         retiro:    parseFloat(gv('cfg-retiro'))  ||0,
         ssi:       parseFloat(gv('cfg-ssi'))     ||0,
         avgTrats:  parseInt(gv('cfg-avgtrats'))  ||0,
-        ps:     ps  ||prev.ps  ||DEFAULTS.ps,
-        psa:    psa ||prev.psa ||DEFAULTS.psa,
+        /* Los PIN ya no viven aquí: son de cada persona, en su tarjeta. Se
+           dejan pasar tal cual venían para que un respaldo viejo, que todavía
+           los trae, siga sirviendo de semilla al restaurarlo. */
+        ps: prev.ps, psa: prev.psa,
     };
 
     // Ojo: esto se pregunta ANTES de guardar, para comparar contra lo que había.
@@ -5070,6 +6091,8 @@ function saveConfig(){
     if (eq.equipo) DB.set('equipo', eq.equipo);
     if (empleadas) DB.set('empleadas', empleadas);
     if (categorias) DB.set('gxcats', categorias);
+    if (usuarios)   DB.set('usuarios', usuarios);
+    if (arrendatarios) DB.set('arrendatarios', arrendatarios);
     DB.set('initialized', true);
     g('sbClinic').textContent=cfg.nombre;
 
@@ -5080,6 +6103,10 @@ function saveConfig(){
     renderEquipoCfg();   // las tarjetas nuevas dejan de serlo
     renderEmpleadasCfg();
     renderCategoriasCfg();
+    renderUsuariosCfg();
+    renderLoginUsuarios();
+    renderArrendatariosCfg();
+    refrescarArrendatariosEnAlquiler();
     refrescarCatsEnGastos();
 
     /* Si tocó una comisión conviene repetirle qué alcanza y qué no, porque es
@@ -5102,7 +6129,7 @@ function saveConfig(){
 // ── Backup / Restauración ─────────────────────────────────────────────────────
 const BACKUP_KEYS = ['tx','gx','gf','planes','config','catalog','comisiones','equipo','empleadas','atajos','nomina','retiro',
                      'aj','alq','anulaciones','quincena','prov_reg','pila','ssi_pag','reminders','orto_fin','orto_manual',
-                     'prestamos', 'gxcats', 'cierres', 'concil', 'cierresMes', 'initialized'];
+                     'prestamos', 'gxcats', 'cierres', 'concil', 'cierresMes', 'usuarios', 'arrendatarios', 'initialized'];
 
 /* ── Limpiar duplicados (bug _rxPending ya corregido) ── */
 function limpiarDuplicadosTx() {
@@ -5758,6 +6785,250 @@ function _guardarEquipo(retoque, mensaje) {
     if (leido.comisiones && Object.keys(leido.comisiones).length) DB.set('comisiones', leido.comisiones);
     DB.set('equipo', equipo);
     renderEquipoCfg();
+    if (mensaje) toast('✅ ' + mensaje, 'success', 6000);
+}
+
+/* ══ Los arrendatarios del Consultorio #2 ══════════════════════════════════
+   Los dos nombres estaban escritos dentro del desplegable de Alquiler: si
+   entraba un arrendatario nuevo había que pasar por «Otro…» y teclearlo cada
+   vez. Ahora es una lista suya.
+
+   Lo ya registrado guarda el nombre tal cual estaba ese día, así que cambiar
+   un nombre aquí no toca ni un alquiler viejo.                             */
+
+function getArrendatarios() {
+    const guardados = DB.get('arrendatarios');
+    /* Una lista vacía guardada a propósito se respeta: no se vuelve a sembrar. */
+    if (Array.isArray(guardados)) return guardados;
+
+    /* Primera vez: sólo los dos que estaban escritos en el desplegable.
+       Probé a traer también los nombres tecleados en «Otro…» y no sirve: ahí
+       hay cosas que no son arrendatarios («Recaudo Julio», una instalación de
+       aire). Los demás los agrega ella. */
+    return ['Dra. María Angélica Velasco', 'Dr. Carlos Mario Rodríguez'];
+}
+
+function refrescarArrendatariosEnAlquiler() {
+    const sel = g('alq-tenant');
+    if (!sel) return;
+    const antes = sel.value;
+    const lista = getArrendatarios();
+    sel.innerHTML = lista.map(n => `<option value="${_eqEsc(n)}">${_eqEsc(n)}</option>`).join('')
+                  + '<option value="otro">Otro…</option>';
+    sel.value = [...lista, 'otro'].includes(antes) ? antes : (lista[0] || 'otro');
+    onAlqTenantChange();
+
+    /* «A, B y C» — no «A y B y C». Con más de tres nombres el título se hace
+       una tira, así que ahí se corta y se dice cuántos faltan. */
+    const sub = g('alq-sub');
+    if (sub) {
+        let quienes = '';
+        if (!lista.length)           quienes = '';
+        else if (lista.length === 1) quienes = lista[0];
+        else if (lista.length <= 3)  quienes = lista.slice(0, -1).join(', ') + ' y ' + lista[lista.length - 1];
+        else                         quienes = lista.slice(0, 2).join(', ') + ' y ' + (lista.length - 2) + ' más';
+        sub.textContent = quienes ? 'Alquiler por hora — ' + quienes : 'Alquiler por hora';
+    }
+}
+
+function _arrFila(nombre) {
+    return `
+    <div class="fg" data-arr="1" style="display:flex;flex-direction:row;gap:8px;align-items:center;margin-bottom:10px">
+        <input type="text" class="fc arr-nombre" value="${_eqEsc(nombre)}" placeholder="Nombre completo" style="flex:1">
+        <button type="button" class="btn btn-ghost" style="flex:0 0 auto;white-space:nowrap"
+            onclick="this.closest('[data-arr]').remove()">Quitar</button>
+    </div>`;
+}
+
+function pintarHintDeCuenta() {
+    const h = g('cfg-banco-hint');
+    if (!h) return;
+    const cta = (gv('cfg-cuenta') || '').trim();
+    h.textContent = cta ? 'Saldo actual — ' + cta : 'Saldo actual';
+}
+
+function renderArrendatariosCfg() {
+    const cont = g('cfg-arrend');
+    if (!cont) return;
+    cont.innerHTML = getArrendatarios().map(_arrFila).join('');
+}
+
+function agregarArrendatario() {
+    g('cfg-arrend').insertAdjacentHTML('beforeend', _arrFila(''));
+    const filas = g('cfg-arrend').querySelectorAll('.arr-nombre');
+    const ultima = filas[filas.length - 1];
+    if (ultima) { ultima.scrollIntoView({ behavior:'smooth', block:'center' }); ultima.focus(); }
+}
+
+/* Quitar una fila no borra nada de lo registrado: los alquileres guardaron el
+   nombre el día que se anotaron. Sólo deja de salir en el desplegable. */
+function leerArrendatariosDeLaPantalla() {
+    if (!g('cfg-arrend')) return null;          // la pantalla ni se ha dibujado
+    const filas = [...document.querySelectorAll('#cfg-arrend .arr-nombre')];
+    const lista = [];
+    for (const f of filas) {
+        const n = (f.value || '').trim();
+        if (!n) { abrirSeccionDe(f); toast('Hay un arrendatario sin nombre.', 'error', 5000); return null; }
+        if (lista.includes(n)) { abrirSeccionDe(f); toast(n + ' está dos veces en la lista.', 'error', 5000); return null; }
+        lista.push(n);
+    }
+    return lista;
+}
+
+/* ══ Quién abre la app ═════════════════════════════════════════════════════
+   Mismas tarjetas que el equipo. Lo que se edita aquí es otra cosa: no es
+   quién atiende ni quién está en nómina, es quién puede abrir la app.
+
+   Regla que no se rompe: yo no escribo PIN de nadie. La casilla llega vacía
+   y la teclea ella. Vacía en alguien que ya existe quiere decir «déjalo como
+   está», no «bórralo».                                                     */
+
+function _usrTarjeta(id, u, esNuevo) {
+    const off = u.activo === false;
+    const emojis = USUARIO_EMOJIS.includes(u.emoji) ? USUARIO_EMOJIS : [u.emoji || '👤', ...USUARIO_EMOJIS];
+    return `
+    <div class="eq-card${off ? ' eq-off' : ''}" data-usr-id="${id}"${esNuevo ? ' data-usr-nuevo="1"' : ''}>
+        <div class="eq-av" style="background:#8A7878;font-size:24px" id="usr-av-${id}">${_eqEsc(u.emoji || '👤')}</div>
+        <div class="eq-body">
+            <div class="fg">
+                <label>Nombre</label>
+                <input type="text" class="fc" id="usr-name-${id}" value="${_eqEsc(u.name)}" placeholder="Nombre y apellido">
+            </div>
+            <div class="fg">
+                <label>Qué hace aquí</label>
+                <input type="text" class="fc" id="usr-role-${id}" value="${_eqEsc(u.role)}" placeholder="Ej: Auxiliar">
+                <span class="hint">Sale debajo del nombre, en la pantalla de entrada.</span>
+            </div>
+            <div class="fg">
+                <label>Dibujito</label>
+                <select class="fc" id="usr-emoji-${id}" onchange="usrEmojiCambio('${id}')">
+                    ${emojis.map(e => `<option value="${_eqEsc(e)}"${e === (u.emoji || '👤') ? ' selected' : ''}>${_eqEsc(e)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="fg">
+                <label>PIN de 4 dígitos</label>
+                <input type="password" class="fc" id="usr-pin-${id}" maxlength="4" inputmode="numeric"
+                    placeholder="${esNuevo ? '••••' : ''}"
+                    style="font-size:20px;letter-spacing:8px;text-align:center">
+                <span class="hint">${esNuevo
+                    ? 'Tecléelo usted. Queda guardado y nadie más lo ve escrito.'
+                    : (u.pin ? 'Dejar vacío para no cambiar el PIN actual'
+                             : '⚠️ Todavía no tiene PIN: entra sin PIN hasta que le ponga uno.')}</span>
+            </div>
+        </div>
+        <div class="eq-side">
+            ${off
+                ? `<button type="button" class="eq-btn eq-back" onclick="reactivarUsuario('${id}')">Volvió</button>`
+                : `<button type="button" class="eq-btn" onclick="retirarUsuario('${id}')">Quitarle la entrada</button>`}
+        </div>
+    </div>`;
+}
+
+function usrEmojiCambio(id) {
+    const av = g('usr-av-' + id);
+    if (av) av.textContent = gv('usr-emoji-' + id) || '👤';
+}
+
+function renderUsuariosCfg() {
+    if (!g('cfg-usuarios')) return;
+    const act = [], off = [];
+    Object.entries(getUsuarios()).forEach(([id, u]) => (u.activo === false ? off : act).push([id, u]));
+
+    g('cfg-usuarios').innerHTML = act.map(([id, u]) => _usrTarjeta(id, u, false)).join('');
+    g('cfg-usuarios-retirados').innerHTML = !off.length ? '' :
+        `<div class="eq-hdr-off">Ya no pueden abrir la app (${off.length}) — lo que registraron sigue intacto</div>` +
+        off.map(([id, u]) => _usrTarjeta(id, u, false)).join('');
+}
+
+function abrirUsuarioNuevo() {
+    const id = 'us' + Date.now().toString(36);
+    const usados = Object.values(getUsuarios()).map(u => u.emoji);
+    const emoji = USUARIO_EMOJIS.find(e => !usados.includes(e)) || '👤';
+    g('cfg-usuarios').insertAdjacentHTML('beforeend',
+        _usrTarjeta(id, { name:'', role:'', emoji, pin:'', activo:true }, true));
+    const casilla = g('usr-name-' + id);
+    if (casilla) { casilla.scrollIntoView({ behavior:'smooth', block:'center' }); casilla.focus(); }
+}
+
+/* Lee las tarjetas. Si algo está mal devuelve null y no se guarda NADA. */
+function leerUsuariosDeLaPantalla() {
+    const base = getUsuarios();
+    const tarjetas = [...document.querySelectorAll('#page-config [data-usr-id]')];
+    if (!tarjetas.length) return null;
+
+    const usuarios = {};
+    for (const t of tarjetas) {
+        const id      = t.dataset.usrId;
+        const esNuevo = t.dataset.usrNuevo === '1';
+        const nombre  = (gv('usr-name-' + id) || '').trim();
+        if (!nombre) {
+            abrirSeccionDe(g('usr-name-' + id));
+            toast('A la persona nueva le falta el nombre.', 'error', 5000);
+            return null;
+        }
+        const tecleado = (gv('usr-pin-' + id) || '').trim();
+        if (tecleado && !/^\d{4}$/.test(tecleado)) {
+            abrirSeccionDe(g('usr-pin-' + id));
+            toast('El PIN de ' + nombre + ' debe ser de 4 dígitos.', 'error', 5000);
+            return null;
+        }
+        if (esNuevo && !tecleado) {
+            abrirSeccionDe(g('usr-pin-' + id));
+            toast('Póngale un PIN de 4 dígitos a ' + nombre + '.', 'error', 5000);
+            return null;
+        }
+        usuarios[id] = {
+            ...(base[id] || {}),
+            id,
+            name:  nombre,
+            role:  (gv('usr-role-'  + id) || '').trim(),
+            emoji: (gv('usr-emoji-' + id) || '👤'),
+            pin:   tecleado || (base[id] ? base[id].pin || '' : ''),
+            activo: base[id] ? base[id].activo !== false : true
+        };
+    }
+    if (!Object.values(usuarios).some(u => u.activo !== false)) {
+        toast('Alguien tiene que poder abrir la app.', 'error', 5000);
+        return null;
+    }
+    return usuarios;
+}
+
+function retirarUsuario(id) {
+    const u = getUsuarios()[id];
+    if (!u) return;
+    if (usuariosActivos().length <= 1) {
+        toast('No se puede: quedaría nadie para abrir la app.', 'error', 6000);
+        return;
+    }
+    if (!confirm(
+        `${u.name} deja de salir en la pantalla de entrada y ya no puede abrir la app.\n\n` +
+        `NO se borra nada: los cobros y los gastos que registró siguen exactamente\n` +
+        `igual. Si vuelve, se reactiva con un botón.\n\n` +
+        `¿Quitarle la entrada a ${u.name}?`
+    )) return;
+    _guardarUsuarios({ [id]: { activo:false } }, `${u.name} ya no puede abrir la app. Nada de lo registrado cambió.`);
+}
+
+function reactivarUsuario(id) {
+    const u = getUsuarios()[id];
+    if (!u) return;
+    _guardarUsuarios({ [id]: { activo:true } }, `${u.name} vuelve a poder abrir la app.`);
+}
+
+function _guardarUsuarios(retoque, mensaje) {
+    const leido = leerUsuariosDeLaPantalla();
+    if (!leido) return;
+    Object.entries(retoque || {}).forEach(([id, campos]) => {
+        leido[id] = { ...(getUsuarios()[id] || {}), ...(leido[id] || {}), ...campos };
+    });
+    if (!Object.values(leido).some(u => u.activo !== false)) {
+        toast('Alguien tiene que poder abrir la app.', 'error', 5000);
+        return;
+    }
+    DB.set('usuarios', leido);
+    renderUsuariosCfg();
+    renderLoginUsuarios();
     if (mensaje) toast('✅ ' + mensaje, 'success', 6000);
 }
 
@@ -9653,6 +10924,56 @@ function migrarSalidasDelAlquiler() {
     localStorage.setItem('dentalgest_mig_alq_salidas', '1');
 }
 
+/* Las otras dos que ella me contestó del Consultorio #2 de agosto.
+
+   «¿Unifico los 8 registros de Mary Angelica Velasco bajo Dra. María Angélica
+   Velasco?» — sí. Para la app eran dos personas distintas, así que la cuenta
+   de la misma señora salía partida en dos: $400.000 por un lado y el resto
+   por otro.
+
+   «Los $10.000 de Esterilización Mary, ¿es un servicio que usted le cobra
+   aparte del alquiler?» — sí. Entonces no es un arrendatario llamado
+   «Esterilización Mary»: es un cobro de esterilización a la misma señora, y
+   la fila ya tiene su casilla propia para eso.
+
+   NO se mueve un peso. `total` queda igual y las tarjetas suman `total`, así
+   que el alquiler de agosto no cambia: sólo deja de estar a nombre de alguien
+   que no existe. El texto original se guarda en la nota, porque lo que estaba
+   escrito ese día también es un dato.
+
+   Corre una sola vez y deja su marca: de aquí en adelante ella edita el
+   nombre en la pantalla y una corrida posterior no se lo puede deshacer. */
+function migrarNombresDelAlquiler() {
+    if (localStorage.getItem('dentalgest_mig_alq_mary')) return;
+    const CANON = 'Dra. María Angélica Velasco';
+    const list  = DB.get('alq') || [];
+    let unidos = 0, esteril = 0;
+
+    list.forEach(r => {
+        if (!r.imported) return;
+        const t = _sinTildes(r.tenant || '').replace(/\s+/g, ' ').trim();
+
+        if (/^mary angelica velasco$/i.test(t)) {
+            r.tenant = CANON; unidos++;
+            return;
+        }
+        /* Sin horas y sin tarifa: la plata de esta fila es toda esterilización. */
+        if (/^esterilizacion mary$/i.test(t) && !r.hours && !r.rate) {
+            r.notes = (r.notes ? r.notes + ' · ' : '') + 'Venía anotado como «' + r.tenant + '».';
+            r.tenant        = CANON;
+            r.sterilization = r.total || 0;
+            esteril++;
+        }
+    });
+
+    if (unidos || esteril) {
+        DB.set('alq', list);
+        console.log(`[alquiler] ${unidos} fila(s) unificadas bajo ${CANON}, ` +
+                    `${esteril} pasaron a esterilización`);
+    }
+    localStorage.setItem('dentalgest_mig_alq_mary', '1');
+}
+
 function ponerAlDiaLasEmpleadas() {
     const guardadas = DB.get('empleadas');
     if (guardadas && Object.keys(guardadas).length) return;
@@ -10701,7 +12022,9 @@ function initAlquiler() {
     sv('alq-date', todayISO());
     sv('alq-hrs',''); sv('alq-steril',''); sv('alq-notes','');
     g('alq-tenant-otro-wrap').classList.add('hidden');
-    g('alq-tenant').value = 'Dra. María Angélica Velasco';
+    refrescarArrendatariosEnAlquiler();
+    const primero = getArrendatarios()[0];
+    if (primero) g('alq-tenant').value = primero;
     // Reset payment method to efectivo
     _alqCurrentPM = 'efectivo';
     document.querySelectorAll('#alqPayGrid .pay-opt').forEach(opt => opt.classList.remove('selected'));
@@ -10898,6 +12221,9 @@ function renderAlquilerList() {
             <td><span class="pm-badge ${GX_PM_CLS[r.payMethod]||'pm-ef'}">${GX_PM_LBL[r.payMethod]||r.payMethod}</span></td>
             <td style="font-weight:700;color:${sal?'var(--danger)':'var(--success)'};font-variant-numeric:tabular-nums">${sal?'−':''}${fmt(r.total)}</td>
             <td style="white-space:nowrap">
+                <button title="Corregir el nombre del arrendatario en esta fila"
+                    style="background:var(--bg);color:var(--muted);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit;margin-right:4px"
+                    onclick="renombrarArrendatarioAlq('${r.id}')">✎</button>
                 <button title="${sal?'Volverlo a marcar como un cobro del alquiler':'No fue un cobro: esta plata salió del alquiler para pagar algo'}"
                     style="background:var(--bg);color:var(--muted);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit;margin-right:4px"
                     onclick="toggleAlqTipo('${r.id}')">${sal?'↑ cobro':'↓ salida'}</button>
@@ -10933,6 +12259,30 @@ function renderAlquilerList() {
             algo. Se muestran aquí para poder seguirle el rastro, pero <strong>no cambian la utilidad del mes</strong>:
             el alquiler entra completo por Ingresos y el gasto sale completo por Gastos. Restar el uno del otro
             escondería los dos.</p>`);
+}
+
+/* Un nombre mal escrito parte en dos la cuenta de la misma persona: «Mary
+   Angelica Velasco» y «Dra. María Angélica Velasco» eran dos señoras distintas
+   para la app. Hasta hoy la única forma de arreglarlo era borrar la fila.
+   Cambiar el nombre no toca la plata: total, horas y fecha quedan igual. */
+function renombrarArrendatarioAlq(id) {
+    const list = DB.get('alq') || [];
+    const rec  = list.find(r => r.id === id);
+    if (!rec) return;
+    const nuevo = prompt(
+        'Nombre del arrendatario en esta fila.\n\n' +
+        'Escríbalo igual que en las otras filas de la misma persona, para que ' +
+        'la app las sume juntas.\n\nNo cambia la fecha ni el monto.',
+        rec.tenant || ''
+    );
+    if (nuevo === null) return;
+    const limpio = nuevo.replace(/\s+/g, ' ').trim();
+    if (!limpio) { toast('El nombre no puede quedar vacío', 'error'); return; }
+    if (limpio === rec.tenant) return;
+    rec.tenant = limpio;
+    DB.set('alq', list);
+    renderAlquilerMetrics(); renderAlquilerList();
+    toast('Quedó a nombre de ' + limpio);
 }
 
 function deleteAlquiler(id) {
@@ -12507,18 +13857,21 @@ function renderGastosFijos() {
         </div>`;
     }).join('');
 
-    // Empty state
+    /* El calendario se dibuja SIEMPRE.
+
+       Antes, si ella no había agregado ninguna cuenta suya, el mes entero se
+       reemplazaba por un cartel de «sin gastos fijos». Pero PILA y la S.S. de
+       ella no salen de esa lista: son chips que la app pone sola, y ese cartel
+       se los tapaba encima. Quedaba una pantalla que arriba decía $876.224 y
+       abajo no mostraba absolutamente nada — que es justo lo que ella vio.
+
+       La invitación a agregar la primera cuenta va aparte, debajo del mes. */
     const calEl = g('gf-cal-grid');
     if (!calEl) return;
-    if (!gfList.length) {
-        calEl.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">
-            <div style="font-size:36px;margin-bottom:12px">📅</div>
-            <div style="font-weight:700;margin-bottom:6px">Sin gastos fijos configurados</div>
-            <div style="font-size:12px">Presiona <strong>"+ Agregar gasto"</strong> para registrar el primero</div>
-        </div>`;
-        return;
-    }
     calEl.innerHTML = gridHtml;
+
+    const vacio = g('gf-cal-vacio');
+    if (vacio) vacio.style.display = gfList.length ? 'none' : '';
 }
 
 function _renderGfManageList() {
@@ -14481,7 +15834,7 @@ function renderSaludMes() {
        propósito: es una preferencia de esta pantalla, no un dato de la
        clínica — si se sincronizara, lo que ella cierre aquí le cerraría
        la pantalla a Sandry allá. */
-    const abierta = localStorage.getItem('dentalgest_salud_abierta') !== 'no';
+    const abierta = localStorage.getItem('dentalgest_salud_abierta') === 'si';
 
     el.style.background   = bg;
     el.style.borderColor  = titleColor + '40';

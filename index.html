@@ -5064,7 +5064,21 @@ function _repararGx() {
     _dgCache.gx = _normGx(_dgCache.gx);
     localStorage.setItem('dg_gx', JSON.stringify(_dgCache.gx));
     _dgSyncServer();
-    console.log('[DentalGest] categoría repuesta en ' + antes + ' gasto(s)');
+    /* Esto le cambia gastos suyos y los sube al servidor. Avisaba con un
+       console.log, que ella no va a abrir nunca: la app le tocaba los datos
+       y ella se enteraba sólo si le cuadraba mal un reporte. Que se vea. */
+    _avisarCuandoSePueda(antes === 1
+        ? 'A 1 gasto le faltaba la categoría y se la repusimos. Revíselo en Gastos.'
+        : `A ${antes} gastos les faltaba la categoría y se la repusimos. Revíselos en Gastos.`);
+}
+
+/* toast() necesita el área de avisos, y esto corre mientras la app todavía
+   está arrancando. Se espera a que exista, en vez de perder el mensaje. */
+function _avisarCuandoSePueda(msg, intentos = 40) {
+    try {
+        if (g('toastArea')) { toast(msg, '', 9000); return; }
+    } catch(e) {}
+    if (intentos > 0) setTimeout(() => _avisarCuandoSePueda(msg, intentos - 1), 250);
 }
 
 function _dgSetupRealtime() {
@@ -11161,7 +11175,6 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
     const retiro       = parseFloat(cfg.retiro)||0;
     const paraFiscales = R.parafiscales;
 
-    const totalEgresos = R.honorarios + R.materiales + R.totalFijos + retiro;
     /* Mismo criterio que en Resumen: el retiro NO baja el resultado. Iba
        como un renglón «(−) Retiro Dra. Silvia» en medio de los gastos, y
        eso lo pone al nivel del arriendo cuando no lo es: el arriendo hay
@@ -11217,25 +11230,59 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
             <div class="db-section">
                 <div class="db-sec-hdr"><h3>⚖️ Punto de equilibrio</h3></div>
                 <div style="padding:16px 18px">
-                    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">¿Cuánto necesita facturar la clínica para cubrir <em>todo</em>, incluyendo tu retiro?</div>
+                    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Cuánto tiene que producir el mes para no perder ni ganar.</div>
                     <div style="display:flex;justify-content:center;padding:0 0 8px"><canvas id="ch-equil" height="200"></canvas></div>
                     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center">
-                        <div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">Costos totales</div><div style="font-size:18px;font-weight:800;color:var(--danger)">${fmt(totalEgresos)}</div></div>
-                        <div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">Producción actual</div><div style="font-size:18px;font-weight:800;${prod>=totalEgresos?'color:var(--success)':'color:var(--bronze)'}">${fmt(prod)}</div></div>
+                        <div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">Su piso del mes</div><div style="font-size:18px;font-weight:800;color:var(--danger)">${fmt(R.equilibrio)}</div></div>
+                        <div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">Lleva producido</div><div style="font-size:18px;font-weight:800;${prod>=R.equilibrio?'color:var(--success)':'color:var(--bronze)'}">${fmt(prod)}</div></div>
                     </div>
-                    ${prod < totalEgresos
+                    ${prod < R.equilibrio
                         ? `<div style="background:rgba(160,57,62,.08);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--danger)">
-                            ⚠️ Faltan <strong>${fmt(totalEgresos-prod)}</strong> para cubrir todos los costos del mes.
+                            ⚠️ Le falta producir <strong>${fmt(R.equilibrio-prod)}</strong> para llegar al piso.
                            </div>`
                         : `<div style="background:rgba(94,140,106,.08);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--success)">
-                            ✅ La clínica cubre todo. Excedente: <strong>${fmt(prod-totalEgresos)}</strong>
+                            ✅ Ya pasó el piso, por <strong>${fmt(prod-R.equilibrio)}</strong> de producción.
                            </div>`}
-                    ${retiro===0?`<div style="font-size:11px;color:var(--muted);margin-top:10px;padding:8px;background:var(--bg);border-radius:var(--radius-sm)">💡 Define tu retiro en Configuración para que el punto de equilibrio incluya tu sueldo.</div>`:''}
+                    ${retiro>0?`
+                    <div style="margin-top:10px;padding:11px 12px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;line-height:1.6">
+                        <div style="display:flex;justify-content:space-between;gap:10px">
+                            <span>Y para llevarse sus ${fmt(retiro)} completos</span>
+                            <strong style="white-space:nowrap;font-variant-numeric:tabular-nums">${fmt(R.equilibrioConRetiro)}</strong>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:4px">
+                            Su retiro no le resta al resultado, pero sí es plata que tiene que salir
+                            de algún lado. Este es el piso contándolo.
+                        </div>
+                    </div>`:`<div style="font-size:11px;color:var(--muted);margin-top:10px;padding:8px;background:var(--bg);border-radius:var(--radius-sm)">💡 Ponga lo que quiere llevarse en ⚙️ Configuración y aquí le sale cuánto hay que producir para lograrlo.</div>`}
+                    ${/* Por qué el piso NO es «lo que cuesta el mes» a secas.
+                          Esta pantalla restaba producción de costos totales y
+                          decía «faltan $3.525.550». Es la trampa de siempre: para
+                          producir esos $3.525.550 hay que pagar más honorarios,
+                          así que el hueco nunca se cerraba. El de verdad eran
+                          $4.665.333. */''}
+                    ${R.tajada > 0 ? `
+                    <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6">
+                        El piso no es lo que cuesta el mes: es más alto. De cada peso que
+                        cobra, ${Math.round((1-R.tajada)*100)} centavos se van en el honorario
+                        del especialista y en lo que sube y baja con los pacientes; sólo
+                        ${Math.round(R.tajada*100)} quedan para tapar ${fmt(R.cargaFijaTotal)} de
+                        carga fija. Por eso hay que producir de más para cubrirla.
+                    </div>` : `
+                    <div style="font-size:11px;color:var(--danger);margin-top:10px;line-height:1.6">
+                        ${prod > 0
+                          ? `Ojo: este mes lo que se va en honorarios, materiales y gastos que
+                             suben y bajan con los pacientes se come todo lo que cobró. Así no
+                             hay piso posible —atender más no acerca el mes a cero, lo aleja—.
+                             El número de arriba es sólo la carga fija, sin ese ajuste.`
+                          : `Todavía no hay producción en el período, así que el piso que sale
+                             arriba es la carga fija pelada. Cuando haya cobros se recalcula
+                             con lo que de verdad deja cada peso.`}
+                    </div>`}
                 </div>
             </div>
         </div>`;
 
-    const _prod=prod, _tot=totalEgresos;
+    const _prod=prod, _tot=R.equilibrio;
     setTimeout(()=>{
         const cubierto = Math.min(_prod, _tot);
         const falta    = Math.max(0, _tot - _prod);
@@ -15524,32 +15571,13 @@ function showBoldSettle() {
 }
 
 function renderCaja() {
-    const cfg   = DB.get('config') || DEFAULTS;
-    const allTx = DB.get('tx') || [];
-    const allGx = DB.get('gx') || [];
     const allAj = DB.get('aj') || [];
-    const today = todayISO();
 
-    /* El efectivo sale de efectivoHasta() y no de una cuenta propia: el arqueo
-       está en esta misma pantalla y dos cuentas separadas se contradicen solas. */
-    const ef     = efectivoHasta(null);
-    const inEf   = ef.entro, outEf = ef.salio, ajEf = ef.ajustes;
-
-    const inBan  = allTx.filter(t=>t.payMethod==='banco').reduce((s,t)=>s+t.price,0);
-    const outBan = allGx.filter(gx=>gx.paySource==='banco').reduce((s,gx)=>s+gx.amount,0);
-    const ajBan  = allAj.filter(aj=>aj.bucket==='banco').reduce((s,aj)=>s+(aj.type==='in'?aj.amount:-aj.amount),0);
-
-    const inBold     = allTx.filter(t=>t.payMethod==='bold_c'||t.payMethod==='bold_d').reduce((s,t)=>s+t.price,0)
-                     + allAj.filter(aj=>aj.bucket==='bold' && !aj.boldSettle).reduce((s,aj)=>s+aj.amount,0);
-    const boldSetAj  = allAj.filter(aj=>aj.boldSettle);
-    const boldConsi  = boldSetAj.filter(aj=>aj.type==='in').reduce((s,aj)=>s+aj.amount,0);
-    const ajProv  = allAj.filter(aj=>aj.bucket==='prov').reduce((s,aj)=>s+(aj.type==='in'?aj.amount:-aj.amount),0);
-
-    const initEf  = parseFloat(cfg.ef)    || 0;
-    const initBan = parseFloat(cfg.banco) || 0;
-    const efSaldo   = initEf  + inEf  - outEf  + ajEf;
-    const banSaldo  = initBan + inBan - outBan + ajBan;
-    const provSaldo = ajProv;
+    /* Los saldos salen de saldosDeCaja(), que es de donde los lee también el
+       Panel del día: dos cuentas separadas se contradicen solas. */
+    const S = saldosDeCaja();
+    const { inEf, outEf, ajEf, ajBan, inBan, outBan, inBold, boldConsi,
+            initEf, initBan, efSaldo, banSaldo, provSaldo } = S;
 
     g('cj-ef-amt').textContent   = fmt(efSaldo);
     const ajEfLbl  = ajEf  >= 0 ? `+${fmt(ajEf)}`  : `−${fmt(Math.abs(ajEf))}`;
@@ -15557,9 +15585,7 @@ function renderCaja() {
     g('cj-ef-sub').textContent   = `Inicial ${fmt(initEf)} · Ingresos ${fmt(inEf)} · Gastos −${fmt(outEf)} · Ajustes ${ajEfLbl}`;
     g('cj-ban-amt').textContent  = fmt(banSaldo);
     g('cj-ban-sub').textContent  = `Inicial ${fmt(initBan)} · Ingresos ${fmt(inBan)} · Gastos −${fmt(outBan)} · Ajustes ${ajBanLbl}`;
-    // boldSetAj = neto consignado + comisión Bold; su suma = bruto procesado por Bold
-    const boldPendTotal = Math.max(0, inBold - boldSetAj.reduce((s,aj)=>s+aj.amount,0));
-    g('cj-bold-amt').textContent  = fmt(boldPendTotal);
+    g('cj-bold-amt').textContent  = fmt(S.boldPend);
     g('cj-bold-sub').textContent  = boldConsi > 0
         ? `Total cobrado ${fmt(inBold)} · Ya consignado ${fmt(boldConsi)}`
         : 'Sin consignaciones registradas aún';
@@ -15625,6 +15651,56 @@ function efectivoHasta(hasta, sinCierreDe) {
         .filter(a => a.bucket === 'efectivo' && cabe(a))
         .reduce((s, a) => s + (a.type === 'in' ? a.amount : -a.amount), 0);
     return { inicial, entro, salio, ajustes, saldo: inicial + entro - salio + ajustes };
+}
+
+/* ── Lo que hay en cada bolsillo, en un solo sitio ────────────────────────
+   El Panel del día llevaba su propia cuenta y le faltaban los ajustes de
+   caja: para el mismo día enseñaba un efectivo distinto al de Caja. Un
+   traslado de Bancolombia al cajón, una consignación de Bold o un faltante
+   de arqueo no aparecían por ninguna parte. En agosto eso eran $986.420 de
+   diferencia sólo por el traslado del día 31, y el renglón de Bold decía
+   «por cobrar» enseñando TODO lo pasado por el datáfono en la vida de la
+   clínica, no lo que Bold todavía no ha consignado.
+
+   Y los cobros marcados «pago recibido en período anterior» quedaban dentro
+   del banco pero fuera del efectivo: la misma marca contada de dos maneras
+   según el bolsillo. Aquí se excluyen siempre — esa plata ya estaba.
+
+   Las dos pantallas leen de aquí. Si mañana cambia la regla, cambia una vez. */
+function saldosDeCaja() {
+    const cfg   = DB.get('config') || DEFAULTS;
+    const allGx = DB.get('gx') || [];
+    const allAj = DB.get('aj') || [];
+    const vivos = (DB.get('tx') || []).filter(t => !t.pagoPrevio);
+
+    const ef = efectivoHasta(null);
+
+    const initBan = parseFloat(cfg.banco) || 0;
+    const inBan   = vivos.filter(t => t.payMethod === 'banco').reduce((s,t) => s + (t.price||0), 0);
+    const outBan  = allGx.filter(gx => gx.paySource === 'banco').reduce((s,gx) => s + (gx.amount||0), 0);
+    const ajBan   = allAj.filter(aj => aj.bucket === 'banco')
+                         .reduce((s,aj) => s + (aj.type === 'in' ? aj.amount : -aj.amount), 0);
+
+    /* Bold guarda la plata unos días. Lo cobrado con datáfono menos lo que
+       Bold ya consignó: los apuntes de consignación traen el neto y la
+       comisión por aparte, y su suma es el bruto que Bold procesó. */
+    const inBold    = vivos.filter(t => t.payMethod === 'bold_c' || t.payMethod === 'bold_d')
+                           .reduce((s,t) => s + (t.price||0), 0)
+                    + allAj.filter(aj => aj.bucket === 'bold' && !aj.boldSettle)
+                           .reduce((s,aj) => s + aj.amount, 0);
+    const boldSetAj = allAj.filter(aj => aj.boldSettle);
+    const boldConsi = boldSetAj.filter(aj => aj.type === 'in').reduce((s,aj) => s + aj.amount, 0);
+    const boldPend  = Math.max(0, inBold - boldSetAj.reduce((s,aj) => s + aj.amount, 0));
+
+    const provSaldo = allAj.filter(aj => aj.bucket === 'prov')
+                           .reduce((s,aj) => s + (aj.type === 'in' ? aj.amount : -aj.amount), 0);
+
+    const banSaldo = initBan + inBan - outBan + ajBan;
+    return { initEf: ef.inicial, inEf: ef.entro, outEf: ef.salio, ajEf: ef.ajustes,
+             efSaldo: ef.saldo,
+             initBan, inBan, outBan, ajBan, banSaldo,
+             inBold, boldConsi, boldPend, provSaldo,
+             total: ef.saldo + banSaldo + boldPend };
 }
 
 function efectivoDelDia(fecha, sinCierreDe) {
@@ -16470,6 +16546,17 @@ function calcResultadoMes(txs, gxs) {
     const tajada     = prod > 0 ? (margenBruto - gastosVariables) / prod : 0;
     const equilibrio = tajada > 0 ? Math.round(cargaFijaTotal / tajada) : cargaFijaTotal;
 
+    /* El mismo piso, pero contando lo que ella quiere llevarse. Su retiro no
+       es un costo de la clínica —por eso no baja el resultado— pero sí es
+       plata que tiene que salir de algún lado, así que para saber cuánto hay
+       que producir para que le quede su sueldo, se suma arriba y se vuelve a
+       dividir por la tajada. Restarlo por fuera daría un número más bajo del
+       real: producir el retiro también cuesta honorarios. */
+    const retiroObj  = parseFloat(cfg.retiro) || 0;
+    const equilibrioConRetiro = tajada > 0
+        ? Math.round((cargaFijaTotal + retiroObj) / tajada)
+        : cargaFijaTotal + retiroObj;
+
     /* Lo que se dejó por fuera de «los demás gastos», partido en tres, para
        poder decirle EN LA PANTALLA cuál renglón fue y por qué. Un total
        agregado no se puede explicar: «$2.587.050 son sueldos» era falso —
@@ -16486,7 +16573,8 @@ function calcResultadoMes(txs, gxs) {
              nomExcluida, arrExcluido, honExcluido, deudaExcluida,
              honPagadosEnGastos: honExcluido, segReal,
              parafiscales, paraEstimados, retiros,
-             totalFijos, resultado, cargaFijaTotal, gastosVariables, equilibrio };
+             totalFijos, resultado, cargaFijaTotal, gastosVariables, equilibrio,
+             retiroObj, equilibrioConRetiro, tajada };
 }
 
 /* La frase que explica qué filas de Gastos se dejaron por fuera y por qué.
@@ -16550,11 +16638,14 @@ function renderSaludMes() {
     const hayAj  = (ajIn + ajOut) > 0;
 
     const fijos  = R.totalFijos;
-    /* La barra ya no compara la producción contra el arriendo y los sueldos
-       —esa era la comparación que dejaba un «100% ya está tapado» encima de
-       un número rojo— sino contra TODO lo que cuesta el mes. */
-    const costoTotal = R.honorarios + R.materiales + R.totalFijos;
-    const pctFij = costoTotal > 0 ? Math.min(100, Math.round(prod / costoTotal * 100)) : 0;
+    /* La barra mide contra el PISO, no contra «lo que cuesta el mes».
+       Comparar la producción con la suma de los costos es la trampa de
+       siempre: dentro de esos costos están los honorarios, que suben cuando
+       ella produce más, así que la meta se corre sola. En agosto decía
+       «82% cubierto» cuando del piso real llevaba 71%. Un 82% encima de un
+       número rojo es exactamente lo que no se entiende. */
+    const pctEq   = R.equilibrio > 0 ? Math.min(100, Math.round(prod / R.equilibrio * 100)) : 0;
+    const faltaEq = Math.max(0, R.equilibrio - prod);
 
     /* La proyección iba con un 26 fijo: multiplicaba el promedio por 26 días
        hábiles SIEMPRE, estuviera el mes en el día 3 o en el día 28. El 28 de
@@ -16587,14 +16678,16 @@ function renderSaludMes() {
         msg='Ponga el arriendo y los sueldos en ⚙️ Configuración para ver cómo va el mes de verdad';
     } else if (queda >= 0) {
         icon='✅'; titleColor='#2e7d32'; bg='rgba(76,175,80,.07)';
-        msg=`El mes va en verde: ya contando todo lo del mes, le quedan ${fmt(queda)}`;
+        msg='Es lo que le <strong>sobra</strong> este mes después de pagar todo lo del mes.';
     } else if (proyeccion >= R.equilibrio) {
         icon='📈'; titleColor='#1565c0'; bg='rgba(33,150,243,.07)';
-        msg=`Hoy va corto por ${fmt(-queda)}, pero al ritmo de este mes alcanza a taparlo`;
+        msg='Es lo que <strong>falta</strong> hoy para pagar todo lo del mes. Al ritmo que lleva, alcanza a taparlo antes de que cierre.';
     } else {
         icon='⚠️'; titleColor='#c62828'; bg='rgba(244,67,54,.06)';
-        msg=`El mes va corto por ${fmt(-queda)}: lo que entró no alcanza para todo lo que cuesta`;
+        msg='Es lo que <strong>falta</strong> para pagar todo lo del mes. Al ritmo que lleva, no alcanza a taparlo.';
     }
+    /* El número grande ya está arriba; la frase no lo vuelve a decir, explica
+       qué es. Antes repetía la misma cifra tres veces en la misma tarjeta. */
 
     /* fmt() de un negativo escupe «$-363.380». Con el signo por delante se
        lee como plata, no como una resta a medias. */
@@ -16613,6 +16706,16 @@ function renderSaludMes() {
             <div style="font-size:13.5px;font-weight:800;color:${color};white-space:nowrap">${fmt(monto)}</div>
         </div>`;
 
+    /* Las tres cifras del ritmo iban en una tira, seguidas, con paréntesis
+       dentro de paréntesis. Puestas en casillas se pueden comparar de un
+       vistazo, que es de lo que se trata: su ritmo contra lo que necesita. */
+    const casilla = (rot, val, sub, color) => `
+        <div style="background:var(--white);padding:11px 14px">
+            <div style="font-size:9.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${rot}</div>
+            <div style="font-size:17px;font-weight:800;line-height:1.2;margin-top:3px;color:${color||'var(--dark)'}">${val}</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:2px">${sub}</div>
+        </div>`;
+
     const mesLbl  = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     /* Si la abre o la cierra, que se quede así. Va sin prefijo dg_ a
        propósito: es una preferencia de esta pantalla, no un dato de la
@@ -16623,39 +16726,40 @@ function renderSaludMes() {
     el.style.background   = bg;
     el.style.borderColor  = titleColor + '40';
     el.innerHTML = `
-    <div style="padding:16px 18px 14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <span style="font-size:24px">${icon}</span>
+    ${/* Se lee de arriba abajo y responde una pregunta por bloque:
+          1. ¿cómo va el mes?  2. ¿cuánto me falta para no perder?
+          3. ¿a este ritmo llego?  Antes las tres iban revueltas en dos
+          columnas y una tira de tres frases con paréntesis dentro de
+          paréntesis, y ella me dijo que no se entendía. */''}
+    <div style="padding:17px 18px 15px">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+            <span style="font-size:27px;line-height:1.05">${icon}</span>
             <div style="flex:1;min-width:0">
-                <div style="font-weight:800;font-size:13px;color:${titleColor};text-transform:uppercase;letter-spacing:.5px">Salud de la clínica — ${mesLbl}</div>
-                <div style="font-size:12.5px;color:var(--dark);margin-top:3px;line-height:1.45">${msg}</div>
-            </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-            <div style="min-width:150px">
-                <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Le queda del mes</div>
-                <div style="font-size:30px;font-weight:800;line-height:1.15;color:${queda>=0?'var(--success)':'var(--danger)'}">${plata(queda)}</div>
-                <div style="font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px">
-                    ${queda >= 0
-                        ? 'Lo que sobra este mes después de pagar todo lo del mes'
-                        : 'Lo que falta este mes para alcanzar a pagar todo lo del mes'}
-                </div>
-            </div>
-            <div style="flex:1;min-width:190px">
-                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px">
-                    <span>De todo lo que cuesta el mes, lleva cubierto</span>
-                    <strong style="color:${titleColor}">${pctFij}%</strong>
-                </div>
-                <div style="height:9px;border-radius:6px;background:rgba(0,0,0,.07);overflow:hidden">
-                    <div style="height:100%;width:${pctFij}%;border-radius:6px;background:${titleColor};transition:width .3s ease"></div>
-                </div>
-                <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45">
-                    ${fmt(prod)} que entró contra ${fmt(costoTotal)} que cuesta el mes${prod>=costoTotal?' — ya está tapado':''}
-                </div>
+                <div style="font-weight:800;font-size:11px;color:${titleColor};text-transform:uppercase;letter-spacing:.7px">${mesLbl}</div>
+                <div style="font-size:33px;font-weight:800;line-height:1.1;margin-top:3px;color:${queda>=0?'var(--success)':'var(--danger)'}">${plata(queda)}</div>
+                <div style="font-size:12.5px;color:var(--dark);line-height:1.5;margin-top:4px">${msg}</div>
             </div>
         </div>
     </div>
+
+    ${fijos > 0 ? `
+    <div style="padding:0 18px 15px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:7px">
+            <span style="font-size:11.5px;color:var(--muted);line-height:1.4">
+                Para no perder ni ganar tiene que producir
+                <strong style="color:var(--dark)">${fmt(R.equilibrio)}</strong> en el mes
+            </span>
+            <strong style="color:${titleColor};font-size:14px;white-space:nowrap">${pctEq}%</strong>
+        </div>
+        <div style="height:10px;border-radius:6px;background:rgba(0,0,0,.07);overflow:hidden">
+            <div style="height:100%;width:${pctEq}%;border-radius:6px;background:${titleColor};transition:width .3s ease"></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.45">
+            Lleva ${fmt(prod)}${faltaEq > 0
+                ? ` · le faltan <strong style="color:var(--dark)">${fmt(faltaEq)}</strong> de producción`
+                : ' — ya pasó el piso'}
+        </div>
+    </div>` : ''}
 
     <details ${abierta?'open':''}
              ontoggle="try{localStorage.setItem('dentalgest_salud_abierta', this.open?'si':'no')}catch(e){}"
@@ -16715,6 +16819,31 @@ function renderSaludMes() {
                 Puede verlos en <strong>Caja</strong>.
             </div>` : ''}
 
+            ${/* Sólo cuando la tajada es positiva. Si un mes el honorario y el
+                  laboratorio se comen toda la producción, tajada sale 0 o
+                  negativa y esta frase diría «120 centavos se van y quedan −20»,
+                  que no es castellano ni es cierto. Ahí el piso ya no se puede
+                  calcular y el motor devuelve la carga fija pelada, así que la
+                  pregunta «por qué X y no Y» tampoco tiene sentido. */''}
+            ${fijos > 0 && R.tajada > 0 ? `
+            <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
+                <strong>Por qué el piso es ${fmt(R.equilibrio)} y no ${fmt(R.cargaFijaTotal)}.</strong>
+                La carga fija —lo que se paga haya o no haya pacientes— son
+                ${fmt(R.cargaFijaTotal)}. Pero de cada peso que usted cobra,
+                ${Math.round((1-R.tajada)*100)} centavos se van en el honorario del
+                especialista y en lo que sube y baja con los pacientes; sólo quedan
+                ${Math.round(R.tajada*100)} para tapar esa carga. Por eso hay que producir
+                ${fmt(R.equilibrio)} para cubrir ${fmt(R.cargaFijaTotal)}.
+            </div>` : ''}
+            ${fijos > 0 && prod > 0 && R.tajada <= 0 ? `
+            <div style="margin-top:12px;font-size:11px;color:var(--danger);line-height:1.55">
+                <strong>Este mes no hay piso que valga.</strong> Entre honorarios,
+                materiales y lo que sube y baja con los pacientes se va todo lo que
+                cobró y algo más, así que atender más pacientes no acerca el mes a
+                cero: lo aleja. Revise las comisiones y el laboratorio antes de
+                mirar el resto.
+            </div>` : ''}
+
             <div style="margin-top:12px;background:rgba(184,134,11,.09);border-left:3px solid var(--warning);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;color:var(--dark)">
                 ⚠️ <strong>Este no es el dinero que hay en el cajón.</strong> Aquí cuentan los
                 tratamientos del mes aunque el paciente no haya pagado, y los honorarios y
@@ -16726,17 +16855,20 @@ function renderSaludMes() {
     </details>
 
     ${diasConProd > 0 ? `
-    <div style="padding:10px 18px;border-top:1px solid ${titleColor}22;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted);line-height:1.5">
-        <span>📅 <strong>${diasConProd}</strong> días con pacientes de ${diasCorridos} corridos · promedio <strong>${fmt(promDia)}</strong> por día atendido</span>
-        <span>📊 ${mesCerrado ? 'El mes cerró en' : `Faltan ${diasDelMes-diasCorridos} días; a este ritmo cierra en`}
-            <strong style="color:${proyeccion>=R.equilibrio?'var(--success)':'#e65100'}">${fmt(proyeccion)}</strong>
-            ${proyeccion<R.equilibrio?' — por debajo de lo que cuesta tener abierto':' — alcanza para todo lo del mes'}</span>
-        ${/* El equilibrio no es «los fijos ÷ los días». De cada peso cobrado
-              una tajada se va en el honorario del especialista, así que hay
-              que producir bastante más que los fijos para taparlos. */''}
-        ${fijos>0?`<span>🎯 Con <strong>${fmt(puntoEq)}</strong> en cada día que atienda no pierde ni gana
-            (hay que producir ${fmt(R.equilibrio)} en el mes para tapar ${fmt(R.cargaFijaTotal)} de carga fija,
-             porque de cada peso que entra una parte se va en honorarios y en lo que sube y baja)</span>`:''}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(134px,1fr));gap:1px;background:${titleColor}26;border-top:1px solid ${titleColor}22">
+        ${casilla('Su ritmo', fmt(promDia),
+            `por día atendido · ${diasConProd} de ${diasCorridos} días`)}
+        ${/* Ésta al lado de la anterior a propósito: las dos son «por día
+              atendido», así que la comparación se hace sola. */''}
+        ${fijos > 0 ? casilla('Para no perder', fmt(puntoEq), 'en cada día que atienda',
+            promDia >= puntoEq ? 'var(--success)' : 'var(--danger)') : ''}
+        ${casilla(mesCerrado ? 'El mes cerró en' : `Si sigue así, cierra en`, fmt(proyeccion),
+            mesCerrado
+              ? (proyeccion >= R.equilibrio ? 'alcanzó para todo lo del mes' : 'por debajo del piso')
+              : (proyeccion >= R.equilibrio
+                    ? `alcanza · quedan ${diasDelMes-diasCorridos} días`
+                    : `${fmt(Math.max(0, R.equilibrio-proyeccion))} por debajo del piso`),
+            proyeccion >= R.equilibrio ? 'var(--success)' : '#e65100')}
     </div>
     ` : `<div style="padding:10px 18px;border-top:1px solid ${titleColor}22;font-size:12px;color:var(--muted)">Sin producción registrada este mes todavía.</div>`}`;
 }
@@ -16919,23 +17051,17 @@ function renderDashboard() {
         }).join('');
     }
 
-    // Saldos de caja (acumulado general)
-    const inEf   = allTx.filter(t=>t.payMethod==='efectivo').reduce((s,t)=>s+t.price,0);
-    const outEf  = allGx.filter(gx=>gx.paySource==='efectivo').reduce((s,gx)=>s+gx.amount,0);
-    const inBan  = allTx.filter(t=>t.payMethod==='banco').reduce((s,t)=>s+t.price,0);
-    const outBan = allGx.filter(gx=>gx.paySource==='banco').reduce((s,gx)=>s+gx.amount,0);
-    const inBold = allTx.filter(t=>t.payMethod==='bold_c'||t.payMethod==='bold_d').reduce((s,t)=>s+t.price,0);
-    const initEf  = parseFloat(cfg.ef)   || 0;
-    const initBan = parseFloat(cfg.banco) || 0;
-    const efSaldo  = initEf  + inEf  - outEf;
-    const banSaldo = initBan + inBan - outBan;
+    /* Saldos de caja: la misma cuenta que enseña la pantalla de Caja, leída
+       del mismo sitio. Antes esta pantalla la hacía por su lado y le faltaban
+       los ajustes; enseñaba otro efectivo para el mismo día. */
+    const S = saldosDeCaja();
     g('db-saldos').innerHTML = `
-        <div class="saldo-row"><span class="saldo-lbl">💵 Efectivo</span><span class="saldo-val pos">${fmt(efSaldo)}</span></div>
-        <div class="saldo-row"><span class="saldo-lbl">🏦 Bancolombia</span><span class="saldo-val pos">${fmt(banSaldo)}</span></div>
-        <div class="saldo-row"><span class="saldo-lbl">💳 Bold (por cobrar)</span><span class="saldo-val" style="color:var(--warning)">${fmt(inBold)}</span></div>
+        <div class="saldo-row"><span class="saldo-lbl">💵 Efectivo</span><span class="saldo-val pos">${fmt(S.efSaldo)}</span></div>
+        <div class="saldo-row"><span class="saldo-lbl">🏦 Bancolombia</span><span class="saldo-val pos">${fmt(S.banSaldo)}</span></div>
+        <div class="saldo-row"><span class="saldo-lbl">💳 Bold (por consignar)</span><span class="saldo-val" style="color:var(--warning)">${fmt(S.boldPend)}</span></div>
         <div class="saldo-row" style="background:var(--bg)">
             <span class="saldo-lbl" style="font-weight:700;color:var(--dark)">Total registrado</span>
-            <span class="saldo-val">${fmt(efSaldo + banSaldo + inBold)}</span>
+            <span class="saldo-val">${fmt(S.total)}</span>
         </div>`;
 
     // Compact tx list

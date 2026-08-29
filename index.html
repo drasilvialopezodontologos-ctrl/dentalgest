@@ -7671,7 +7671,12 @@ function renderGxList() {
             <td style="font-size:12px">${eh(provDesc)||'—'}${tcTag}</td>
             <td class="price-cell" style="color:${isRetiro?'#005c38':'var(--danger)'}">${isRetiro?'':'−'}${fmt(gx.amount)}</td>
             <td><span class="pm-badge ${GX_PM_CLS[gx.paySource]||'pm-ef'}">${GX_PM_LBL[gx.paySource]||gx.paySource}</span></td>
-            <td><button style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit" onclick="deleteGx('${gx.id}')">✕</button></td>
+            <td style="white-space:nowrap">
+                <button title="${isRetiro?'Volver a gasto de la clínica':'Marcar como sueldo suyo, no gasto de la clínica'}"
+                    style="background:${isRetiro?'rgba(0,100,60,.12)':'rgba(0,0,0,.05)'};color:${isRetiro?'#005c38':'var(--muted)'};border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit;margin-right:3px"
+                    onclick="toggleGxRetiro('${gx.id}')">👤</button>
+                <button style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-family:inherit" onclick="deleteGx('${gx.id}')">✕</button>
+            </td>
         </tr>`;
     }).join('');
 
@@ -7730,6 +7735,50 @@ function deleteGx(id) {
             toast('✅ Gasto anulado — caja actualizada');
         }
     );
+}
+
+/* ══════════════════════════════════════════════════════════
+   👤 «ESTO NO FUE UN GASTO DE LA CLÍNICA, ME LO LLEVÉ YO»
+   ══════════════════════════════════════════════════════════
+
+   El formulario deja escoger «gasto» o «sueldo» al CREAR la fila, pero una
+   vez guardada no había forma de cambiarla. Silvia revisó agosto y encontró
+   cuatro renglones que son suyos y no de la clínica —un medicamento y los
+   pasajes de Arelis, la empleada de su casa—. Sin este botón le tocaría
+   borrarlos y volverlos a escribir, perdiendo la fecha y el motivo. Peor:
+   borrarlos haría creer que esa plata nunca salió del bolsillo, y sí salió.
+
+   Qué cambia y qué no, que es lo que hay que tener claro:
+
+     · CAJA NO SE MUEVE. La plata salió del bolsillo igual, la haya gastado
+       la clínica o se la haya llevado ella. Por eso Caja resta todos los
+       gastos, tengan o no la marca.
+     · LA UTILIDAD SÍ SUBE. Un retiro no es un costo del negocio: es reparto
+       de lo que quedó. Deja de restar, y el mes mejora en ese monto.
+     · Y empieza a contar contra su retiro objetivo del mes, para que no
+       parezca que no se ha llevado nada.
+
+   Se puede deshacer con el mismo botón: no borra ni inventa nada, sólo
+   pone o quita una marca. */
+function toggleGxRetiro(id) {
+    const gxs = DB.get('gx') || [];
+    const gx  = gxs.find(r => r.id === id);
+    if (!gx) return;
+
+    const aRetiro = !gx.esRetiro;
+    const desc    = [gx.provider, gx.desc].filter(Boolean).join(' · ') || gx.catLabel || 'este gasto';
+
+    gx.esRetiro = aRetiro;
+    if (!aRetiro) delete gx.esRetiro;
+    DB.set('gx', gxs);
+
+    renderGxList();
+    if (typeof renderCaja      === 'function') renderCaja();
+    if (typeof renderDashboard === 'function') renderDashboard();
+
+    toast(aRetiro
+        ? `👤 ${fmt(gx.amount)} pasa a sueldo suyo — la caja no se mueve, pero deja de restarle al mes`
+        : `💸 ${fmt(gx.amount)} vuelve a ser gasto de la clínica`, 'success');
 }
 
 /* ── Reportes ── */
@@ -7795,6 +7844,7 @@ function setRepTab(tab) {
 function renderReportes() {
     const desde = g('rep-desde')?.value || todayISO().slice(0,7)+'-01';
     const hasta  = g('rep-hasta')?.value || todayISO();
+    _repDesde = desde; _repHasta = hasta;
     const label  = desde===hasta ? desde : `${desde} → ${hasta}`;
     const allTx  = (DB.get('tx')||[]).filter(t=>t.date>=desde && t.date<=hasta);
     const allGx  = (DB.get('gx')||[]).filter(gx=>gx.date>=desde && gx.date<=hasta && !gx.esRetiro);
@@ -7807,6 +7857,44 @@ function renderReportes() {
     if (repTab==='equil') renderRepEquil(label, allTx, allGx, allNom);
 }
 
+/* El rango que está mirando Reportes, para que las funciones de cada pestaña
+   puedan pedir los retiros del mismo período sin volver a leer los inputs. */
+let _repDesde = '', _repHasta = '';
+
+/* ══════════════════════════════════════════════════════════
+   LOS RETIROS DE LA DUEÑA VIVEN EN DOS SITIOS
+   ══════════════════════════════════════════════════════════
+
+   Se pueden anotar de dos maneras y las dos son legítimas:
+
+     · desde Nómina → «Registrar retiro», que crea una fila en 'nomina';
+     · desde Gastos, marcando la fila como «Sueldo», que le pone
+       esRetiro:true a una fila de 'gx'.
+
+   Toda pantalla que sume «cuánto se ha llevado este mes» tiene que mirar
+   las DOS. Miraban sólo la primera, y por ahí se perdía plata: los cuatro
+   renglones de agosto de Silvia —el medicamento y los pasajes de Arelis,
+   $467.050— salían del bolsillo, dejaban de restar en la utilidad porque
+   un retiro no es un costo, y en «Mi compensación» seguía diciendo
+   «retirado $0». La misma plata desapareciendo entre dos puertas.
+
+   Caja no entra aquí y es correcto: allá se restan todos los gastos, tenga
+   o no la marca, porque la plata salió del bolsillo igual. Lo que cambia
+   con la marca es la UTILIDAD, no el saldo. */
+function retirosEnRango(desde, hasta) {
+    const enRango = d => d && d >= desde && d <= hasta;
+    const nom = (DB.get('nomina') || [])
+        .filter(n => n.type === 'retiro' && enRango(n.date))
+        .map(n => ({ id:n.id, date:n.date, amount:n.amount, payMethod:n.payMethod,
+                     mixtoEf:n.mixtoEf, mixtoBan:n.mixtoBan, origen:'nom' }));
+    const gxs = (DB.get('gx') || [])
+        .filter(x => x.esRetiro && enRango(x.date))
+        .map(x => ({ id:x.id, date:x.date, amount:x.amount, payMethod:x.paySource,
+                     origen:'gx',
+                     desc:[x.provider, x.desc].filter(Boolean).join(' · ') }));
+    return [...nom, ...gxs].sort((a,b) => a.date === b.date ? 0 : (a.date < b.date ? -1 : 1));
+}
+
 function renderRepResumen(mes, allTx, allGx, allNom) {
     /* Misma cuenta que el Panel y que Rentabilidad. Antes esta pantalla
        restaba TODOS los gastos y encima los sueldos, así que las quincenas
@@ -7816,8 +7904,20 @@ function renderRepResumen(mes, allTx, allGx, allNom) {
     const prod      = R.prod;
     const gastos    = allGx.reduce((s,gx)=>s+gx.amount,0);
     const comisiones= R.honorarios;
-    const retiroPagado = allNom.filter(n=>n.type==='retiro').reduce((s,n)=>s+n.amount,0);
-    const balance   = R.resultado - retiroPagado;
+    /* ══════════════════════════════════════════════════════════
+       EL RETIRO DE LA DUEÑA NO ES UN COSTO DE LA CLÍNICA
+       ══════════════════════════════════════════════════════════
+       Esta casilla restaba el retiro del resultado, y así el Panel decía
+       −$2.662.200 y esta pantalla −$3.129.250 del mismo agosto — con el
+       letrero de abajo jurando que son el mismo número.
+
+       Lo que ella se lleva no es un gasto: es el reparto de lo que quedó.
+       Restarlo aquí es lo mismo que contarlo en Gastos, que es justo lo
+       que quitamos con el botón 👤. El resultado es UNO y es el mismo en
+       todas las pantallas; el retiro se muestra debajo, como lo que es:
+       cuánto de ese resultado ya salió para ella. */
+    const retiroPagado = retirosEnRango(_repDesde, _repHasta).reduce((s,r)=>s+r.amount,0);
+    const balance   = R.resultado;
 
     // Formas de pago breakdown
     const pmTotals = {};
@@ -7872,7 +7972,9 @@ function renderRepResumen(mes, allTx, allGx, allNom) {
                 <span class="metric-icon">🏦</span>
                 <div class="metric-label">Le queda del período</div>
                 <div class="metric-val ${balance>=0?'pos':'neg'}">${balance>=0?'':'−'}${fmt(Math.abs(balance))}</div>
-                <div class="metric-sub">Producción menos todo lo que costó${retiroPagado>0?', incluido su retiro':''}</div>
+                <div class="metric-sub">${retiroPagado>0
+                    ? `Antes de su retiro · ya se llevó ${fmt(retiroPagado)}`
+                    : 'Producción menos todo lo que costó'}</div>
             </div>
         </div>
         <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 14px;margin:-8px 0 20px;font-size:11px;color:var(--muted);line-height:1.6">
@@ -8498,12 +8600,17 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
     const prod      = R.prod;
     const gastos    = R.otrosGastos;
     const comisiones= R.honorarios;
-    const retiroPagado = allNom.filter(n=>n.type==='retiro').reduce((s,n)=>s+n.amount,0);
+    const retiroPagado = retirosEnRango(_repDesde, _repHasta).reduce((s,r)=>s+r.amount,0);
     const retiro       = parseFloat(cfg.retiro)||0;
     const paraFiscales = R.parafiscales;
 
     const totalEgresos = R.honorarios + R.materiales + R.totalFijos + retiro;
-    const balance      = R.resultado - retiroPagado;
+    /* Mismo criterio que en Resumen: el retiro NO baja el resultado. Iba
+       como un renglón «(−) Retiro Dra. Silvia» en medio de los gastos, y
+       eso lo pone al nivel del arriendo cuando no lo es: el arriendo hay
+       que pagarlo produzca o no; su retiro sale de lo que quedó. Ahora va
+       debajo del total, con lo que le falta por retirar. */
+    const balance      = R.resultado;
 
     const lineItem = (lbl, val, cls='') =>
         `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(229,213,207,.4)">
@@ -8523,15 +8630,27 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
                     ${lineItem('(−) Sueldos y transporte del personal', '−'+fmt(R.sueldos), 'neg')}
                     ${paraFiscales>0?lineItem('(−) Parafiscales'+(R.paraEstimados?' estimados':''), '−'+fmt(paraFiscales), 'neg'):''}
                     ${lineItem('(−) Los demás gastos del mes', '−'+fmt(gastos), 'neg')}
-                    ${retiroPagado>0?lineItem('(−) Retiro Dra. Silvia (pagado)', '−'+fmt(retiroPagado), 'neg'):''}
                     ${/* Se llama igual que en el Panel a propósito. Antes cada
                           pantalla le ponía nombre propio al mismo número —«Balance
                           disponible», «Utilidad», «Le queda»— y parecían cuentas
                           distintas cuando eran la misma. */''}
                     <div style="display:flex;justify-content:space-between;padding:12px 0;border-top:2px solid var(--border);margin-top:4px">
-                        <span style="font-size:14px;font-weight:800">Le queda del mes${retiroPagado>0?', ya sacado su retiro':''}</span>
+                        <span style="font-size:14px;font-weight:800">Le queda del mes</span>
                         <span style="font-size:20px;font-weight:800;${balance>=0?'color:var(--success)':'color:var(--danger)'}">${balance>=0?'':'−'}${fmt(Math.abs(balance))}</span>
                     </div>
+                    ${retiroPagado>0?`
+                    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px">
+                        ${lineItem('De eso, usted ya se llevó', fmt(retiroPagado))}
+                        <div style="display:flex;justify-content:space-between;padding:9px 0">
+                            <span style="font-size:13px">Le falta por retirar del objetivo</span>
+                            <span style="font-weight:700;font-variant-numeric:tabular-nums">${fmt(Math.max(0, retiro-retiroPagado))}</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted);line-height:1.6">
+                            Su retiro no le resta al resultado del mes: no es un gasto de
+                            la clínica, es el reparto de lo que quedó. Por eso el número de
+                            arriba es el mismo del Panel del día.
+                        </div>
+                    </div>`:''}
                     <div style="font-size:11px;color:var(--muted);margin-top:4px">
                         ${R.paraEstimados?'* Parafiscales = EPS+Pensión+ARL Clase I+Caja sobre SMLMV vigente. Es una estimación: este mes no hay seguridad social anotada en Gastos.<br>':''}
                         ${R.gastosExcluidos>0?`* ${explicaExcluidos(R)}`:''}
@@ -9178,7 +9297,10 @@ function renderNomSilvia() {
     const mes = todayISO().slice(0,7);
     const allTx  = (DB.get('tx')  ||[]).filter(t  => t.date.startsWith(mes));
     const allGx  = (DB.get('gx')  ||[]).filter(gx => gx.date.startsWith(mes) && !gx.esRetiro);
-    const allRet = (DB.get('nomina')||[]).filter(n => n.date.startsWith(mes) && n.type==='retiro');
+    /* Las DOS puertas por las que ella se lleva plata: el módulo de Nómina y
+       las filas de Gastos marcadas «Sueldo». Esta pantalla miraba sólo la
+       primera y por eso decía «retirado $0» con $467.050 ya fuera del cajón. */
+    const allRet = retirosEnRango(mes+'-01', mes+'-31');
 
     /* Lo que la clínica puede pagarle es lo mismo que le queda al mes, ni un
        peso más. Antes esta pantalla lo calculaba aparte —restaba los gastos
@@ -9249,12 +9371,18 @@ function renderNomSilvia() {
                        const d = new Date(r.date+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});
                        const pmDisp = r.payMethod==='mixto'
                            ? `Mixto (ef ${fmt(r.mixtoEf||0)} + tr ${fmt(r.mixtoBan||0)})`
-                           : (PM_LBL[r.payMethod]||r.payMethod);
+                           : (PM_LBL[r.payMethod]||r.payMethod||'—');
+                       /* Los que vienen de Gastos se anulan allá, no aquí: el botón
+                          de esta tabla llama a deleteNomina y no encontraría la fila.
+                          Mejor decir de dónde salió que ofrecer un botón que miente. */
+                       const esGx = r.origen === 'gx';
                        return `<tr>
                            <td style="padding:4px 8px;font-size:11px;color:var(--muted)">${d}</td>
-                           <td style="padding:4px 8px;font-size:11px">${pmDisp}</td>
+                           <td style="padding:4px 8px;font-size:11px">${pmDisp}${esGx?`<div style="font-size:10px;color:var(--muted)">desde Gastos · ${eh(r.desc||'')}</div>`:''}</td>
                            <td style="padding:4px 8px;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--success)">${fmt(r.amount)}</td>
-                           <td style="padding:4px 6px"><button onclick="deleteNomina('${r.id}')" title="Anular" style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:10px;font-family:inherit">✕</button></td>
+                           <td style="padding:4px 6px">${esGx
+                               ? `<span title="Se cambia desde la pantalla de Gastos" style="font-size:10px;color:var(--muted)">💸</span>`
+                               : `<button onclick="deleteNomina('${r.id}')" title="Anular" style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:10px;font-family:inherit">✕</button>`}</td>
                        </tr>`;
                    }).join('');
                    return `<div style="background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:10px">

@@ -14701,6 +14701,16 @@ function openPatientHistory(patient) {
             const descCell = t.discountAmt > 0
                 ? `<span style="color:var(--danger);font-size:10px;white-space:nowrap">-${fmt(t.discountAmt)}</span>`
                 : '—';
+            /* Sólo tiene sentido en un cobro suelto: los abonos de un plan ya
+               tienen su deuda contada, y el segundo renglón de un pago mixto
+               es el mismo cobro partido en dos. */
+            const planDeEste = allPlanes.find(p => p.origenTx === t.id);
+            const puedeDeber = !t.fromPlan && !t.splitChild && t.type !== 'saldo';
+            const deudaCell  = planDeEste
+                ? `<span style="font-size:10px;color:var(--muted);white-space:nowrap">📋 con plan</span>`
+                : (puedeDeber
+                    ? `<button onclick="abrirQuedoDebiendo('${t.id}')" title="Este paciente quedó debiendo parte de este tratamiento" style="background:rgba(160,57,62,.08);color:var(--danger);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:10px;font-family:inherit;font-weight:700;white-space:nowrap">Quedó debiendo</button>`
+                    : '—');
             return `<tr>
                 <td style="white-space:nowrap;font-size:11px;color:var(--muted)">${fechaLbl}</td>
                 <td style="font-size:12px;max-width:160px">${eh(t.treatName)}${(t.toothRef||t.diagnosis)?'<div style="font-size:10px;color:var(--muted);white-space:normal">'+(t.toothRef?'🦷 '+eh(t.toothRef):'')+((t.toothRef&&t.diagnosis)?' · ':'')+((t.diagnosis&&DIAG_LABELS[t.diagnosis])?DIAG_LABELS[t.diagnosis]:t.diagnosis||'')+'</div>':''}</td>
@@ -14709,6 +14719,7 @@ function openPatientHistory(patient) {
                 <td style="font-size:11px;color:var(--muted);white-space:nowrap">${pmLbl[t.payMethod]||t.payMethod}</td>
                 <td style="font-size:11px;text-align:center">${descCell}</td>
                 <td style="font-weight:800;color:${nc};font-variant-numeric:tabular-nums;white-space:nowrap">${fmt(neto)}</td>
+                <td style="text-align:center">${deudaCell}</td>
             </tr>`;
         }).join('');
         tableWrap.innerHTML = `
@@ -14718,7 +14729,7 @@ function openPatientHistory(patient) {
                     <thead><tr>
                         <th>Fecha</th><th>Tratamiento</th><th>Doctor</th>
                         <th>Cobrado</th><th>Pago</th><th>Descuento</th>
-                        <th style="color:var(--success)">★ Neto</th>
+                        <th style="color:var(--success)">★ Neto</th><th>¿Debe algo?</th>
                     </tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
@@ -14732,6 +14743,166 @@ function openPatientHistory(patient) {
 function closePatientHistory() {
     g('pac-hist-modal').style.display = 'none';
     document.body.style.overflow = '';
+}
+
+/* ── «Quedó debiendo», anotado después ──────────────────────────────────────
+   Caso real de Hugo López: abonó $330.000 por transferencia y quedó debiendo
+   $200.000, pero el cobro se registró sin marcar el saldo. La plata que entró
+   está bien —ya está en el banco y ya causó su comisión—; lo que falta es que
+   la app sepa de la deuda.
+
+   Antes esto no se podía arreglar sin dañar algo. Crear un plan a mano por el
+   valor completo le decía que Hugo debía los $530.000 enteros; y meterle el
+   abono de $330.000 creaba un cobro NUEVO por la misma plata, que le inflaba
+   el mes y le pagaba la comisión dos veces.
+
+   La salida es la misma que ya usa el aviso de Reportes: el abono entra
+   marcado como YA REGISTRADO —no crea cobro, no causa comisión— y sólo sirve
+   para que el saldo salga solo.
+
+   ⚠️ Y hay DOS casos distintos, que se pagan distinto. Casi me como el
+   segundo con el caso real de Hugo López:
+
+   (a) El honorario se liquidó sobre lo que se cobró. Entonces lo que falte
+       por cobrar SÍ causará comisión cuando el paciente lo pague, porque de
+       ese pedazo todavía no se le ha pagado nada al especialista.
+
+   (b) El honorario se liquidó sobre el tratamiento COMPLETO. Es el caso de
+       Hugo: a Diana Valencia se le pagaron $185.500, que es el 35% de
+       $530.000 —no de los $330.000 que entraron—. Ahí el saldo NO puede
+       volver a causar comisión: se le estaría pagando dos veces el mismo
+       pedazo. Se marca `comisionYaLiquidada` y el saldo entra limpio.
+
+   Cuál de los dos es se deduce solo: si el honorario dividido por el
+   porcentaje del trato da un tratamiento más caro que lo cobrado, es (b), y
+   de paso ese mismo número dice cuánto quedó debiendo. Es la misma cuenta
+   que ya hace el aviso de Reportes; aquí sólo se aprovecha.
+
+   El laboratorio va en 0 a propósito: el del cobro original ya se descontó
+   allá, y volver a descontarlo dejaría corto al especialista.            */
+let _deudaTx = null;
+let _deudaYaLiquidada = false;
+let _deudaPagado = 0;
+
+/* Un pago partido —la mitad en efectivo y la mitad por transferencia— queda
+   en DOS renglones que son UN solo cobro. Si aquí miro nada más el renglón
+   donde ella hizo clic, creo que pagó la mitad de lo que en realidad pagó, y
+   le invento una deuda que no existe. Así que sumo la venida completa. */
+function _pagadoDeLaVenida(t) {
+    if (!t.splitGroup) return t.price || 0;
+    return (DB.get('tx') || [])
+        .filter(x => x.splitGroup === t.splitGroup)
+        .reduce((s, x) => s + (x.price || 0), 0);
+}
+
+function abrirQuedoDebiendo(txId) {
+    const t = (DB.get('tx') || []).find(x => x.id === txId);
+    if (!t) { toast('No encuentro ese cobro', 'error'); return; }
+    const ya = (DB.get('planes') || []).find(p => p.origenTx === txId);
+    if (ya) { toast(`${t.patient} ya tiene un plan por este tratamiento`, 'error'); return; }
+    _deudaTx = t;
+    _deudaPagado = _pagadoDeLaVenida(t);
+
+    /* ¿El honorario ya se pagó sobre el tratamiento entero? */
+    const gana   = (t.commStatus !== 'owner' ? (t.commission || 0) : 0) || _honorarioEnNota(t);
+    const pct    = pctComision(t.docId);
+    const baseImp = (pct && gana) ? Math.round(gana / pct) : 0;
+    const saldoDeducido = baseImp - _deudaPagado;
+    _deudaYaLiquidada = saldoDeducido >= 10000;
+
+    const pmLbl = {efectivo:'efectivo', banco:'transferencia', bold_c:'tarjeta de crédito', bold_d:'tarjeta débito', previo:'período anterior'};
+    const comoPago = t.splitGroup ? 'en pago partido' : ('por ' + (pmLbl[t.payMethod] || t.payMethod));
+    g('deuda-resumen').innerHTML =
+        `<strong>${eh(t.patient)}</strong> — ${eh(t.treatName || 'tratamiento')}<br>` +
+        `<span style="color:var(--muted)">Ya pagó <strong style="color:var(--success)">${fmt(_deudaPagado)}</strong> ` +
+        `${comoPago} el ` +
+        `${new Date(t.date+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}</span>`;
+
+    const aviso = g('deuda-yaliq');
+    if (_deudaYaLiquidada) {
+        /* La app ya sabe cuánto es: se lo deja puesto para que no lo teclee. */
+        sv('deuda-monto', saldoDeducido);
+        aviso.style.display = '';
+        aviso.innerHTML =
+            `🔎 <strong>Esto ya lo sabía la app.</strong> A ${eh(docShort(t.docId, t.docName))} se le pagaron ` +
+            `<strong>${fmt(gana)}</strong>, que es el ${Math.round(pct*100)}% de <strong>${fmt(baseImp)}</strong> — ` +
+            `no de los ${fmt(_deudaPagado)} que entraron. Por eso el tratamiento completo vale ${fmt(baseImp)} ` +
+            `y quedaron debiendo <strong>${fmt(saldoDeducido)}</strong>, que ya le dejé puesto abajo.<br><br>` +
+            `Como ese honorario ya cubre el tratamiento entero, <strong>lo que falta por cobrar no vuelve a ` +
+            `causar comisión</strong>. Si volviera a causarla, se le pagaría dos veces el mismo pedazo.`;
+    } else {
+        sv('deuda-monto', '');
+        aviso.style.display = 'none';
+        aviso.innerHTML = '';
+    }
+    calcDeudaPreview();
+    g('deuda-modal').style.display = 'flex';
+    setTimeout(() => g('deuda-monto').focus(), 60);
+}
+
+function calcDeudaPreview() {
+    if (!_deudaTx) return;
+    const debe = parseFloat(gv('deuda-monto')) || 0;
+    const el = g('deuda-preview');
+    if (debe <= 0) { el.innerHTML = ''; return; }
+    const total = _deudaPagado + debe;
+    el.innerHTML = `El tratamiento completo queda en <strong>${fmt(total)}</strong> — ` +
+                   `${fmt(_deudaPagado)} ya pagados y <strong style="color:var(--danger)">${fmt(debe)}</strong> por cobrar.`;
+}
+
+function cerrarQuedoDebiendo() {
+    _deudaTx = null;
+    _deudaPagado = 0;
+    g('deuda-modal').style.display = 'none';
+}
+
+function confirmarQuedoDebiendo() {
+    const t = _deudaTx;
+    if (!t) return;
+    const debe = parseFloat(gv('deuda-monto')) || 0;
+    if (debe <= 0) { toast('Escribe cuánto quedó debiendo', 'error'); return; }
+    const cobrado = _deudaPagado || (t.price || 0);
+    const total   = cobrado + debe;
+    const fechaLbl = new Date(t.date+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
+    const plan = {
+        id: 'pl' + Date.now(),
+        patient:   t.patient,
+        docId:     t.docId,
+        docName:   t.docName || getDoctores()[t.docId]?.name || t.docId,
+        treatDesc: t.treatName || 'Plan de tratamiento',
+        treatId:   t.treatId || null,
+        totalAgreed: total,
+        labCost: 0,          // el del cobro original ya se descontó allá
+        labDescontado: 0,
+        abonos: [{
+            id: 'ab' + Date.now(),
+            date: t.date,
+            amount: cobrado,
+            payMethod: t.payMethod || 'efectivo',
+            yaRegistrado: true,       // ← no crea cobro: el cobro ya existe
+            origenTx: t.id,
+            createdAt: new Date().toISOString()
+        }],
+        status: 'active',
+        origenTx: t.id,
+        /* Ver el comentario largo de arriba: (a) el saldo causa su comisión
+           cuando lo paguen; (b) el honorario ya se pagó sobre el tratamiento
+           entero y el saldo entra limpio. */
+        ...(_deudaYaLiquidada ? { comisionYaLiquidada: true } : { comisionPorAbono: true }),
+        createdAt: new Date().toISOString(),
+        date: t.date,
+        notes: `Deuda anotada después. Los ${fmt(cobrado)} del ${fechaLbl} ya estaban ` +
+               `registrados en la caja y no se vuelven a cobrar; faltan ${fmt(debe)}.` +
+               (_deudaYaLiquidada
+                 ? ` El honorario ya se liquidó sobre el tratamiento completo, así que el saldo no causa comisión.`
+                 : ` El saldo causará su comisión cuando el paciente lo pague.`)
+    };
+    const list = DB.get('planes') || [];
+    list.push(plan);
+    DB.set('planes', list);
+    cerrarQuedoDebiendo();
+    openPatientHistory(t.patient);   // se repinta con el plan ya puesto
+    toast(`✅ ${t.patient} debe ${fmt(debe)} — ya quedó en Planes`, 'success');
 }
 
 function printPatientHistory() {
@@ -18324,6 +18495,37 @@ function confirmExtracto() {
              en los libros, un solo tecleo de doctor / paciente / fecha / pago. -->
         <button onclick="confirmSaveRx(true)" style="width:100%;margin-top:9px;padding:10px;border-radius:10px;border:1.5px dashed var(--bronze);background:transparent;color:var(--bronze);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">➕ Guardar y agregar otro tratamiento al mismo paciente</button>
         <p style="font-size:11px;color:var(--muted);margin:7px 0 0;text-align:center;line-height:1.45">Guarda éste y vuelve al formulario con el <strong>doctor, el paciente, la fecha y la forma de pago</strong> ya puestos. Quedan dos renglones —uno por tratamiento— para que cada comisión y cada ganancia se vean por separado.</p>
+    </div>
+</div>
+
+<!-- ══ MODAL: EL PACIENTE QUEDÓ DEBIENDO (deuda anotada después) ══ -->
+<div id="deuda-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10050;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:26px 24px;max-width:430px;width:92%;box-shadow:0 12px 40px rgba(0,0,0,.3)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <span style="font-size:22px">📋</span>
+            <div>
+                <div style="font-weight:800;font-size:16px;color:var(--dark)">El paciente quedó debiendo</div>
+                <div style="font-size:12px;color:var(--muted)">Para cobros que se registraron sin marcar el saldo</div>
+            </div>
+        </div>
+        <div id="deuda-resumen" style="background:var(--bg);border-radius:12px;padding:13px 16px;margin-bottom:14px;font-size:13px;line-height:1.6"></div>
+        <div id="deuda-yaliq" style="display:none;background:rgba(120,150,190,.1);border:1.5px solid rgba(120,150,190,.35);border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:12px;line-height:1.6;color:#3d4f63"></div>
+        <div class="fg" style="margin-bottom:10px">
+            <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">¿Cuánto le quedó debiendo?</label>
+            <div class="inp-pre"><span class="pre-lbl">$</span>
+                <input type="number" class="fc" id="deuda-monto" placeholder="0" min="0" oninput="calcDeudaPreview()">
+            </div>
+        </div>
+        <div id="deuda-preview" style="font-size:12.5px;color:var(--dark);background:#FFF5EE;border-radius:10px;padding:0 14px;line-height:1.6"></div>
+        <p style="font-size:11.5px;color:var(--muted);margin:12px 0 0;line-height:1.55">
+            <strong>El cobro que ya entró no se toca.</strong> Esa plata ya está en la caja y ya causó su
+            comisión — no se vuelve a cobrar ni se cuenta dos veces. Aquí sólo se anota la deuda, para que
+            salga en <strong>Planes</strong> y usted sepa a quién cobrarle.
+        </p>
+        <div style="display:flex;gap:10px;margin-top:16px">
+            <button onclick="cerrarQuedoDebiendo()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✕ Cancelar</button>
+            <button onclick="confirmarQuedoDebiendo()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📋 Anotar la deuda</button>
+        </div>
     </div>
 </div>
 

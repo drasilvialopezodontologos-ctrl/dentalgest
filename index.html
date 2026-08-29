@@ -3052,6 +3052,36 @@ Devolver no es gastar.</strong></div>
                         <div id="cfg-usuarios"></div>
                         <div id="cfg-usuarios-retirados"></div>
                         <button type="button" class="eq-add" onclick="abrirUsuarioNuevo()">+ Darle entrada a alguien</button>
+
+                        <!-- Modo equipo compartido. Es un ajuste DE ESTE EQUIPO:
+                             prenderlo en la sala de espera no se lo prende al de ella.
+                             Por eso el aviso de abajo dice en cuál está parada. -->
+                        <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:20px">
+                            <h4 style="margin:0 0 4px;font-size:15px">🖥️ Este equipo es compartido</h4>
+                            <p style="margin:0 0 14px;color:var(--muted);font-size:13px">
+                                Para el computador de la sala de espera, o cualquiera que use más de una persona.
+                            </p>
+                            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:14px">
+                                <input type="checkbox" id="cfg-compartido" onchange="guardarEquipoCompartido()"
+                                       style="width:18px;height:18px;margin-top:2px;flex-shrink:0;cursor:pointer">
+                                <span style="font-size:14px;line-height:1.5">
+                                    Pedir el PIN <strong>cada vez</strong> que se abra la app en este equipo,
+                                    y <strong>cerrarla sola</strong> si nadie la toca.
+                                </span>
+                            </label>
+                            <div id="cfg-compartido-detalle" style="display:none;padding-left:28px">
+                                <label style="display:block;font-size:13px;color:var(--muted);margin-bottom:6px">
+                                    Cerrar sola después de
+                                </label>
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <input type="number" id="cfg-compartido-min" min="1" max="480" step="1"
+                                           onchange="guardarEquipoCompartido()"
+                                           style="width:90px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px">
+                                    <span style="font-size:14px">minutos sin tocarla</span>
+                                </div>
+                            </div>
+                            <div id="cfg-compartido-aviso" class="alert alert-info" style="margin-top:14px;font-size:13px"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -4987,6 +5017,8 @@ const _DG_EQUIPO = 'dentalgest_equipo';
 
 function _dgEquipoRecuerda() {
     try {
+        /* Equipo compartido: no se acuerda de nadie, a propósito. */
+        if (_dgEsCompartido()) return null;
         const u = localStorage.getItem(_DG_EQUIPO);
         const us = getUsuarios();
         /* A quien ya no tiene entrada, el equipo tampoco lo recuerda. */
@@ -4995,6 +5027,60 @@ function _dgEquipoRecuerda() {
 }
 function _dgOlvidarEquipo() {
     try { localStorage.removeItem(_DG_EQUIPO); } catch (e) {}
+}
+
+/* ── Modo equipo compartido ───────────────────────────────────────────────
+   El computador de la sala de espera no es de nadie: lo usa Sandry, lo usa
+   quien esté de turno, y está a la vista del paciente que espera. Ahí "que el
+   equipo se acuerde de quién entra" deja de ser una comodidad y pasa a ser un
+   problema — cualquiera que se siente entra sin poner nada.
+
+   Con este modo prendido, ese equipo:
+     · vuelve a pedir el PIN cada vez que se abre la app, y
+     · se sale solo si nadie lo toca durante los minutos que ella diga.
+
+   Se prende POR EQUIPO. Prenderlo en la sala de espera no se lo prende al
+   computador de Silvia: por eso la clave no lleva el prefijo dg_ (esas se
+   suben al servidor y las comparten los dos equipos; éstas no salen de aquí). */
+const _DG_COMPARTIDO = 'dentalgest_compartido';
+const _DG_MINUTOS    = 'dentalgest_minutos';
+const _DG_MIN_DEF    = 10;
+
+function _dgEsCompartido() {
+    try { return localStorage.getItem(_DG_COMPARTIDO) === '1'; } catch (e) { return false; }
+}
+function _dgMinutosEspera() {
+    try {
+        const n = parseInt(localStorage.getItem(_DG_MINUTOS), 10);
+        /* Menos de 1 minuto la echaría mientras escribe; más de 8 horas ya no
+           es un descuido, es que se fue a la casa y dejó el equipo prendido. */
+        return (n >= 1 && n <= 480) ? n : _DG_MIN_DEF;
+    } catch (e) { return _DG_MIN_DEF; }
+}
+
+let _dgRelojInactivo = null;
+let _dgVigilando     = false;
+
+/* Cada toque, tecla o movimiento vuelve a poner el reloj en cero. */
+function _dgReiniciarInactividad() {
+    if (_dgRelojInactivo) { clearTimeout(_dgRelojInactivo); _dgRelojInactivo = null; }
+    if (!_dgEsCompartido() || !currentUser) return;
+    _dgRelojInactivo = setTimeout(() => {
+        /* No se pierde nada: lo que ella escribió ya está guardado, esto sólo
+           cierra la puerta. Vuelve la pantalla del PIN. */
+        if (!currentUser) return;
+        doLogout();
+        toast('🔒 Se cerró solo por inactividad. Ponga el PIN para seguir.', '', 9000);
+    }, _dgMinutosEspera() * 60000);
+}
+
+function _dgVigilarInactividad() {
+    if (!_dgVigilando) {
+        ['mousedown', 'keydown', 'touchstart', 'scroll', 'wheel']
+            .forEach(ev => document.addEventListener(ev, _dgReiniciarInactividad, { passive: true }));
+        _dgVigilando = true;
+    }
+    _dgReiniciarInactividad();
 }
 
 async function _dgSesionActiva() {
@@ -5107,7 +5193,7 @@ function doLogin(){
        afuera: el PIN dice quién es, no si puede — quien llegó hasta aquí ya
        pasó por la cuenta, que es la puerta de verdad. */
     if(!u.pin){
-        try { localStorage.setItem(_DG_EQUIPO, u.id); } catch (e) {}
+        if (!_dgEsCompartido()) { try { localStorage.setItem(_DG_EQUIPO, u.id); } catch (e) {} }
         currentUser=u; enterApp();
         toast('⚠️ ' + u.name + ' todavía no tiene PIN. Póngaselo en Configuración → Acceso y seguridad.', '', 9000);
         return;
@@ -5116,9 +5202,11 @@ function doLogin(){
     const pin=getPin();
     if(pin.length<4){ g('loginErr').textContent='Ingresa los 4 dígitos del PIN'; return; }
     if(pin===u.pin){
-        /* De aquí en adelante este equipo ya sabe quién es. */
-        const primeraVez = !_dgEquipoRecuerda();
-        try { localStorage.setItem(_DG_EQUIPO, selUser); } catch (e) {}
+        /* En equipo compartido NO se guarda quién entró: la gracia es que el
+           siguiente que se siente tenga que poner su propio PIN. */
+        const compartido = _dgEsCompartido();
+        const primeraVez = !compartido && !_dgEquipoRecuerda();
+        if (!compartido) { try { localStorage.setItem(_DG_EQUIPO, selUser); } catch (e) {} }
         currentUser=u;
         enterApp();
         if (primeraVez) {
@@ -5135,6 +5223,7 @@ function doLogout(){
        equipo y vuelve a salir la pregunta con el PIN. La cuenta (correo y
        contraseña) no se toca — para eso está el otro botón. */
     _dgOlvidarEquipo();
+    if (_dgRelojInactivo) { clearTimeout(_dgRelojInactivo); _dgRelojInactivo = null; }
     currentUser=null;
     g('appShell').classList.add('hidden');
     g('loginScreen').classList.remove('cargando-directo');
@@ -5168,6 +5257,7 @@ function enterApp(){
     g('sbClinic').textContent=cfg.nombre||DEFAULTS.nombre;
     renderSyncBadge();   // pinta el estado de la conexión al entrar
     _vigilarTablas();    // vigila las tablas nuevas para que no estiren la pantalla
+    _dgVigilarInactividad();  // en equipo compartido, cierra solo si nadie lo toca
     const init=DB.get('initialized');
     navigate(init?'dashboard':'config');
     if(!init) toast('👋 Bienvenida. Completa la configuración inicial antes de empezar.','',6000);
@@ -6938,6 +7028,62 @@ function renderUsuariosCfg() {
     g('cfg-usuarios-retirados').innerHTML = !off.length ? '' :
         `<div class="eq-hdr-off">Ya no pueden abrir la app (${off.length}) — lo que registraron sigue intacto</div>` +
         off.map(([id, u]) => _usrTarjeta(id, u, false)).join('');
+    pintarEquipoCompartido();
+}
+
+/* ── El interruptor de "este equipo es compartido" ─────────────────────────
+   No se guarda con el botón «Guardar configuración» y no viaja al servidor,
+   porque no es un dato de la clínica: es de ESTE computador. El de la sala de
+   espera lo tiene prendido; el de ella, apagado. Guarda al instante. */
+function pintarEquipoCompartido() {
+    const chk = g('cfg-compartido');
+    if (!chk) return;
+    const on = _dgEsCompartido();
+    chk.checked = on;
+    const min = g('cfg-compartido-min');
+    if (min) min.value = _dgMinutosEspera();
+    const det = g('cfg-compartido-detalle');
+    if (det) det.style.display = on ? '' : 'none';
+
+    const aviso = g('cfg-compartido-aviso');
+    if (aviso) {
+        aviso.innerHTML = on
+            ? '🔒 <strong>Prendido en este equipo.</strong> Al abrir la app siempre va a pedir el PIN, ' +
+              'y se cierra sola a los ' + _dgMinutosEspera() + ' minutos de no tocarla. ' +
+              'Su computador no cambia: esto se prende equipo por equipo.'
+            : '🔓 <strong>Apagado en este equipo.</strong> Después del primer PIN, este computador ' +
+              'entra solo y no lo vuelve a pedir. Está bien si el equipo es de una sola persona; ' +
+              'préndalo si lo usa más de una o si está a la vista de los pacientes.';
+    }
+}
+
+function guardarEquipoCompartido() {
+    const chk = g('cfg-compartido');
+    if (!chk) return;
+    const on = chk.checked;
+    try {
+        if (on) localStorage.setItem(_DG_COMPARTIDO, '1');
+        else    localStorage.removeItem(_DG_COMPARTIDO);
+    } catch (e) {}
+
+    const casilla = g('cfg-compartido-min');
+    if (casilla) {
+        const n = parseInt(casilla.value, 10);
+        if (n >= 1 && n <= 480) {
+            try { localStorage.setItem(_DG_MINUTOS, String(n)); } catch (e) {}
+        } else if (casilla.value !== '') {
+            toast('Los minutos van de 1 a 480 (8 horas). Se dejó en ' + _dgMinutosEspera() + '.', 'error', 6000);
+        }
+    }
+
+    if (on) {
+        /* Ya no tiene sentido que este equipo siga recordando a nadie. */
+        _dgOlvidarEquipo();
+    }
+    pintarEquipoCompartido();
+    _dgVigilarInactividad();   // el reloj arranca (o se apaga) desde ya
+    toast(on ? '🔒 Este equipo queda como compartido: pedirá el PIN cada vez.'
+             : '🔓 Este equipo vuelve a entrar solo después del primer PIN.', '', 7000);
 }
 
 function abrirUsuarioNuevo() {
@@ -15627,6 +15773,19 @@ function calcResultadoMes(txs, gxs) {
     const gxArr    = gxVivos.filter(gx => gx.cat === 'arriendo');
     const gxSeg    = gxVivos.filter(gx => gx.cat === 'segsoc');
 
+    /* Pagar la cuota de la tarjeta NO es un gasto del mes: es bajar una deuda.
+       El gasto nació el día de la compra, que fue hace meses.
+
+       Silvia me lo confirmó fila por fila en agosto: la Éxito son compras del
+       consultorio de hace tiempo, y la Av Villas son gastos compartidos. En
+       los dos casos la plata sale del banco hoy, pero lo comprado no es de
+       agosto. Dejarlas adentro le cargaba a agosto $603.700 que no le tocan y
+       le escondía la categoría real de lo que compró.
+
+       Sigue saliendo de Caja, que es donde de verdad se siente. Lo único que
+       cambia es que deja de restarle a la utilidad del mes. */
+    const gxDeuda  = gxVivos.filter(gx => gx.cat === 'tarjetas');
+
     /* El arriendo y los sueldos del mes son los de Configuración. Si ahí no
        hay nada puesto, manda lo anotado en Gastos, para no perderlo. */
     const arriendo    = arrCfg > 0 ? arrCfg : sum(gxArr);
@@ -15644,7 +15803,7 @@ function calcResultadoMes(txs, gxs) {
        mismo arriendo, cobrado dos veces, $1.500.000 de más. El renglón de
        arriba ya representa estas filas; contarlas otra vez es contarlas dos
        veces, no importa de dónde salió la cifra. */
-    const yaContadas = new Set([...gxHon, ...gxNomEmp, ...gxArr].map(gx => gx.id));
+    const yaContadas = new Set([...gxHon, ...gxNomEmp, ...gxArr, ...gxDeuda].map(gx => gx.id));
     const otrosGx     = gxVivos.filter(gx => !yaContadas.has(gx.id));
     const otrosGastos = sum(otrosGx);
 
@@ -15699,11 +15858,13 @@ function calcResultadoMes(txs, gxs) {
     const nomExcluida = nominaPagada;
     const arrExcluido = sum(gxArr);
     const honExcluido = sum(gxHon);
+    const deudaExcluida = sum(gxDeuda);
 
     return { prod, honorarios, honPend, materiales, margenBruto,
              arriendo, arrDeCfg, sueldos, sueldosDeCfg, sueldosCfg, nominaPagada,
-             otrosGastos, gastosExcluidos: nomExcluida + arrExcluido + honExcluido,
-             nomExcluida, arrExcluido, honExcluido,
+             otrosGastos,
+             gastosExcluidos: nomExcluida + arrExcluido + honExcluido + deudaExcluida,
+             nomExcluida, arrExcluido, honExcluido, deudaExcluida,
              honPagadosEnGastos: honExcluido, segReal,
              parafiscales, paraEstimados, retiros,
              totalFijos, resultado, cargaFijaTotal, gastosVariables, equilibrio };
@@ -15718,11 +15879,15 @@ function motivosExcluidos(R) {
     if (R.nomExcluida > 0) partes.push(`${fmt(R.nomExcluida)} de quincenas del personal —el sueldo completo del mes ya va arriba, en su renglón—`);
     if (R.honExcluido > 0) partes.push(`${fmt(R.honExcluido)} de honorarios de especialistas, que ya van en el renglón de honorarios`);
     if (R.arrExcluido > 0) partes.push(`${fmt(R.arrExcluido)} de arriendo, que ya va en su renglón`);
+    /* Éste sale por otra razón que los tres de arriba: no es que ya esté
+       contado en otro renglón, es que no es gasto de este mes. Por eso trae
+       su propio motivo escrito y no se puede resumir junto con los demás. */
+    if (R.deudaExcluida > 0) partes.push(`${fmt(R.deudaExcluida)} de cuotas de tarjeta de crédito, que bajan una deuda —el gasto nació el día de la compra, no hoy—`);
     return partes.join('; ');
 }
 function explicaExcluidos(R) {
     const m = motivosExcluidos(R);
-    return m ? `De Gastos se dejaron por fuera ${fmt(R.gastosExcluidos)} para no cobrarlos dos veces: ${m}.` : '';
+    return m ? `De Gastos se dejaron por fuera ${fmt(R.gastosExcluidos)} porque no le tocan al resultado de este mes: ${m}.` : '';
 }
 
 /* ── Dashboard ── */

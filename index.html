@@ -1597,11 +1597,13 @@
                         cobrarle, y en diciembre no va a acordarse.</p>
                         <p><strong>La solución:</strong> un <strong>plan de tratamiento</strong>, que
                         es la cuenta corriente del paciente:</p>
-                        <div class="man-caja">Total acordado    $530.000
-Ya pagó           $330.000   ← el cobro del 25 de agosto
-Saldo             $200.000   ← esto es lo que le deben</div>
-                        <p>Cada vez que abone, se registra el abono y el saldo baja solo. Cuando
-                        llegue a $0, el plan se marca completado.</p>
+                        <div class="man-caja">Total acordado  $530.000
+Ya pagó         $330.000
+Saldo           $200.000</div>
+                        <p>Los $330.000 son el cobro del 25 de agosto, que ya está registrado. Los
+                        $200.000 son <strong>lo que le deben</strong>. Cada vez que abone, se
+                        registra el abono y el saldo baja solo. Cuando llegue a $0, el plan se
+                        marca completado.</p>
                         <h4>Cómo se hace, en un clic</h4>
                         <p>Vaya a <strong>Reportes → Por doctor</strong> y pique la fila del doctor.
                         Los cobros donde el porcentaje no cuadra salen con un aviso rosado que dice
@@ -1661,38 +1663,63 @@ Saldo             $200.000   ← esto es lo que le deben</div>
                         <span class="man-chev">▾</span></summary>
                     <div class="man-cuerpo">
                         <p>El número grande del Panel del día se calcula así:</p>
-                        <div class="man-caja">Le queda = Todo lo que entró en el mes
-           − Costos fijos
-           − Honorarios que todavía debe
-           − Gastos registrados</div>
+                        <div class="man-caja">Producción del mes
+  − Honorarios de especialistas
+  − Materiales
+  ────────────────────────────
+  = Queda de los tratamientos
+  − Arriendo
+  − Sueldos y transporte
+  − Los demás gastos
+  ────────────────────────────
+  = LE QUEDA DEL MES</div>
                         <p>En el Panel puede picar <strong>«De dónde sale ese número»</strong> y le
                         muestra la cuenta renglón por renglón, con lo que significa cada uno.</p>
-                        <p><strong>«Honorarios que todavía debe»</strong> son los de los
-                        especialistas, ya causados y sin pagar. Están en el cajón pero no son suyos.</p>
 
-                        <h4>Por qué el número de agosto bajó dos veces</h4>
-                        <p>Agosto empezó diciendo <strong>−$73.380</strong> y terminó diciendo
-                        <strong>−$1.349.800</strong>. <strong>La app no perdió plata: dejó de
-                        contar mal.</strong> Fueron dos cosas:</p>
+                        <h4>Las tres reglas de esta cuenta</h4>
                         <ol>
-                            <li><strong>Aparecieron los $290.000 de Diana.</strong> Sus honorarios
-                            estaban escritos dentro de una nota de texto, donde ningún cálculo los
-                            veía. Ahora están donde deben, y esa deuda ya se ve.</li>
-                            <li><strong>Se quitó una ganancia que nunca existió ($986.420).</strong>
-                            Cuando usted saca plata de Bancolombia para tener efectivo, eso deja
-                            dos anotaciones: una salida del banco y una entrada al efectivo. La
-                            cuenta sumaba la entrada y no restaba la salida, así que la misma plata
-                            cambiada de bolsillo se veía como si la clínica hubiera ganado
-                            $986.420. Los traslados entre bolsillos ya no entran aquí.</li>
+                            <li><strong>Cada costo entra una vez y por una sola puerta.</strong> El
+                            arriendo y los sueldos salen de <strong>Configuración</strong>. Cuando
+                            usted anota en Gastos la quincena que le pagó a Sandry, esa fila
+                            <em>no</em> se vuelve a restar: el sueldo del mes ya está contado
+                            completo más arriba. Por eso «los demás gastos del mes» es menos que el
+                            total de la pantalla de Gastos — y la propia pantalla le dice cuánto
+                            dejó por fuera y por qué.</li>
+                            <li><strong>Cuenta lo del mes, no lo que salió del cajón.</strong> Un
+                            tratamiento hecho cuenta aunque el paciente no haya pagado. El sueldo
+                            del mes cuenta completo aunque usted vaya por la mitad de las
+                            quincenas. Eso es lo correcto para saber si el mes dio o no dio.</li>
+                            <li><strong>Los ajustes de caja no entran.</strong> Sacar plata de
+                            Bancolombia para tener efectivo deja dos anotaciones, y la misma plata
+                            cambiada de bolsillo no es ganancia.</li>
+                        </ol>
+
+                        <h4>Agosto de 2026: cómo llegó a −$3.129.250</h4>
+                        <p>El número bajó varias veces mientras se arreglaba la cuenta.
+                        <strong>La clínica no perdió más plata: la app dejó de contar
+                        mal.</strong> Lo que se corrigió:</p>
+                        <ol>
+                            <li><strong>Los $290.000 de Diana.</strong> Sus honorarios estaban
+                            escritos dentro de una nota de texto, donde ningún cálculo los veía.</li>
+                            <li><strong>Una ganancia que nunca existió ($986.420):</strong> los
+                            traslados entre bolsillos, que se sumaban como si fueran ingresos.</li>
+                            <li><strong>$3.906.250 de honorarios que no restaban en ninguna
+                            parte.</strong> Cuando se importó el mes quedaron guardados como
+                            ajustes de caja. La plata salió de verdad, pero ningún estado de
+                            resultados la estaba viendo.</li>
+                            <li><strong>El arriendo no se restaba en Reportes</strong> y la nómina
+                            salía en $0 — y en el Panel las quincenas se restaban dos veces.</li>
                         </ol>
                         <p>El alquiler y el recobro del agua sí son plata que entró de verdad, y
-                        siguen contando — entran por su lado, dentro del primer renglón.</p>
-                        <div class="man-ojo"><p>⚠️ <strong>Una advertencia sobre este número.</strong>
-                        Cuando usted pague una comisión desde la pantalla de Comisiones, «Te queda»
-                        va a <strong>subir</strong> —porque deja de estar pendiente— aunque la plata
-                        sí salió del cajón. Es confuso y viene de antes de estos cambios. Se lo digo
-                        para que no se asuste ni se confíe: <strong>para saber cuánta plata tiene,
-                        mire Caja, no «Te queda».</strong> Queda anotado para arreglarlo.</p></div>
+                        siguen contando — entran por su lado, dentro de la producción.</p>
+                        <div class="man-ojo"><p>💡 <strong>Este número y el de Caja son distintos, y
+                        los dos están bien.</strong> «Le queda del mes» dice si el mes
+                        <em>dio o no dio</em>. <strong>Caja</strong> dice cuánta plata hay hoy en el
+                        cajón y en el banco. Pagar un honorario baja la plata de Caja y
+                        <em>no mueve</em> «le queda del mes» — porque ese honorario ya estaba
+                        contado desde el día en que se hizo el tratamiento. Para saber cuánto
+                        tiene, mire <strong>Caja</strong>. Para saber si el mes sirvió, mire
+                        <strong>este número</strong>.</p></div>
                     </div>
                 </details>
 
@@ -7391,12 +7418,16 @@ function renderReportes() {
 }
 
 function renderRepResumen(mes, allTx, allGx, allNom) {
-    const prod      = allTx.filter(t=>!t.pagoPrevio).reduce((s,t)=>s+t.price,0);
+    /* Misma cuenta que el Panel y que Rentabilidad. Antes esta pantalla
+       restaba TODOS los gastos y encima los sueldos, así que las quincenas
+       anotadas en Gastos se descontaban dos veces; y la nómina la leía del
+       módulo de quincenas, que ella no usa, así que salía en $0. */
+    const R         = calcResultadoMes(allTx, allGx);
+    const prod      = R.prod;
     const gastos    = allGx.reduce((s,gx)=>s+gx.amount,0);
-    const comisiones= allTx.filter(t=>t.commStatus!=='owner').reduce((s,t)=>s+t.commission,0);
-    const nomPagada = allNom.filter(n=>n.type==='quincena').reduce((s,n)=>s+n.amount,0);
+    const comisiones= R.honorarios;
     const retiroPagado = allNom.filter(n=>n.type==='retiro').reduce((s,n)=>s+n.amount,0);
-    const balance   = prod - gastos - comisiones - nomPagada - retiroPagado;
+    const balance   = R.resultado - retiroPagado;
 
     // Formas de pago breakdown
     const pmTotals = {};
@@ -7437,22 +7468,29 @@ function renderRepResumen(mes, allTx, allGx, allNom) {
             </div>
             <div class="metric-card mc-expense">
                 <span class="metric-icon">📤</span>
-                <div class="metric-label">Gastos registrados</div>
+                <div class="metric-label">Gastos anotados</div>
                 <div class="metric-val neg">−${fmt(gastos)}</div>
-                <div class="metric-sub">${allGx.length} gastos</div>
+                <div class="metric-sub">${allGx.length} gastos${R.gastosExcluidos>0?` · ${fmt(R.gastosExcluidos)} ya contados aparte`:''}</div>
             </div>
             <div class="metric-card mc-balance">
                 <span class="metric-icon">💊</span>
-                <div class="metric-label">Comisiones + nómina</div>
-                <div class="metric-val neg">−${fmt(comisiones+nomPagada+retiroPagado)}</div>
-                <div class="metric-sub">Com. ${fmt(comisiones)} · Nóm. ${fmt(nomPagada)}${retiroPagado>0?' · Retiro '+fmt(retiroPagado):''}</div>
+                <div class="metric-label">Honorarios y sueldos</div>
+                <div class="metric-val neg">−${fmt(comisiones+R.sueldos)}</div>
+                <div class="metric-sub">Especialistas ${fmt(comisiones)} · Personal ${fmt(R.sueldos)}</div>
             </div>
             <div class="metric-card mc-meta">
                 <span class="metric-icon">🏦</span>
-                <div class="metric-label">Balance disponible</div>
-                <div class="metric-val ${balance>=0?'pos':'neg'}">${balance>=0?'':'-'}${fmt(Math.abs(balance))}</div>
-                <div class="metric-sub">Después de gastos${retiroPagado>0?', nómina y retiro':' y honorarios'}</div>
+                <div class="metric-label">Le queda del período</div>
+                <div class="metric-val ${balance>=0?'pos':'neg'}">${balance>=0?'':'−'}${fmt(Math.abs(balance))}</div>
+                <div class="metric-sub">Producción menos todo lo que costó${retiroPagado>0?', incluido su retiro':''}</div>
             </div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px 14px;margin:-8px 0 20px;font-size:11px;color:var(--muted);line-height:1.6">
+            El <strong>resultado</strong> no es «gastos anotados» restado de la producción: las dos
+            casillas del medio se pisan. ${R.gastosExcluidos>0
+                ? `De los ${fmt(gastos)} anotados, ${fmt(R.gastosExcluidos)} no se restan otra vez aquí: ${motivosExcluidos(R)}.`
+                : `Los sueldos y el arriendo salen de Configuración, se deban o no se hayan pagado todavía.`}
+            El desglose renglón por renglón está en la pestaña <strong>Rentabilidad</strong>.
         </div>
         <div class="db-grid db-grid-2">
             <div class="db-section">
@@ -7839,25 +7877,27 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
         return new Date(base+'T12:00:00').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     })();
 
-    // Cálculos base
-    const prod       = allTx.filter(t=>!t.pagoPrevio).reduce((s,t)=>s+t.price,0);
-    const comisiones = allTx.reduce((s,t)=>s+(t.commission||0),0);
-    const totalMat   = allTx.reduce((s,t)=>s+(t.matCost||0),0);
-    const margenBruto= prod - comisiones - totalMat;
-    const gastos     = allGx.reduce((s,gx)=>s+gx.amount,0);
-    const nomPagada  = allNom.filter(n=>n.type==='quincena').reduce((s,n)=>s+n.amount,0);
-    const _pilaBase1 = parseFloat((DB.get('config')||{}).smlmv) || 1750905;
-    const _arlRate1  = parseFloat((DB.get('config')||{}).arl)   || ARL;
-    let paraFiscales = 0;
-    // Una vez por cada empleada que siga trabajando, sean dos o sean cinco.
-    Object.keys(emps).forEach(() => { paraFiscales+=Math.round(_pilaBase1*(EPS_EMP+PEN_EMP+_arlRate1+CAJA)); });
-    const costosFijos = gastos + nomPagada + paraFiscales + ssi;
-    const utilidadAntesRetiro = margenBruto - costosFijos;
+    /* La misma cuenta que el Panel, no una paralela. Antes esta pantalla
+       hacía la suya: no restaba el arriendo por ningún lado, ponía la
+       nómina en $0 porque leía el módulo de quincenas —que ella no usa,
+       paga por Gastos— y sumaba parafiscales estimados encima de la
+       seguridad social real que ya venía dentro de los gastos. */
+    const R          = calcResultadoMes(allTx, allGx);
+    const prod       = R.prod;
+    const comisiones = R.honorarios;
+    const totalMat   = R.materiales;
+    const margenBruto= R.margenBruto;
+    const gastos     = R.otrosGastos;
+    const paraFiscales = R.parafiscales;
+    const costosFijos = R.totalFijos;
+    const utilidadAntesRetiro = R.resultado;
     const excedente  = utilidadAntesRetiro - retiro;
     const nTrat        = allTx.length;
     const avgTrats     = parseInt(cfg.avgTrats)||0;
     const denomTrat    = avgTrats > 0 ? avgTrats : nTrat;
-    const overheadPorTrat = denomTrat>0 ? Math.round(costosFijos/denomTrat) : 0;
+    /* Se reparte la carga FIJA, no todos los costos: el laboratorio y los
+       insumos ya cambian con cada tratamiento y no son carga de nadie más. */
+    const overheadPorTrat = denomTrat>0 ? Math.round(R.cargaFijaTotal/denomTrat) : 0;
     /* Sin paréntesis propios: quien lo usa decide si van entre paréntesis o
        después de un punto. Traerlos puestos dejaba «(este mes (81 tto))». */
     const overheadSrc  = avgTrats>0 ? `el número que usted configuró, ${avgTrats} al mes`
@@ -7934,11 +7974,18 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
                 ${totalMat>0?pl('(−) Materiales consumibles', '−'+fmt(totalMat), 'var(--danger)', false, true):''}
                 ${pl('Margen bruto (queda en clínica)', fmt(margenBruto)+' <span style="font-size:11px">('+margenPct+'%)</span>', 'var(--bronze)', true)}
                 <div style="height:8px"></div>
-                ${pl('(−) Gastos operativos', '−'+fmt(gastos), 'var(--danger)', false, true)}
-                ${pl('(−) Nómina empleadas (pagada)', '−'+fmt(nomPagada), 'var(--danger)', false, true)}
-                ${pl('(−) Parafiscales estimados', '−'+fmt(paraFiscales), 'var(--danger)', false, true)}
-                ${ssi>0?pl('(−) S.S. Dra. Silvia', '−'+fmt(ssi), 'var(--danger)', false, true):''}
-                ${pl('Utilidad antes de tu retiro', fmt(utilidadAntesRetiro), utilidadAntesRetiro>=0?'var(--success)':'var(--danger)', true)}
+                ${pl('(−) Arriendo del local', '−'+fmt(R.arriendo), 'var(--danger)', false, true)}
+                ${pl('(−) Sueldos y transporte del personal', '−'+fmt(R.sueldos), 'var(--danger)', false, true)}
+                ${paraFiscales>0?pl('(−) Parafiscales'+(R.paraEstimados?' estimados':''), '−'+fmt(paraFiscales), 'var(--danger)', false, true):''}
+                ${pl('(−) Los demás gastos del mes', '−'+fmt(gastos), 'var(--danger)', false, true)}
+                ${/* fmt() de un negativo escupe «$-3.129.250». El signo va por
+                      delante para que se lea como plata en rojo, no como una
+                      resta a medias. */''}
+                ${pl('Le queda del mes'+(retiro>0?', antes de su retiro':''), (utilidadAntesRetiro<0?'−':'')+fmt(Math.abs(utilidadAntesRetiro)), utilidadAntesRetiro>=0?'var(--success)':'var(--danger)', true)}
+                ${R.gastosExcluidos>0?`<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">
+                    ${explicaExcluidos(R)} No son un costo nuevo: es la plata saliendo de un costo
+                    que ya está contado arriba.
+                </div>`:''}
                 ${retiro>0?`
                 <div style="height:4px"></div>
                 ${pl('(−) Retiro Dra. Silvia', retiro>0?'−'+fmt(retiro):'No configurado', 'var(--danger)', false, true)}
@@ -7962,7 +8009,7 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
                 <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Cada tratamiento carga con</div>
                     <div style="font-size:24px;font-weight:800;color:var(--dark)">${denomTrat>0?fmt(overheadPorTrat):'—'}</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:4px">de arriendo, sueldos y servicios<br>${fmt(costosFijos)} de costos fijos ÷ ${denomTrat} tratamientos <span style="color:${avgTrats>0?'var(--success)':'var(--bronze)'}">· ${overheadSrc}</span></div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px">de arriendo, sueldos y servicios<br>${fmt(R.cargaFijaTotal)} de carga fija ÷ ${denomTrat} tratamientos <span style="color:${avgTrats>0?'var(--success)':'var(--bronze)'}">· ${overheadSrc}</span></div>
                 </div>
                 <div style="background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center">
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Utilidad antes de retiro</div>
@@ -8013,8 +8060,10 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
         </table></div>
         <div style="padding:10px 18px;font-size:11px;color:var(--muted);background:var(--bg);border-top:1px solid var(--border)">
             💡 <strong>Carga fija</strong>: el arriendo, los sueldos y los servicios se pagan haya o no pacientes,
-            así que cada tratamiento del mes carga con su pedacito. ${fmt(costosFijos)} de costos fijos
+            así que cada tratamiento del mes carga con su pedacito. ${fmt(R.cargaFijaTotal)} de carga fija
             ÷ <strong>${denomTrat} tratamientos</strong> (${overheadSrc}) = <strong>${fmt(overheadPorTrat)} cada uno</strong>.
+            ${R.gastosVariables>0?`El laboratorio, los insumos y los pasajes del especialista no entran aquí
+            (${fmt(R.gastosVariables)}): esos suben y bajan con cada tratamiento, no son carga fija.`:''}
             El <strong>margen neto</strong> es lo que queda después de restarla: si sale en rojo,
             ese tratamiento no alcanza a pagar lo que le toca.${avgTrats===0?' · <em>En Configuración → «Promedio de tratamientos al mes» puede poner su número real y la cuenta queda más fiel.</em>':''}
             ${(!hasMat && !sinCosto)?' · <em>Ponle a cada tratamiento su costo de material en Catálogo → ✎ Editar, y este cuadro te dice cuánto deja de verdad.</em>':''}
@@ -8051,24 +8100,20 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
 
 function renderRepEquil(mes, allTx, allGx, allNom) {
     const cfg   = DB.get('config') || DEFAULTS;
-    const emps  = getEmpleadasActivas ? getEmpleadasActivas() : {};
 
-    const prod      = allTx.filter(t=>!t.pagoPrevio).reduce((s,t)=>s+t.price,0);
-    const gastos    = allGx.reduce((s,gx)=>s+gx.amount,0);
-    const comisiones= allTx.filter(t=>t.commStatus!=='owner').reduce((s,t)=>s+t.commission,0);
-    const nomPagada    = allNom.filter(n=>n.type==='quincena').reduce((s,n)=>s+n.amount,0);
+    /* La misma cuenta del Panel y de Rentabilidad. Aquí también se contaban
+       las quincenas encima de los sueldos y los parafiscales encima de la
+       seguridad social ya pagada. */
+    const R         = calcResultadoMes(allTx, allGx);
+    const prod      = R.prod;
+    const gastos    = R.otrosGastos;
+    const comisiones= R.honorarios;
     const retiroPagado = allNom.filter(n=>n.type==='retiro').reduce((s,n)=>s+n.amount,0);
     const retiro       = parseFloat(cfg.retiro)||0;
-    const ssi          = parseFloat(cfg.ssi)||0;
+    const paraFiscales = R.parafiscales;
 
-    // Parafiscales estimados del mes (mensual completo) — base SMLMV por ley
-    const _pilaBase2 = parseFloat(cfg.smlmv) || 1750905;
-    const _arlRate2  = parseFloat(cfg.arl)   || ARL;
-    let paraFiscales = 0;
-    Object.keys(emps).forEach(() => { paraFiscales += Math.round(_pilaBase2*(EPS_EMP+PEN_EMP+_arlRate2+CAJA)); });
-
-    const totalEgresos = gastos + comisiones + nomPagada + paraFiscales + ssi + retiro;
-    const balance      = prod - gastos - comisiones - nomPagada - paraFiscales - ssi - retiroPagado;
+    const totalEgresos = R.honorarios + R.materiales + R.totalFijos + retiro;
+    const balance      = R.resultado - retiroPagado;
 
     const lineItem = (lbl, val, cls='') =>
         `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(229,213,207,.4)">
@@ -8082,19 +8127,24 @@ function renderRepEquil(mes, allTx, allGx, allNom) {
                 <div class="db-sec-hdr"><h3>📊 Estado del mes</h3></div>
                 <div style="padding:0 18px 18px">
                     ${lineItem('Producción bruta', fmt(prod), 'pos')}
-                    ${lineItem('(−) Gastos registrados', '−'+fmt(gastos), 'neg')}
                     ${lineItem('(−) Comisiones doctores', '−'+fmt(comisiones), 'neg')}
-                    ${lineItem('(−) Nómina empleadas (pagada)', '−'+fmt(nomPagada), 'neg')}
-                    ${lineItem('(−) Parafiscales estimados', '−'+fmt(paraFiscales), 'neg')}
-                    ${ssi>0?lineItem('(−) S.S. Dra. Silvia', '−'+fmt(ssi), 'neg'):''}
+                    ${R.materiales>0?lineItem('(−) Materiales', '−'+fmt(R.materiales), 'neg'):''}
+                    ${lineItem('(−) Arriendo del local', '−'+fmt(R.arriendo), 'neg')}
+                    ${lineItem('(−) Sueldos y transporte del personal', '−'+fmt(R.sueldos), 'neg')}
+                    ${paraFiscales>0?lineItem('(−) Parafiscales'+(R.paraEstimados?' estimados':''), '−'+fmt(paraFiscales), 'neg'):''}
+                    ${lineItem('(−) Los demás gastos del mes', '−'+fmt(gastos), 'neg')}
                     ${retiroPagado>0?lineItem('(−) Retiro Dra. Silvia (pagado)', '−'+fmt(retiroPagado), 'neg'):''}
+                    ${/* Se llama igual que en el Panel a propósito. Antes cada
+                          pantalla le ponía nombre propio al mismo número —«Balance
+                          disponible», «Utilidad», «Le queda»— y parecían cuentas
+                          distintas cuando eran la misma. */''}
                     <div style="display:flex;justify-content:space-between;padding:12px 0;border-top:2px solid var(--border);margin-top:4px">
-                        <span style="font-size:14px;font-weight:800">Balance disponible</span>
-                        <span style="font-size:20px;font-weight:800;${balance>=0?'color:var(--success)':'color:var(--danger)'}">${balance>=0?'':'-'}${fmt(Math.abs(balance))}</span>
+                        <span style="font-size:14px;font-weight:800">Le queda del mes${retiroPagado>0?', ya sacado su retiro':''}</span>
+                        <span style="font-size:20px;font-weight:800;${balance>=0?'color:var(--success)':'color:var(--danger)'}">${balance>=0?'':'−'}${fmt(Math.abs(balance))}</span>
                     </div>
                     <div style="font-size:11px;color:var(--muted);margin-top:4px">
-                        * Parafiscales = EPS+Pensión+ARL Clase I+Caja sobre SMLMV vigente<br>
-                        ${ssi>0?'* S.S. Dra. Silvia incluida según configuración':'* Configura S.S. de Dra. Silvia en Configuración para incluirla'}
+                        ${R.paraEstimados?'* Parafiscales = EPS+Pensión+ARL Clase I+Caja sobre SMLMV vigente. Es una estimación: este mes no hay seguridad social anotada en Gastos.<br>':''}
+                        ${R.gastosExcluidos>0?`* ${explicaExcluidos(R)}`:''}
                     </div>
                 </div>
             </div>
@@ -8714,14 +8764,17 @@ function renderNomSilvia() {
     const mes = todayISO().slice(0,7);
     const allTx  = (DB.get('tx')  ||[]).filter(t  => t.date.startsWith(mes));
     const allGx  = (DB.get('gx')  ||[]).filter(gx => gx.date.startsWith(mes) && !gx.esRetiro);
-    const allNom = (DB.get('nomina')||[]).filter(n => n.date.startsWith(mes) && n.type==='quincena');
     const allRet = (DB.get('nomina')||[]).filter(n => n.date.startsWith(mes) && n.type==='retiro');
 
-    const prod       = allTx.filter(t=>!t.pagoPrevio).reduce((s,t)=>s+t.price,0);
-    const gastos     = allGx.reduce((s,gx)=>s+gx.amount,0);
-    const comisiones = allTx.reduce((s,t)=>s+t.commission,0);
-    const nomPagada  = allNom.reduce((s,n)=>s+n.amount,0);
-    const disponible      = prod - gastos - comisiones - nomPagada - ssi;
+    /* Lo que la clínica puede pagarle es lo mismo que le queda al mes, ni un
+       peso más. Antes esta pantalla lo calculaba aparte —restaba los gastos
+       enteros Y encima la nómina, y sumaba la seguridad social de ella sobre
+       una que ya venía dentro de los gastos— y le daba un «disponible»
+       distinto del que mostraba el Panel para el mismo mes. */
+    const R          = calcResultadoMes(allTx, allGx);
+    const prod       = R.prod;
+    const comisiones = R.honorarios;
+    const disponible = R.resultado;
     const retirado        = allRet.reduce((s,r)=>s+r.amount,0);
     const pendRetiro      = Math.max(0, retiro - retirado);
 
@@ -8752,13 +8805,21 @@ function renderNomSilvia() {
                <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">Estado del mes — ${mesLbl}</div>
                <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px">
                    ${li('Producción bruta', fmt(prod), 'var(--success)')}
-                   ${li('(−) Comisiones doctores', '−'+fmt(comisiones), 'var(--danger)')}
-                   ${li('(−) Gastos operativos', '−'+fmt(gastos), 'var(--danger)')}
-                   ${li('(−) Nómina empleadas (pagada)', '−'+fmt(nomPagada), 'var(--danger)')}
-                   ${ssi > 0 ? li('(−) S.S. clínica (tu aporte)', '−'+fmt(ssi), 'var(--danger)') : ''}
+                   ${li('(−) Honorarios de los especialistas', '−'+fmt(comisiones), 'var(--danger)')}
+                   ${R.materiales > 0 ? li('(−) Materiales de los tratamientos', '−'+fmt(R.materiales), 'var(--danger)') : ''}
+                   ${li('(−) Arriendo del local', '−'+fmt(R.arriendo), 'var(--danger)')}
+                   ${li('(−) Sueldos y transporte del personal', '−'+fmt(R.sueldos), 'var(--danger)')}
+                   ${R.parafiscales > 0 ? li('(−) Parafiscales' + (R.paraEstimados?' (estimados)':''), '−'+fmt(R.parafiscales), 'var(--danger)') : ''}
+                   ${li('(−) Los demás gastos del mes', '−'+fmt(R.otrosGastos), 'var(--danger)')}
                    <div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:14px;font-weight:800;border-top:2px solid var(--border);margin-top:6px">
                        <span>Disponible para tu retiro</span>
                        <span style="font-variant-numeric:tabular-nums;color:${disponible>=0?'var(--success)':'var(--danger)'}">${disponible<0?'−':''}${fmt(Math.abs(disponible))}</span>
+                   </div>
+                   <div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+                       Es el mismo número que el Panel llama <strong>«le queda del mes»</strong>: si allá y aquí
+                       dijeran cosas distintas, una de las dos estaría mintiendo.
+                       ${R.gastosExcluidos>0?`<br>${explicaExcluidos(R)}`:''}
+                       ${ssi>0 && R.parafiscales===0?'<br>Su seguridad social no se resta otra vez aquí: este mes ya viene anotada dentro de los gastos.':''}
                    </div>
                </div>
                <div style="border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;font-size:13px;
@@ -8808,8 +8869,9 @@ function renderNomSilvia() {
             </div>
             <div style="padding:16px 18px">
                 <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
-                    Como <strong>dueña y gerente</strong>, tu ingreso es la utilidad real de la clínica:<br>
-                    lo que queda después de pagar todos los gastos, comisiones a doctores y nómina.
+                    Como <strong>dueña y gerente</strong>, tu ingreso es lo que de verdad le queda a la
+                    clínica: lo que sobra después del arriendo, los sueldos, los honorarios de los
+                    especialistas y los demás gastos del mes.
                 </div>
                 ${retiroBlock}
                 <div id="ssi-silvia-section"></div>
@@ -11922,6 +11984,166 @@ function addCajaMov(pm, type, amount, desc, date, sourceId) {
     DB.set('aj', aj);
 }
 
+/* ── LA CUENTA DEL MES ────────────────────────────────────────────────────
+   Una sola función para las CINCO pantallas que dicen cómo va el mes: Panel
+   (Salud de la clínica), Reportes → Resumen, Reportes → Rentabilidad,
+   Reportes → Equilibrio y Nómina → Mi compensación. Antes cada una hacía su
+   propia cuenta y daban cifras distintas del mismo agosto: el Panel
+   −$1.349.800 y Reportes −$1.592.522. Ninguna de las dos era la buena; la
+   reconciliada es −$3.129.250. Tres errores, cada uno metido en una sola de
+   las dos:
+
+   1. El Panel restaba sólo los honorarios PENDIENTES. Los ya pagados se
+      perdían: en agosto $3.906.250 de Rafael, Nay, Diana Cabeza y Sandry,
+      que la importación guardó como ajustes de caja y no como gastos. Y
+      hacía que pagarle a un especialista MEJORARA el mes — probado: pagarle
+      los $290.000 a Diana subía el número a −$1.059.800 mientras Caja
+      mostraba los mismos $290.000 saliendo del efectivo. El honorario nace
+      cuando se hace el tratamiento, no cuando se paga. Aquí se restan todos.
+
+   2. Los sueldos se contaban dos veces: $3.500.000 de Configuración más
+      $2.126.800 de quincenas anotadas en Gastos. Silvia confirmó que son
+      los mismos. Una fila de Gastos que paga una quincena no es un costo
+      nuevo, es plata saliendo de un costo que ya se contó.
+
+   3. Reportes no restaba el arriendo por ningún lado —no hay fila de
+      arriendo en Gastos y esa pantalla no leía Configuración— y encima
+      sumaba parafiscales estimados sobre $1.667.500 de seguridad social
+      real que ya venían dentro de los gastos.
+
+   La regla, de aquí en adelante: cada costo entra UNA vez y por UNA sola
+   puerta. Lo que Configuración ya dice no se vuelve a sumar desde Gastos. */
+
+/* Las categorías que suben y bajan con la cantidad de pacientes. No sirven
+   para repartir «carga fija» entre tratamientos, porque no son carga fija. */
+const CATS_VARIABLES = ['lab', 'insumos', 'pasajes'];
+
+function calcResultadoMes(txs, gxs) {
+    const cfg  = DB.get('config') || DEFAULTS;
+    const emps = getEmpleadasActivas();
+    const sum  = a => a.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+
+    /* ── Lo que entró y lo que costó hacerlo ──
+       Los cobros marcados 'owner' son los que se queda la clínica entera: no
+       llevan honorario. Se excluyen a mano y no sólo confiando en que el
+       campo venga en cero, que es como lo hace el resto de la app. */
+    const esOwner     = t => t.commStatus === 'owner';
+    const prod        = txs.filter(t => !t.pagoPrevio).reduce((s,t) => s + (t.price||0), 0);
+    const honorarios  = txs.reduce((s,t) => s + (esOwner(t) ? 0 : (t.commission||0)), 0);
+    const honPend     = txs.filter(t => ['pending','partial'].includes(t.commStatus))
+                           .reduce((s,t) => s + ((t.commission||0) - (t.commPaidAmount||0)), 0);
+    const materiales  = txs.reduce((s,t) => s + (t.matCost||0), 0);
+    const margenBruto = prod - honorarios - materiales;
+
+    /* ── Quién es empleada ──
+       Los nombres salen de Configuración, no escritos aquí: si mañana entra
+       otra o sale una, esto se acomoda solo. Se compara sin tildes porque
+       en Gastos está escrito «Sandry Florez» y en Configuración «Flórez». */
+    const nombresEmp = Object.values(emps)
+        .map(e => _sinTildes(e.shortName || e.name || '').trim().split(/\s+/)[0])
+        .filter(x => x.length > 2);
+    const esDeEmpleada = gx => {
+        const d = _sinTildes((gx.desc||'') + ' ' + (gx.provider||''));
+        return nombresEmp.some(nm => d.includes(nm));
+    };
+
+    const hayEmps    = nombresEmp.length > 0;
+    const sueldosCfg = Object.values(emps).reduce((s,e) =>
+        s + (parseFloat(e.salary)||0) + (parseFloat(e.transport)||0), 0);
+    const arrCfg     = parseFloat(cfg.arr) || 0;
+
+    /* Su retiro no es un costo de la clínica, es reparto de lo que quedó.
+       Va aparte, después del resultado. */
+    const gxVivos  = gxs.filter(gx => !gx.esRetiro);
+    const retiros  = sum(gxs.filter(gx => gx.esRetiro));
+
+    const gxHon    = gxVivos.filter(gx => gx.cat === 'honorarios');
+    const gxNomEmp = gxVivos.filter(gx => gx.cat === 'nomina' && hayEmps && esDeEmpleada(gx));
+    const gxArr    = gxVivos.filter(gx => gx.cat === 'arriendo');
+    const gxSeg    = gxVivos.filter(gx => gx.cat === 'segsoc');
+
+    /* El arriendo y los sueldos del mes son los de Configuración. Si ahí no
+       hay nada puesto, manda lo anotado en Gastos, para no perderlo. */
+    const arriendo    = arrCfg > 0 ? arrCfg : sum(gxArr);
+    const arrDeCfg    = arrCfg > 0;
+    const nominaPagada= sum(gxNomEmp);
+    const sueldosDeCfg= hayEmps && sueldosCfg > 0;
+    const sueldos     = sueldosDeCfg ? sueldosCfg : nominaPagada;
+
+    /* Fuera las filas que sólo son el pago de algo ya contado arriba.
+
+       Van SIEMPRE, venga el número de Configuración o de estas mismas filas.
+       Estaban condicionadas a que viniera de Configuración, y eso abría un
+       hueco: con el arriendo puesto en $0 y anotado en Gastos, la fila se
+       sumaba como arriendo Y se quedaba dentro de «los demás gastos» — el
+       mismo arriendo, cobrado dos veces, $1.500.000 de más. El renglón de
+       arriba ya representa estas filas; contarlas otra vez es contarlas dos
+       veces, no importa de dónde salió la cifra. */
+    const yaContadas = new Set([...gxHon, ...gxNomEmp, ...gxArr].map(gx => gx.id));
+    const otrosGx     = gxVivos.filter(gx => !yaContadas.has(gx.id));
+    const otrosGastos = sum(otrosGx);
+
+    /* Parafiscales: si ya pagó seguridad social y la anotó, esa es la cifra
+       y ya está dentro de «los demás gastos». La estimación sólo entra
+       cuando no hay nada anotado. Sumar las dos era contar lo mismo dos
+       veces —$876.222 encima de $1.667.500 reales. */
+    const segReal   = sum(gxSeg);
+    const ssiCfg    = parseFloat(cfg.ssi) || 0;
+    const pilaBase  = parseFloat(cfg.smlmv) || 1750905;
+    const arlRate   = parseFloat(cfg.arl)   || ARL;
+    const segEstim  = Object.keys(emps).length *
+                      Math.round(pilaBase * (EPS_EMP + PEN_EMP + arlRate + CAJA));
+    const parafiscales = segReal > 0 ? 0 : (ssiCfg > 0 ? ssiCfg : segEstim);
+    const paraEstimados= segReal === 0 && ssiCfg === 0 && segEstim > 0;
+
+    const totalFijos = arriendo + sueldos + otrosGastos + parafiscales;
+    const resultado  = margenBruto - totalFijos;
+
+    /* Para repartir entre tratamientos sólo sirve lo que NO cambia con el
+       número de pacientes. El laboratorio, los insumos y los pasajes del
+       especialista sí cambian, así que salen. */
+    const gastosVariables = sum(otrosGx.filter(gx => CATS_VARIABLES.includes(gx.cat)));
+    const cargaFijaTotal  = totalFijos - gastosVariables;
+
+    /* Cuánto hay que producir para no perder ni ganar. Cada peso cobrado
+       deja sólo lo que sobra después del honorario del especialista, así
+       que los fijos se tapan con esa tajada, no con el peso entero. */
+    const tajada   = prod > 0 ? margenBruto / prod : 0;
+    const equilibrio = tajada > 0 ? Math.round(totalFijos / tajada) : totalFijos;
+
+    /* Lo que se dejó por fuera de «los demás gastos», partido en tres, para
+       poder decirle EN LA PANTALLA cuál renglón fue y por qué. Un total
+       agregado no se puede explicar: «$2.587.050 son sueldos» era falso —
+       $460.250 de esos eran honorarios. */
+    const nomExcluida = nominaPagada;
+    const arrExcluido = sum(gxArr);
+    const honExcluido = sum(gxHon);
+
+    return { prod, honorarios, honPend, materiales, margenBruto,
+             arriendo, arrDeCfg, sueldos, sueldosDeCfg, sueldosCfg, nominaPagada,
+             otrosGastos, gastosExcluidos: nomExcluida + arrExcluido + honExcluido,
+             nomExcluida, arrExcluido, honExcluido,
+             honPagadosEnGastos: honExcluido, segReal,
+             parafiscales, paraEstimados, retiros,
+             totalFijos, resultado, cargaFijaTotal, gastosVariables, equilibrio };
+}
+
+/* La frase que explica qué filas de Gastos se dejaron por fuera y por qué.
+   Está en un solo sitio porque la dicen cinco pantallas y tienen que decir
+   exactamente lo mismo: si una se queda con la redacción vieja, vuelve a
+   haber dos versiones de la misma cuenta, que es de lo que se trataba. */
+function motivosExcluidos(R) {
+    const partes = [];
+    if (R.nomExcluida > 0) partes.push(`${fmt(R.nomExcluida)} de quincenas del personal —el sueldo completo del mes ya va arriba, en su renglón—`);
+    if (R.honExcluido > 0) partes.push(`${fmt(R.honExcluido)} de honorarios de especialistas, que ya van en el renglón de honorarios`);
+    if (R.arrExcluido > 0) partes.push(`${fmt(R.arrExcluido)} de arriendo, que ya va en su renglón`);
+    return partes.join('; ');
+}
+function explicaExcluidos(R) {
+    const m = motivosExcluidos(R);
+    return m ? `De Gastos se dejaron por fuera ${fmt(R.gastosExcluidos)} para no cobrarlos dos veces: ${m}.` : '';
+}
+
 /* ── Dashboard ── */
 let dashDate = todayISO();
 
@@ -11940,62 +12162,73 @@ function renderSaludMes() {
     const mesGx  = allGx.filter(gx => gx.date && gx.date.startsWith(mes));
     const mesAj  = allAj.filter(a  => a.date && a.date.startsWith(mes));
 
-    const prod   = mesTx.filter(t=>!t.pagoPrevio).reduce((s,t) => s + t.price, 0);
-    const gastos = mesGx.reduce((s,gx) => s + gx.amount, 0);
+    /* La cuenta la hace calcResultadoMes, la misma que usa Reportes. Antes
+       cada pantalla hacía la suya y daban cifras distintas del mismo mes. */
+    const R      = calcResultadoMes(mesTx, mesGx);
+    const prod   = R.prod;
+    const queda  = R.resultado;
 
-    /* Los ajustes de caja NO entran en esta cuenta, y antes sí entraban.
-       Sumaba las entradas y no restaba las salidas, así que un traslado de
-       un bolsillo a otro —sacar de Bancolombia para tener efectivo— aparecía
-       como ganancia pura. En agosto eso inflaba el resultado en $986.420: la
-       entrada al efectivo se sumaba y la salida del banco, que es la misma
-       plata, no se restaba nunca.
+    /* Los ajustes de caja NO entran en esta cuenta. Sumaba las entradas y no
+       restaba las salidas, así que un traslado de un bolsillo a otro —sacar
+       de Bancolombia para tener efectivo— aparecía como ganancia pura. En
+       agosto eso inflaba el resultado en $986.420.
 
        Y no es cosa de sumar también las salidas. Un ajuste de caja corrige
-       cuánto hay en un bolsillo; esta cuenta dice cuánto GANÓ el mes. Son
-       dos preguntas distintas. Lo que sí es ingreso —el alquiler, el
-       recobro del agua— ya viene por su lado dentro de la producción. */
+       cuánto hay en un bolsillo; esta cuenta dice cuánto GANÓ el mes. Ojo:
+       en agosto la importación metió 62 pagos de honorarios aquí dentro
+       ($3.906.250), así que este renglón no es todo «traslados» — por eso
+       abajo se cuenta aparte lo que es honorario de lo que es traslado. */
     const ajIn   = mesAj.filter(a => a.type==='in').reduce((s,a) => s+a.amount, 0);
     const ajOut  = mesAj.filter(a => a.type!=='in').reduce((s,a) => s+a.amount, 0);
+    const ajHon  = mesAj.filter(a => a.type!=='in' && a.sourceId)
+                        .reduce((s,a) => s+a.amount, 0);
     const hayAj  = (ajIn + ajOut) > 0;
-    const commPend = mesTx
-        .filter(t => ['pending','partial'].includes(t.commStatus))
-        .reduce((s,t) => s + (t.commission - (t.commPaidAmount||0)), 0);
 
-    const arr    = parseFloat(cfg.arr)    || 0;
-    const nomina = (parseFloat(cfg.ss)||0)+(parseFloat(cfg.st)||0)+
-                   (parseFloat(cfg.zs)||0)+(parseFloat(cfg.zt)||0)+
-                   (parseFloat(cfg.ssi)||0)+(parseFloat(cfg.retiro)||0);
-    const fijos  = arr + nomina;
-    const queda  = prod - fijos - commPend - gastos;
-    const pctFij = fijos > 0 ? Math.min(100, Math.round(prod / fijos * 100)) : 0;
+    const fijos  = R.totalFijos;
+    /* La barra ya no compara la producción contra el arriendo y los sueldos
+       —esa era la comparación que dejaba un «100% ya está tapado» encima de
+       un número rojo— sino contra TODO lo que cuesta el mes. */
+    const costoTotal = R.honorarios + R.materiales + R.totalFijos;
+    const pctFij = costoTotal > 0 ? Math.min(100, Math.round(prod / costoTotal * 100)) : 0;
 
+    /* La proyección iba con un 26 fijo: multiplicaba el promedio por 26 días
+       hábiles SIEMPRE, estuviera el mes en el día 3 o en el día 28. El 28 de
+       agosto, con 15 días atendidos, daba $20.144.800 y encima el letrero
+       azul «al ritmo de este mes alcanza a taparlo» — quedando tres días.
+       Prometía un mes que ya no cabía en el calendario.
+
+       Ahora es una regla de tres contra los días que de verdad han corrido.
+       Los días sin pacientes no se descuentan a propósito: si de 28 días
+       atendió 15, ese es su ritmo real y así seguirá el resto del mes. */
     const diasConProd = new Set(mesTx.map(t=>t.date)).size;
-    const DIAS_MES    = 26;
-    const promDia     = diasConProd > 0 ? Math.round(prod / diasConProd) : 0;
-    const proyeccion  = promDia * DIAS_MES;
-    const puntoEq     = Math.ceil(fijos / DIAS_MES);
+    const diasDelMes   = new Date(+mes.slice(0,4), +mes.slice(5,7), 0).getDate();
+    const diasCorridos = Math.min(diasDelMes, +todayISO().slice(8,10));
+    const promDia      = diasConProd > 0 ? Math.round(prod / diasConProd) : 0;
+    const proyeccion   = diasCorridos > 0 ? Math.round(prod / diasCorridos * diasDelMes) : prod;
+    const mesCerrado   = diasCorridos >= diasDelMes;
+    /* Y el equilibrio se reparte entre los días que ella atiende, no entre 26:
+       decirle «$647.815 al día» contando domingos es una meta que no existe. */
+    const diasProdMes  = diasCorridos > 0
+        ? Math.max(diasConProd, Math.round(diasConProd / diasCorridos * diasDelMes)) : diasConProd;
+    const puntoEq      = diasProdMes > 0 ? Math.ceil(R.equilibrio / diasProdMes) : R.equilibrio;
 
     /* El veredicto se saca de «lo que queda», no de si la producción tapó los
        fijos. Decían cosas distintas y salían juntos: el letrero verde
        «¡Cubriste todos los costos fijos!» encima de un −$363.380 en rojo.
-       Los dos números eran ciertos; la frase escogía el más bonito. La que
-       manda es la de abajo, que es la que ya descontó honorarios y gastos. */
+       Los dos números eran ciertos; la frase escogía el más bonito. */
     let icon, titleColor, bg, msg;
     if (fijos === 0) {
         icon='⚙️'; titleColor='#666'; bg='#f5f5f5';
         msg='Ponga el arriendo y los sueldos en ⚙️ Configuración para ver cómo va el mes de verdad';
     } else if (queda >= 0) {
         icon='✅'; titleColor='#2e7d32'; bg='rgba(76,175,80,.07)';
-        msg=`El mes va en verde: ya pagando todo lo del mes, le quedan ${fmt(queda)}`;
-    } else if (prod >= fijos) {
-        icon='⚠️'; titleColor='#B8860B'; bg='rgba(184,134,11,.07)';
-        msg=`Cubrió el arriendo y los sueldos, pero entre gastos y honorarios el mes va corto por ${fmt(-queda)}`;
-    } else if (proyeccion >= fijos) {
+        msg=`El mes va en verde: ya contando todo lo del mes, le quedan ${fmt(queda)}`;
+    } else if (proyeccion >= R.equilibrio) {
         icon='📈'; titleColor='#1565c0'; bg='rgba(33,150,243,.07)';
-        msg='Todavía no cubre el arriendo y los sueldos, pero al ritmo de este mes alcanza';
+        msg=`Hoy va corto por ${fmt(-queda)}, pero al ritmo de este mes alcanza a taparlo`;
     } else {
         icon='⚠️'; titleColor='#c62828'; bg='rgba(244,67,54,.06)';
-        msg='Al ritmo de este mes no alcanza a cubrir el arriendo y los sueldos';
+        msg=`El mes va corto por ${fmt(-queda)}: lo que entró no alcanza para todo lo que cuesta`;
     }
 
     /* fmt() de un negativo escupe «$-363.380». Con el signo por delante se
@@ -12046,14 +12279,14 @@ function renderSaludMes() {
             </div>
             <div style="flex:1;min-width:190px">
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px">
-                    <span>Arriendo y sueldos ya cubiertos</span>
+                    <span>De todo lo que cuesta el mes, lleva cubierto</span>
                     <strong style="color:${titleColor}">${pctFij}%</strong>
                 </div>
                 <div style="height:9px;border-radius:6px;background:rgba(0,0,0,.07);overflow:hidden">
                     <div style="height:100%;width:${pctFij}%;border-radius:6px;background:${titleColor};transition:width .3s ease"></div>
                 </div>
                 <div style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45">
-                    ${fmt(prod)} de producción contra ${fmt(fijos)} de costos fijos${prod>=fijos?' — ya está tapado':''}
+                    ${fmt(prod)} que entró contra ${fmt(costoTotal)} que cuesta el mes${prod>=costoTotal?' — ya está tapado':''}
                 </div>
             </div>
         </div>
@@ -12068,34 +12301,60 @@ function renderSaludMes() {
         <div style="padding:2px 18px 14px">
             ${renglon('+', 'Todo lo que entró en el mes', prod,
                 'Los tratamientos hechos, hayan pagado o no, más lo que cobró de alquiler', 'var(--success)')}
-            ${renglon('−', 'Costos fijos', fijos,
-                'Arriendo y sueldos. Se pagan haya o no haya pacientes', 'var(--danger)')}
-            ${renglon('−', 'Honorarios que todavía debe', commPend,
-                commPend > 0
-                  ? 'De los especialistas, ya causados y sin pagar. Están en el cajón pero no son suyos'
-                  : 'No le debe honorarios de este mes a nadie', 'var(--danger)')}
-            ${renglon('−', 'Gastos registrados', gastos,
-                'Todo lo anotado en Gastos: insumos, servicios, laboratorio, pagos ya hechos', 'var(--danger)')}
+            ${renglon('−', 'Honorarios de los especialistas', R.honorarios,
+                R.honPend > 0
+                  ? `Todos los del mes, pagados y por pagar. De estos le faltan ${fmt(R.honPend)} por entregar`
+                  : 'Todos los del mes. Ya se los entregó completos', 'var(--danger)')}
+            ${R.materiales > 0 ? renglon('−', 'Materiales de los tratamientos', R.materiales,
+                'El costo del material que trae puesto cada tratamiento', 'var(--danger)') : ''}
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border)">
+                <span style="width:14px"></span>
+                <div style="flex:1;font-size:12.5px;font-weight:700;color:var(--dark)">Le queda de los tratamientos</div>
+                <div style="font-size:13.5px;font-weight:800;color:var(--dark)">${plata(R.margenBruto)}</div>
+            </div>
+            ${renglon('−', 'Arriendo', R.arriendo,
+                R.arrDeCfg ? 'El del local, según Configuración. Se paga haya o no haya pacientes'
+                           : 'Lo que anotó en Gastos como arriendo', 'var(--danger)')}
+            ${renglon('−', 'Sueldos y transporte del personal', R.sueldos,
+                R.sueldosDeCfg
+                  ? `Lo que ganan al mes según Configuración.${R.nominaPagada>0?` De eso lleva pagado ${fmt(R.nominaPagada)} en quincenas`:''}`
+                  : 'Las quincenas que anotó en Gastos', 'var(--danger)')}
+            ${R.parafiscales > 0 ? renglon('−', 'Seguridad social y parafiscales', R.parafiscales,
+                R.paraEstimados ? 'Estimada, porque este mes no hay ninguna anotada en Gastos'
+                                : 'Según Configuración', 'var(--danger)') : ''}
+            ${renglon('−', 'Los demás gastos del mes', R.otrosGastos,
+                'Servicios, laboratorio, insumos, seguridad social, envíos y todo lo demás de Gastos', 'var(--danger)')}
             <div style="display:flex;align-items:center;gap:10px;padding:11px 0 0">
                 <span style="width:14px"></span>
                 <div style="flex:1;font-size:13px;font-weight:800;color:var(--dark)">Le queda del mes</div>
                 <div style="font-size:15px;font-weight:800;color:${queda>=0?'var(--success)':'var(--danger)'}">${plata(queda)}</div>
             </div>
 
+            ${R.gastosExcluidos > 0 ? `
+            <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
+                <strong>Por qué «los demás gastos» no es el total de Gastos.</strong>
+                ${explicaExcluidos(R)}
+                Esas filas no son un costo nuevo: son la plata saliendo de un costo
+                que ya está contado más arriba. Contarlas otra vez sería pagarlo dos veces
+                en el papel.
+            </div>` : ''}
+
             ${hayAj ? `
             <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.55">
                 Los <strong>ajustes de caja</strong> no entran en esta cuenta. Ellos dicen cuánto
                 hay en cada bolsillo; esta cuenta dice cuánto ganó el mes. Sacar plata de
                 Bancolombia para tener efectivo, por ejemplo, no es ganancia: es la misma plata
-                cambiada de sitio. Este mes hubo ${fmt(ajIn)} de entrada y ${fmt(ajOut)} de
-                salida en ajustes — puede verlos en <strong>Caja</strong>.
+                cambiada de sitio.${ajHon>0?` Ojo: de ${fmt(ajOut)} de salida, ${fmt(ajHon)} son
+                honorarios pagados a los especialistas —quedaron guardados ahí cuando se importó
+                el mes— y esos sí están contados arriba, en su renglón.`:''}
+                Puede verlos en <strong>Caja</strong>.
             </div>` : ''}
 
             <div style="margin-top:12px;background:rgba(184,134,11,.09);border-left:3px solid var(--warning);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;color:var(--dark)">
-                ⚠️ <strong>Este no es el dinero que hay en el cajón.</strong> Cuando le pague
-                un honorario a un especialista, este número va a <strong>subir</strong> —porque
-                deja de estar pendiente— aunque la plata sí salió. Para saber cuánto tiene de
-                verdad, mire <strong>Caja</strong>.
+                ⚠️ <strong>Este no es el dinero que hay en el cajón.</strong> Aquí cuentan los
+                tratamientos del mes aunque el paciente no haya pagado, y los honorarios y
+                sueldos del mes aunque usted todavía no los haya entregado. Para saber cuánto
+                tiene de verdad hoy, mire <strong>Caja</strong>.
                 <a onclick="navigate('manual')" style="cursor:pointer;color:var(--bronze);font-weight:700;text-decoration:underline">Leerlo completo en el Manual →</a>
             </div>
         </div>
@@ -12103,11 +12362,16 @@ function renderSaludMes() {
 
     ${diasConProd > 0 ? `
     <div style="padding:10px 18px;border-top:1px solid ${titleColor}22;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--muted);line-height:1.5">
-        <span>📅 <strong>${diasConProd}</strong> días con pacientes · promedio <strong>${fmt(promDia)}</strong> por día</span>
-        <span>📊 Si sigue a este ritmo, el mes cierra en
-            <strong style="color:${proyeccion>=fijos?'var(--success)':'#e65100'}">${fmt(proyeccion)}</strong>
-            ${proyeccion<fijos?' — por debajo de lo que cuesta tener abierto':' — alcanza para los costos fijos'}</span>
-        ${fijos>0?`<span>🎯 Con <strong>${fmt(puntoEq)}</strong> al día no pierde ni gana (${fmt(fijos)} ÷ ${DIAS_MES} días)</span>`:''}
+        <span>📅 <strong>${diasConProd}</strong> días con pacientes de ${diasCorridos} corridos · promedio <strong>${fmt(promDia)}</strong> por día atendido</span>
+        <span>📊 ${mesCerrado ? 'El mes cerró en' : `Faltan ${diasDelMes-diasCorridos} días; a este ritmo cierra en`}
+            <strong style="color:${proyeccion>=R.equilibrio?'var(--success)':'#e65100'}">${fmt(proyeccion)}</strong>
+            ${proyeccion<R.equilibrio?' — por debajo de lo que cuesta tener abierto':' — alcanza para todo lo del mes'}</span>
+        ${/* El equilibrio no es «los fijos ÷ los días». De cada peso cobrado
+              una tajada se va en el honorario del especialista, así que hay
+              que producir bastante más que los fijos para taparlos. */''}
+        ${fijos>0?`<span>🎯 Con <strong>${fmt(puntoEq)}</strong> en cada día que atienda no pierde ni gana
+            (hay que producir ${fmt(R.equilibrio)} en el mes para tapar ${fmt(fijos)},
+             porque parte de lo que entra se va en honorarios)</span>`:''}
     </div>
     ` : `<div style="padding:10px 18px;border-top:1px solid ${titleColor}22;font-size:12px;color:var(--muted)">Sin producción registrada este mes todavía.</div>`}`;
 }
@@ -12281,7 +12545,15 @@ function printDoc(title, bodyHTML) {
         <div class="print-footer">
             Impreso el ${new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} a las ${new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}
         </div>`;
+    /* Si el navegador tiene bloqueadas las ventanas emergentes, window.open
+       devuelve null y todo lo de abajo reventaba con un error en la consola:
+       ella picaba «Imprimir» y no pasaba absolutamente nada, sin una sola
+       palabra que le dijera por qué. Ahora se lo decimos. */
     const win = window.open('','_blank','width=780,height=900');
+    if (!win) {
+        toast('El navegador bloqueó la ventana de impresión. Permita las ventanas emergentes para este sitio y vuelva a picar Imprimir.', 'error', 9000);
+        return;
+    }
     win.document.write(`<!DOCTYPE html><html lang="es"><head>
         <meta charset="UTF-8">
         <title>${title}</title>

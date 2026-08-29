@@ -8910,9 +8910,15 @@ function saveRx() {
     const descActive = g('rx-desc-row').style.display !== 'none';
     const descAmt    = descActive ? Math.max(0, (_rxCatalogPrice||price) - price) : 0;
     const esPrevio = g('rx-previo')?.checked || false;
+    const pacienteRx = nombreDelPaciente(gv('rx-patient'))||'Sin nombre';
+    const fechaRx    = gv('rx-date')||todayISO();
+    /* La marca de visita sólo sigue valiendo si es el mismo paciente y el
+       mismo día. Si ella cambió el nombre, esto ya es otra venida. */
+    const mismaVisita = (_rxVisita && _rxVisita.paciente === pacienteRx && _rxVisita.fecha === fechaRx)
+        ? _rxVisita.id : null;
     const base  = {
-        date:gv('rx-date')||todayISO(),
-        patient:nombreDelPaciente(gv('rx-patient'))||'Sin nombre',
+        date:fechaRx,
+        patient:pacienteRx,
         docId, docName:getDoctores()[docId]?.name||docId,
         treatId, treatName:treat?.name||'',
         labCost:parseFloat(gv('rx-lab'))||0,
@@ -8922,6 +8928,7 @@ function saveRx() {
         diagnosis: gv('rx-diagnosis').trim() || '',
         ...(descAmt > 0 && { originalPrice: _rxCatalogPrice||price, discountAmt: descAmt }),
         ...(esPrevio && { pagoPrevio: true }),
+        ...(mismaVisita && { visitGroup: mismaVisita }),
     };
 
     // Solo los registros NUEVOS (no incluir existentes — evitar duplicación en confirmSaveRx)
@@ -8980,6 +8987,18 @@ let _rxPending = null;
 let _rxSaldoActive = false;
 let _rxPrecioTotal = 0;
 
+/* ── Dos tratamientos en la misma venida ──────────────────────────────────
+   La paciente de ortodoncia llega al control y de paso se le repara un
+   bracket. Son DOS tratamientos y tienen que quedar en DOS renglones: la
+   comisión de la especialista y la ganancia se calculan por tratamiento, y
+   si se juntan en uno solo se pierde para siempre cuál de los dos deja
+   plata. Lo que no tiene por qué repetirse es el trabajo de teclearlo.
+
+   Esta marca amarra los renglones de una misma venida. Se prende sólo
+   cuando ella usa «Guardar y agregar otro tratamiento», y deja de valer si
+   cambia el nombre del paciente o la fecha — entonces ya es otra visita.  */
+let _rxVisita = null;   // { id, paciente, fecha }
+
 function toggleRxSaldo() {
     _rxSaldoActive = !_rxSaldoActive;
     const chk    = g('rxc-saldo-chk');
@@ -9003,7 +9022,10 @@ function calcRxSaldo() {
     el.style.color  = saldo > 0 ? 'var(--bronze)' : 'var(--success)';
 }
 
-function confirmSaveRx() {
+/* seguirConOtro = true cuando ella usa «Guardar y agregar otro tratamiento».
+   Guarda exactamente igual; lo único distinto es que al final deja el
+   formulario abierto con los datos de la visita puestos. */
+function confirmSaveRx(seguirConOtro) {
     if (!_rxPending) return;
     const notaConf = g('rxc-nota').value.trim();
     _rxPending.forEach(tx => { if (notaConf) tx.notes = notaConf; });
@@ -9066,6 +9088,16 @@ function confirmSaveRx() {
         }
     }
 
+    /* Si sigue con otro tratamiento de la misma venida, los renglones quedan
+       amarrados con la misma marca para verse juntos en la lista del día. */
+    if (seguirConOtro) {
+        const ref = recs[0] || _rxPending[0];
+        if (!_rxVisita || _rxVisita.paciente !== ref.patient || _rxVisita.fecha !== ref.date) {
+            _rxVisita = { id: 'vg' + Date.now(), paciente: ref.patient, fecha: ref.date };
+        }
+        recs.forEach(r => { if (!r.visitGroup) r.visitGroup = _rxVisita.id; });
+    }
+
     const existing = DB.get('tx') || [];
     if (recs.length) DB.set('tx', [...existing, ...recs]);
 
@@ -9121,11 +9153,18 @@ function confirmSaveRx() {
         } else {
             toast('✅ Tratamiento registrado — pagó completo, no hace falta plan', 'success');
         }
-    } else {
+    } else if (!seguirConOtro) {
         toast('✅ Tratamiento registrado correctamente', 'success');
     }
 
-    resetRxForm();
+    if (seguirConOtro) {
+        resetRxOtroTratamiento();
+        /* Si se creó un plan de pago, ese aviso manda —dice cuánto queda
+           debiendo— y no lo tapo con otro. */
+        if (!crearPlan) toast('✅ Guardado. Ahora el otro tratamiento de ' + (savedTx.patient||'el paciente'), 'success');
+    } else {
+        resetRxForm();
+    }
     renderTodayList();
 }
 function cancelSaveRx() {
@@ -9133,7 +9172,42 @@ function cancelSaveRx() {
     g('rx-confirm-modal').style.display = 'none';
 }
 
+/* Borra SÓLO lo del tratamiento y deja puesto lo de la visita: el doctor, el
+   paciente, la fecha y la forma de pago. Es todo el ahorro de trabajo: ella
+   sólo escoge el segundo tratamiento y el precio se carga solo del catálogo.
+   La comisión se vuelve a calcular sobre este renglón, como debe ser. */
+function resetRxOtroTratamiento() {
+    sv('rx-price',''); sv('rx-lab',''); sv('rx-mancomm',''); sv('rx-matcost',''); sv('rx-notes',''); sv('rx-override-comm','');
+    sv('rx-tooth',''); if (g('rx-diagnosis')) g('rx-diagnosis').value='';
+    _rxCatalogPrice = 0; _rxDescType = 'pct';
+    sv('rx-desc-val','');
+    if (g('rx-desc-row'))     g('rx-desc-row').style.display='none';
+    if (g('rx-desc-btn'))    { g('rx-desc-btn').style.color='var(--muted)'; g('rx-desc-btn').style.borderColor='var(--border)'; g('rx-desc-btn').textContent='🏷️ Descuento'; }
+    if (g('rx-desc-preview')) g('rx-desc-preview').textContent='';
+    if (g('rx-desc-pct-btn')){ g('rx-desc-pct-btn').style.background='var(--bronze)'; g('rx-desc-pct-btn').style.color='white'; }
+    if (g('rx-desc-val-btn')){ g('rx-desc-val-btn').style.background='white'; g('rx-desc-val-btn').style.color='var(--muted)'; }
+    if (g('rx-desc-sym'))     g('rx-desc-sym').textContent='%';
+    g('rx-lab-grp').style.display='none';
+    g('rx-override-grp').style.display='none';
+    /* El pago mixto es de un cobro concreto y no se hereda al siguiente:
+       si el segundo tratamiento también se paga con dos métodos, ella lo
+       vuelve a marcar. Heredarlo sería inventarle un cobro que no hizo. */
+    splitPayActive = false;
+    sv('rx-split-amt','');
+    if (g('rx-split-grp'))     g('rx-split-grp').style.display='none';
+    if (g('btn-split-pay'))  { g('btn-split-pay').textContent='➕ Pago mixto (2 métodos)'; g('btn-split-pay').style.color='var(--muted)'; g('btn-split-pay').style.borderColor='var(--border)'; }
+    if (g('rx-split-preview')) g('rx-split-preview').textContent='';
+    resetRxPreview();
+    /* La lista de tratamientos ya está cargada —el doctor no cambió—, así que
+       basta con soltar el que estaba escogido y dejarle el cursor encima. */
+    const ts = g('rx-treat');
+    if (ts) { ts.value = ''; ts.focus(); }
+    const form = g('rx-tto-form');
+    if (form && form.scrollIntoView) form.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
 function resetRxForm() {
+    _rxVisita = null;   // formulario limpio de verdad: la visita se cierra
     sv('rx-doc',''); sv('rx-patient',''); sv('rx-date',todayISO());
     sv('rx-price',''); sv('rx-lab',''); sv('rx-mancomm',''); sv('rx-matcost',''); sv('rx-notes',''); sv('rx-override-comm','');
     sv('rx-tooth',''); if(g('rx-diagnosis')) g('rx-diagnosis').value='';
@@ -9190,13 +9264,18 @@ function renderTodayList() {
         const saldoBadge = isSaldo
             ? `<span style="font-size:9px;background:rgba(100,160,100,.12);color:#2e7d32;border-radius:4px;padding:1px 6px;margin-left:4px;font-weight:700">saldo ant.</span>`
             : '';
+        /* Dos tratamientos de la misma venida: renglones separados, pero se
+           ven marcados para que no parezcan un cobro repetido por error. */
+        const visitaTag = (!isSaldo && t.visitGroup)
+            ? `<span style="font-size:9px;background:rgba(180,140,90,.16);color:var(--bronze);border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:700">misma visita</span>`
+            : '';
         const docCell = isSaldo
             ? `<span style="font-size:11px;color:var(--muted)">— sin comisión</span>`
             : eh(docShort(t.docId, t.docName));
         return `<tr${t.splitChild?' style="opacity:.7"':''}>
             <td style="color:var(--muted);white-space:nowrap">${time}</td>
             <td><span data-patient="${eh(t.patient||'')}" onclick="openPatientHistory(this.dataset.patient)" style="cursor:pointer;color:var(--bronze);text-decoration:underline dotted">${eh(t.patient)}</span></td>
-            <td style="max-width:160px">${isSaldo?'💰 ':''} ${eh(t.treatName)}${saldoBadge}${mixtoTag}${(!isSaldo&&(t.toothRef||t.diagnosis))?'<div style="font-size:10px;color:var(--muted);margin-top:1px">'+(t.toothRef?'🦷 '+eh(t.toothRef):'')+((t.toothRef&&t.diagnosis)?' · ':'')+((t.diagnosis&&DIAG_LABELS[t.diagnosis])?DIAG_LABELS[t.diagnosis]:t.diagnosis||'')+'</div>':''}</td>
+            <td style="max-width:160px">${isSaldo?'💰 ':''} ${eh(t.treatName)}${saldoBadge}${mixtoTag}${visitaTag}${(!isSaldo&&(t.toothRef||t.diagnosis))?'<div style="font-size:10px;color:var(--muted);margin-top:1px">'+(t.toothRef?'🦷 '+eh(t.toothRef):'')+((t.toothRef&&t.diagnosis)?' · ':'')+((t.diagnosis&&DIAG_LABELS[t.diagnosis])?DIAG_LABELS[t.diagnosis]:t.diagnosis||'')+'</div>':''}</td>
             <td style="font-size:11px;color:var(--muted);white-space:nowrap">${docCell}</td>
             <td class="price-cell">${fmt(t.price)}</td>
             <td><span class="pm-badge ${pmCls[t.payMethod]||'pm-ef'}">${pmLbl[t.payMethod]||t.payMethod}</span></td>
@@ -18241,6 +18320,10 @@ function confirmExtracto() {
             <button onclick="cancelSaveRx()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:700;cursor:pointer">✕ Cancelar</button>
             <button onclick="confirmSaveRx()" style="flex:2;padding:11px;border-radius:10px;border:none;background:var(--bronze);color:white;font-size:13px;font-weight:700;cursor:pointer">✅ Confirmar y guardar</button>
         </div>
+        <!-- Ortodoncia: control + reparación en la misma venida. Dos renglones
+             en los libros, un solo tecleo de doctor / paciente / fecha / pago. -->
+        <button onclick="confirmSaveRx(true)" style="width:100%;margin-top:9px;padding:10px;border-radius:10px;border:1.5px dashed var(--bronze);background:transparent;color:var(--bronze);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">➕ Guardar y agregar otro tratamiento al mismo paciente</button>
+        <p style="font-size:11px;color:var(--muted);margin:7px 0 0;text-align:center;line-height:1.45">Guarda éste y vuelve al formulario con el <strong>doctor, el paciente, la fecha y la forma de pago</strong> ya puestos. Quedan dos renglones —uno por tratamiento— para que cada comisión y cada ganancia se vean por separado.</p>
     </div>
 </div>
 

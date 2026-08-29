@@ -2916,9 +2916,20 @@ Devolver no es gastar.</strong></div>
                 <div class="form-section">
                     <div class="fsh">
                         <span class="fsh-icon">👩‍⚕️</span>
-                        <div><h3>Dra. Silvia Patricia López — Dueña</h3><p>Lo que se paga a sí misma y su seguridad social</p></div>
+                        <div><h3 id="cfg-duena-titulo">La dueña</h3><p>Su nombre, lo que se paga a sí misma y su seguridad social</p></div>
                     </div>
                     <div class="fsb">
+                        <!-- El nombre completo. Estaba escrito adentro del programa: si había
+                             que corregir una tilde, ella no podía. Ahora sí. -->
+                        <div class="form-grid" style="margin-bottom:8px">
+                            <div class="fg" style="grid-column:1/-1">
+                                <label>Su nombre completo, como va en los papeles</label>
+                                <input type="text" class="fc" id="cfg-titular"
+                                       oninput="pintarTituloDuena()"
+                                       placeholder="Silvia Patricia López Martínez">
+                                <span class="hint">Es el que sale como <strong>empleadora</strong> en los recibos de nómina de Sandry y de Zury, y el que encabeza esta sección. El nombre corto que ve en pantalla —«Dra. Silvia López»— se cambia más abajo, en <strong>El equipo</strong>.</span>
+                            </div>
+                        </div>
                         <div class="form-grid" style="margin-bottom:8px">
                             <div class="fg">
                                 <label>Retiro mensual objetivo</label>
@@ -4277,7 +4288,7 @@ create policy "solo con cuenta"
                      escritas aquí y no había forma de agregar a nadie. -->
                 <div class="comm-filter-tabs" style="margin-bottom:20px">
                     <span id="nom-tabs-emp"></span>
-                    <button class="comm-tab"        id="ntab-silvia" onclick="setNominaTab('silvia')">👩‍⚕️ Dra. Silvia</button>
+                    <button class="comm-tab"        id="ntab-silvia" onclick="setNominaTab('silvia')">👩‍⚕️ <span id="ntab-silvia-lbl">la dueña</span></button>
                     <button class="comm-tab"        id="ntab-prov"   onclick="setNominaTab('prov')">🏛️ Provisiones</button>
                     <button class="comm-tab"        id="ntab-hist"   onclick="setNominaTab('hist')">📋 Historial</button>
                 </div>
@@ -4690,6 +4701,10 @@ create policy "solo con cuenta"
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
     nombre:'Consultorio Odontológico Dra. Silvia López',
+    /* El nombre completo de la dueña — el que va en los papeles de nómina,
+       donde ella firma como empleadora. Estaba escrito a mano dentro del
+       programa; ahora es una casilla en Configuración → La dueña. */
+    titular:'Silvia Patricia López Martínez',
     dir:'Transversal 9 #34-50 Local 1, Barrio Mamatoco',
     ciudad:'Santa Marta, Magdalena',
     tel:'300 482 1825',
@@ -5742,6 +5757,8 @@ async function navigate(page) {
 function loadConfig(){
     const c=DB.get('config')||DEFAULTS;
     sv('cfg-nombre', c.nombre||DEFAULTS.nombre);
+    sv('cfg-titular',c.titular||DEFAULTS.titular);
+    pintarTituloDuena();
     sv('cfg-dir',    c.dir   ||DEFAULTS.dir);
     sv('cfg-ciudad', c.ciudad||DEFAULTS.ciudad);
     sv('cfg-tel',    c.tel   ||DEFAULTS.tel);
@@ -6229,6 +6246,7 @@ function saveConfig(){
 
     const cfg={
         nombre: gv('cfg-nombre')||DEFAULTS.nombre,
+        titular:(gv('cfg-titular')||'').trim() || prev.titular || DEFAULTS.titular,
         dir:    gv('cfg-dir')   ||DEFAULTS.dir,
         ciudad: gv('cfg-ciudad')||DEFAULTS.ciudad,
         tel:    gv('cfg-tel')   ||DEFAULTS.tel,
@@ -6552,6 +6570,39 @@ function getDoctoresActivos() {
     const activos = {};
     Object.entries(todos).forEach(([id, d]) => { if (d.activo !== false) activos[id] = d; });
     return activos;
+}
+
+/* ── El nombre de la dueña ──────────────────────────────────────────────────
+   Estaba escrito a mano en una docena de sitios del programa: el título de la
+   sección de Configuración, la tarjeta de Nómina, el recibo de las empleadas,
+   la línea de la firma, el renglón del retiro… Si un día se corrige una tilde
+   o cambia un apellido, eso no puede depender de que alguien le meta mano al
+   código.
+
+   Son DOS nombres distintos y por eso hay tres funciones:
+
+     · el de DIARIO  → «Dra. Silvia López». Es el que sale en pantalla y ya era
+                       editable desde antes, en Configuración → El equipo.
+     · el CORTO      → «Dra. Silvia». El de las pestañas y los renglones
+                       apretados. Sale del mismo sitio.
+     · el LEGAL      → «Silvia Patricia López Martínez». El de los papeles de
+                       nómina, donde ella firma como empleadora. Ése no existía
+                       en ninguna parte: ahora es una casilla en
+                       Configuración → La dueña.
+
+   Ninguna de las tres inventa nada: si la casilla queda vacía se cae al
+   siguiente nombre que sí exista, nunca a un espacio en blanco.            */
+function titularNombre() {
+    const d = getDoctores().silvia || {};
+    return (d.name || '').trim() || 'La titular';
+}
+function titularCorto() {
+    const d = getDoctores().silvia || {};
+    return (d.short || '').trim() || titularNombre();
+}
+function titularLegal() {
+    const c = DB.get('config') || {};
+    return (c.titular || '').trim() || DEFAULTS.titular;
 }
 
 /* ── Lo que se lleva cada doctor ────────────────────────────────────────────
@@ -7028,6 +7079,15 @@ function pintarHintDeCuenta() {
     if (!h) return;
     const cta = (gv('cfg-cuenta') || '').trim();
     h.textContent = cta ? 'Saldo actual — ' + cta : 'Saldo actual';
+}
+
+/* El título de la sección se escribe solo con lo que ella teclee, mientras lo
+   teclea. Así ve de una vez que ese nombre lo manda la casilla y no yo. */
+function pintarTituloDuena() {
+    const t = g('cfg-duena-titulo');
+    if (!t) return;
+    const n = (gv('cfg-titular') || '').trim();
+    t.textContent = n ? n + ' — Dueña' : 'La dueña';
 }
 
 function renderArrendatariosCfg() {
@@ -7895,7 +7955,7 @@ function renderCatalogFilters() {
        siempre se respetan, que son los que ella lee de un vistazo. */
     const CORTO = { diana_v:'Odont. General', nay:'Ortodoncia', rafael:'Cirugía',
                     mendoza:'Endodoncia', mayda:'Periodoncia', cabeza:'Rehabilitación',
-                    silvia:'Dra. Silvia', sandry:'Auxiliar' };
+                    silvia:titularCorto(), sandry:'Auxiliar' };
     const FILTERS = [
         { id:'all', label:'Todos' },
         ...Object.entries(getDoctores()).map(([id, d]) => ({
@@ -10750,7 +10810,7 @@ function renderRepRenta(mes, allTx, allGx, allNom) {
                 </div>`:''}
                 ${retiro>0?`
                 <div style="height:4px"></div>
-                ${pl('(−) Retiro Dra. Silvia', retiro>0?'−'+fmt(retiro):'No configurado', 'var(--danger)', false, true)}
+                ${pl('(−) Retiro ' + titularCorto(), retiro>0?'−'+fmt(retiro):'No configurado', 'var(--danger)', false, true)}
                 ${pl('Excedente / Déficit', (excedente>=0?'':'-')+fmt(Math.abs(excedente)), statusColor, true)}
                 `:''}
                 ${retiro>0?`<div style="background:${excedente>=0?'rgba(94,140,106,.1)':'rgba(160,57,62,.08)'};border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;font-size:12px;color:${statusColor}">
@@ -11371,6 +11431,10 @@ function renderNominaTabs() {
     cajaTabs.innerHTML = ids.map(id =>
         `<button class="comm-tab" id="ntab-${eh(id)}" onclick="setNominaTab('${eh(id)}')">💵 ${eh(emps[id].shortName || emps[id].name)}</button>`
     ).join('');
+    /* La pestaña de la dueña sí está escrita en el HTML —es fija, siempre está—
+       pero el nombre sale de su casilla, no del código. */
+    const lblDuena = g('ntab-silvia-lbl');
+    if (lblDuena) lblDuena.textContent = titularCorto();
     cajaPanes.innerHTML = ids.map((id, i) =>
         `<div id="nom-${eh(id)}" class="hidden">
              <div id="nom-card-${eh(id)}"></div>
@@ -11727,7 +11791,7 @@ function renderNomSilvia() {
     g('nom-card-silvia').innerHTML = `
         <div class="db-section" style="border-top:4px solid var(--dark)">
             <div class="db-sec-hdr">
-                <h3>👩‍⚕️ Dra. Silvia Patricia López — Dueña</h3>
+                <h3>👩‍⚕️ ${eh(titularLegal())} — Dueña</h3>
             </div>
             <div style="padding:16px 18px">
                 <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">
@@ -11756,7 +11820,7 @@ function openNomPayModal(empId, period, pendiente, type) {
        antes decía «Sandry» porque el código interno se llamaba así, y a
        cualquiera que entrara después le habría salido el código en la cara. */
     const quien = getEmployees()[empId];
-    const nombre = empId === 'silvia' ? 'Dra. Silvia López'
+    const nombre = empId === 'silvia' ? titularNombre()
                  : (quien ? (quien.name || quien.shortName) : empId);
     const typeLabel = type==='retiro' ? 'Retiro mensual' : 'Quincena';
     g('npm-title').textContent = `💳 ${typeLabel} — ${nombre}`;
@@ -11878,7 +11942,7 @@ function confirmNomPayModal() {
     const mesLbl = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     const emps   = getEmployees();
     const emp    = emps[empId] || {};
-    const name   = emp.shortName || (empId==='silvia'?'Dra. Silvia':empId);
+    const name   = emp.shortName || (empId==='silvia'?titularCorto():empId);
 
     const record = {
         id: (type==='retiro'?'ret':'nom')+Date.now(),
@@ -11895,7 +11959,7 @@ function confirmNomPayModal() {
 
     // Movimientos de caja
     const desc = type==='retiro'
-        ? `Retiro Dra. Silvia — ${mesLbl}`
+        ? `Retiro ${titularCorto()} — ${mesLbl}`
         : `Nómina ${name} — ${period}`;
     if (efAmt  > 0) addCajaMov('efectivo', 'out', efAmt,  desc+(_npmPM==='mixto'?' (ef)' :''), fecha, record.id);
     if (banAmt > 0) addCajaMov('banco',    'out', banAmt, desc+(_npmPM==='mixto'?' (ban)':''), fecha, record.id);
@@ -11922,7 +11986,7 @@ function payRetiroAbono(forcedAmount) {
     const mes    = fecha.slice(0,7);
     const mesLbl = new Date(mes+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     const record = {
-        id:'ret'+Date.now(), type:'retiro', empId:'silvia', empName:'Dra. Silvia',
+        id:'ret'+Date.now(), type:'retiro', empId:'silvia', empName:titularCorto(),
         period:mes, amount, payMethod:pm,
         date:fecha, createdAt:new Date().toISOString()
     };
@@ -11930,7 +11994,7 @@ function payRetiroAbono(forcedAmount) {
     list.push(record);
     DB.set('nomina', list);
     const pmLbl = {banco:'Bancolombia',efectivo:'Efectivo',bold:'Bold',transferencia:'Transferencia'}[pm]||pm;
-    addCajaMov(pm, 'out', amount, `Retiro Dra. Silvia — ${mesLbl}`, null, record.id);
+    addCajaMov(pm, 'out', amount, `Retiro ${titularCorto()} — ${mesLbl}`, null, record.id);
     renderNominaQuinc();
     toast(`✅ Retiro registrado — ${fmt(amount)} desde ${pmLbl}`, 'success');
 }
@@ -11980,7 +12044,7 @@ function renderNominaHist() {
             : (GX_PM_LBL[p.payMethod]||p.payMethod);
         return `<tr>
             <td style="color:var(--muted);white-space:nowrap">${d}</td>
-            <td style="font-weight:600">${eh(emp.shortName || p.empName || (p.empId==='silvia'?'Dra. Silvia':p.empId))}</td>
+            <td style="font-weight:600">${eh(emp.shortName || p.empName || (p.empId==='silvia'?titularCorto():p.empId))}</td>
             <td style="font-size:11px;color:var(--muted)">${typeLabel} · ${perLabel}</td>
             <td style="font-size:11px"><span class="pm-badge ${GX_PM_CLS[p.payMethod]||'pm-ef'}">${pmLabel}</span></td>
             <td style="font-weight:700;color:var(--success);font-variant-numeric:tabular-nums">${fmt(p.amount)}</td>
@@ -13947,7 +14011,7 @@ function showGfChipPop(event, chipId) {
         } else if (d.type === 'ssi') {
             actEl.innerHTML = `<button onclick="closeGfChipPop();navigate('nomina');setTimeout(()=>setNominaTab('silvia'),80)"
                 style="width:100%;padding:8px;border-radius:8px;border:none;background:var(--purp);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
-                👩‍⚕️ Ir a Nómina → Dra. Silvia</button>`;
+                👩‍⚕️ Ir a Nómina → ${eh(titularCorto())}</button>`;
         }
     } else {
         actEl.innerHTML = '';
@@ -16970,7 +17034,7 @@ function printComprobanteDoc(docId, tab) {
         </table>
         <div class="sign-block">
             <div class="sign-line">${eh(dc.name||docId)}<br>Firma</div>
-            <div class="sign-line">Dra. Silvia López<br>Firma y sello</div>
+            <div class="sign-line">${eh(titularNombre())}<br>Firma y sello</div>
         </div>`;
     printDoc('Comprobante — ' + (dc.name||docId), html);
 }
@@ -17167,7 +17231,7 @@ function printNominaRecibo(empId, quinceId, periodoLabel) {
             <div style="margin-top:16px;border-top:1.5px solid #333;padding-top:5px;font-size:11px;font-weight:700">
                 ${eh(cfg.nombre||DEFAULTS.nombre)}
             </div>
-            <div style="font-size:10px;color:#888;margin-top:1px">Empleadora — Dra. Silvia Patricia López Martínez</div>
+            <div style="font-size:10px;color:#888;margin-top:1px">Empleadora — ${eh(titularLegal())}</div>
         </div>
 
         <div style="margin-top:10px;font-size:9px;color:#aaa;text-align:center">
@@ -17669,7 +17733,7 @@ function openSsiModal(month) {
     _ssiModalMonth = month;
     _ssiModalPM    = null;
     const mesLbl = new Date(month+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
-    g('ssi-modal-sub').textContent    = 'Dra. Silvia · ' + mesLbl;
+    g('ssi-modal-sub').textContent    = titularCorto() + ' · ' + mesLbl;
     g('ssi-modal-amount').textContent = fmt(ssi);
     ['ssi-btn-ban','ssi-btn-ef'].forEach(id => {
         const el = g(id);
@@ -17711,7 +17775,7 @@ function confirmSsiModal() {
     const mesLbl = new Date(month+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     const allGx = DB.get('gx') || [];
     allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
-                 provider:'SSI Dra. Silvia', desc:`Seguridad social independiente — ${mesLbl}`,
+                 provider:'SSI ' + titularCorto(), desc:`Seguridad social independiente — ${mesLbl}`,
                  amount:ssi, paySource:_ssiModalPM, notes:'Cotizante independiente', createdAt:Date.now() });
     DB.set('gx', allGx);
     const pmLbl = _ssiModalPM === 'banco' ? '🏦 Bancolombia' : '💵 Efectivo';

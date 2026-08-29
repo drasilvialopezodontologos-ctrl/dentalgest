@@ -1697,6 +1697,82 @@ Quedó             $490.000</div>
                     </div>
                 </details>
 
+                <!-- 6b ────────────────────────────────────────── -->
+                <details class="man-sec">
+                    <summary><span class="man-ico">💳</span>
+                        <div>Las tarjetas de crédito
+                            <span class="man-sub">Pagar la tarjeta no es el gasto</span></div>
+                        <span class="man-chev">▾</span></summary>
+                    <div class="man-cuerpo">
+                        <p>Es el que más confunde, y con razón: usted ve salir plata del banco
+                        y parece un gasto. Pero <strong>la tarjeta no es un gasto — es una forma
+                        de pagar, y una deuda</strong>.</p>
+
+                        <h4>Son dos momentos, no uno</h4>
+                        <p><strong>1. Cuando compra.</strong> Ahí nace el gasto — insumos,
+                        laboratorio, un equipo, lo que sea. Y nace también una deuda con el banco.
+                        La plata todavía <em>no</em> ha salido de su cajón.</p>
+                        <p><strong>2. Cuando paga la factura.</strong> Ahí <strong>no hay ningún
+                        gasto</strong>. Sale plata del banco y baja la deuda. No compró nada nuevo
+                        ese día.</p>
+
+                        <h4>Por qué importa</h4>
+                        <p>Si anota el pago de la factura como gasto, pasan dos cosas feas:</p>
+                        <ul>
+                            <li><strong>Mes equivocado.</strong> Compró en junio y el gasto le
+                            aparece en agosto, o repartido en cuotas durante seis meses. Ninguno
+                            de esos meses le dice la verdad.</li>
+                            <li><strong>Nombre equivocado.</strong> Todo queda bajo «tarjetas».
+                            Usted nunca va a poder ver cuánto gasta de verdad en insumos o en
+                            laboratorio, porque una parte se le esconde ahí.</li>
+                            <li>Y si algún día anota <em>las dos cosas</em> —la compra y el pago—
+                            el gasto le queda contado <strong>dos veces</strong>.</li>
+                        </ul>
+
+                        <h4>Cómo se registra, paso a paso</h4>
+                        <p><strong>La compra</strong> → Gastos, como cualquier otra, con su
+                        categoría de verdad y método de pago
+                        <strong>💳 Tarjeta / a crédito</strong>. El gasto cuenta desde ese día.
+                        <strong>Caja no se mueve</strong>, y está bien: todavía no ha salido plata
+                        de ningún bolsillo.</p>
+                        <p><strong>El pago de la factura</strong> → <em>no</em> va en Gastos. Va en
+                        <strong>Caja → Ajuste</strong>, como <strong>salida de Bancolombia</strong>,
+                        con la descripción «Pago TC …». Así el banco baja lo que de verdad bajó, y
+                        el mes no carga un gasto que no fue de este mes.</p>
+                        <p><strong>Los intereses y la cuota de manejo SÍ son gasto</strong>, del
+                        mes en que se los cobran. Esos van en 📋 Varios, descripción «intereses
+                        tarjeta». Es lo único de la factura que es un gasto de verdad — es lo que
+                        le cuesta deber.</p>
+
+                        <div class="man-caja">Factura de $345.000
+  − abono a la deuda   NO es gasto
+  − intereses          SÍ es gasto
+  ────────────────────────────
+  Caja: salen $345.000</div>
+
+                        <h4>Lo de agosto está pendiente, y a propósito</h4>
+                        <p>En agosto hay $603.700 anotados como gasto que en realidad son
+                        <strong>pagos de tarjeta</strong>: $345.000 de la cuota de AV Villas y
+                        $258.700 de la factura de Éxito Tuya del <strong>período de julio</strong>.
+                        Ninguno de los dos es un gasto de agosto.</p>
+                        <p>No los quité todavía, y la razón importa: <strong>las compras que los
+                        originaron no están registradas en ninguna parte</strong>. Si borro los
+                        pagos sin meter las compras, esa plata desaparece de sus libros y agosto se
+                        vería mejor de lo que fue. Con los sueldos sí se pudo, porque el costo
+                        entraba por otra puerta. Aquí no hay otra puerta todavía.</p>
+
+                        <h4>Cómo se limpia esto de aquí en adelante</h4>
+                        <ul>
+                            <li>De septiembre en adelante, cada compra con tarjeta se registra el
+                            día que se hace, con 💳 Tarjeta / a crédito.</li>
+                            <li>Cada pago de factura se registra como ajuste de salida, no como
+                            gasto.</li>
+                            <li>A los pocos meses la tarjeta deja de ser un hueco y pasa a ser lo
+                            que es: una lista de compras que ya están cada una en su mes.</li>
+                        </ul>
+                    </div>
+                </details>
+
                 <!-- 7 ─────────────────────────────────────────── -->
                 <details class="man-sec">
                     <summary><span class="man-ico">💰</span>
@@ -2707,6 +2783,31 @@ Quedó             $490.000</div>
                                 <input type="text" class="fc" id="gx-desc" placeholder="Ej: Factura junio, corona para paciente X, quincena 1–15...">
                             </div>
                         </div>
+                        <!-- Aviso: pagar la tarjeta no es el gasto — sale al escoger 💳 -->
+                        <div id="gx-tc-aviso" style="display:none;margin-bottom:14px;padding:13px 16px;background:rgba(191,143,58,.09);border-radius:12px;border-left:4px solid var(--bronze)">
+                            <div style="font-size:12.5px;font-weight:800;color:var(--bronze);margin-bottom:7px">⚠️ Pagar la tarjeta no es el gasto</div>
+                            <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:var(--text)">
+                                El gasto fue <strong>lo que compró</strong> con la tarjeta, el día que lo compró.
+                                Cuando paga la factura sólo está <strong>bajando una deuda</strong>: sale plata del
+                                banco y no se gasta en nada nuevo.</p>
+                            <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:var(--text)">
+                                Si lo anota aquí, ese gasto le queda en el mes equivocado y con el nombre
+                                equivocado — «tarjetas» en vez de insumos, laboratorio o lo que haya sido.</p>
+                            <div style="font-size:12px;line-height:1.7;color:var(--text)">
+                                <strong>Lo correcto son dos apuntes distintos:</strong><br>
+                                1. <strong>La compra</strong> → aquí mismo, con su categoría de verdad y método de
+                                pago <strong>💳 Tarjeta / a crédito</strong>. No mueve Caja, porque todavía no ha
+                                salido plata.<br>
+                                2. <strong>El pago de la factura</strong> → no va en Gastos. Va en
+                                <strong>Caja → Ajuste</strong>, como salida de Bancolombia.
+                            </div>
+                            <p style="margin:8px 0 0;font-size:11.5px;line-height:1.6;color:var(--muted)">
+                                La única parte que <strong>sí</strong> es gasto del mes son los
+                                <strong>intereses y la cuota de manejo</strong>. Esos van en
+                                📋 Varios, con la descripción «intereses tarjeta».
+                                <a href="#" onclick="navigate('manual');return false" style="color:var(--bronze);font-weight:700">Ver el manual →</a>
+                            </p>
+                        </div>
                         <!-- Split TC personal/clínica — solo visible para categoría Tarjetas -->
                         <div id="gx-tc-split-row" style="display:none;margin-bottom:14px;padding:12px 16px;background:rgba(242,209,203,.2);border-radius:12px;border:1.5px dashed #C0959F">
                             <div style="font-size:12px;font-weight:700;color:var(--dark-purp);margin-bottom:10px">💳 Separar gasto clínica vs personal</div>
@@ -2764,11 +2865,18 @@ Quedó             $490.000</div>
                                 <input type="radio" name="gxPM" value="mixto">
                                 <span class="pay-icon">🔀</span><span class="pay-name">Mixto</span>
                             </label>
-                            <label class="pay-opt" onclick="selectGxPM(this,'otro')">
+                            <!-- Este es el camino correcto para una compra hecha con tarjeta:
+                                 el gasto queda en su mes y su categoría, y Caja no se mueve
+                                 porque todavía no ha salido plata de ningún bolsillo. -->
+                            <label class="pay-opt" onclick="selectGxPM(this,'otro')" title="Compras con tarjeta de crédito o que quedan debiendo. El gasto cuenta desde hoy; Caja no se mueve hasta que pague.">
                                 <input type="radio" name="gxPM" value="otro">
-                                <span class="pay-icon">📝</span><span class="pay-name">Otro / A crédito</span>
+                                <span class="pay-icon">💳</span><span class="pay-name">Tarjeta / a crédito</span>
                             </label>
                         </div>
+                        <p id="gx-pm-credito-hint" style="display:none;margin:8px 2px 0;font-size:11.5px;line-height:1.6;color:var(--muted)">
+                            💳 El gasto cuenta <strong>desde hoy</strong>, que es cuando compró.
+                            <strong>Caja no se mueve</strong>: la plata sale el día que pague la
+                            factura, y ese día se registra como ajuste de salida, no como gasto.</p>
                         <!-- Fila mixto — visible solo cuando se elige Mixto -->
                         <div id="gx-mixto-row" style="display:none;margin-top:10px;padding:12px 14px;background:var(--bg);border-radius:10px;border:1.5px solid var(--border)">
                             <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">¿Cuánto en cada bolsillo?</div>
@@ -3596,7 +3704,15 @@ const fmtK = v => { const a=Math.abs(v); return (v<0?'-':'')+'$'+(a>=1000000?(a/
 function g(id){ return document.getElementById(id); }
 function gv(id){ const el=g(id); return el?el.value:''; }
 function sv(id,v){ const el=g(id); if(el) el.value=v; }
-function fmt(n){ return '$'+Math.round(n||0).toLocaleString('es-CO'); }
+/* El menos va DELANTE del peso: −$250.520, no $-250.520. Salió mirando
+   Caja con el banco en rojo. En el resto de la app las restas se escriben
+   a mano como '−'+fmt(valor positivo), así que esto sólo toca los casos
+   que de verdad llegan en negativo, que eran justamente los que se veían
+   mal. Y usa el signo menos de verdad (−), no el guión. */
+function fmt(n){
+    const v = Math.round(n||0);
+    return (v<0?'−$':'$') + Math.abs(v).toLocaleString('es-CO');
+}
 
 function toast(msg, type='', ms=3500){
     const a=g('toastArea');
@@ -7118,6 +7234,12 @@ function onGxCatChange() {
     sv('gx-prov-otro','');
     // Split TC
     const isTc = !!cat?.tcSplit;
+    /* El aviso sale justo donde se comete el error. La categoría se dejó
+       —ella ya tiene agosto registrado así y no se le borra nada— pero
+       deja de ser una invitación silenciosa: pagar la tarjeta no es el
+       gasto, el gasto fue lo que compró con ella. */
+    const av = g('gx-tc-aviso');
+    if (av) av.style.display = isTc ? 'block' : 'none';
     g('gx-tc-split-row').style.display   = isTc ? 'block' : 'none';
     g('gx-amount-hint').style.display    = isTc ? 'block' : 'none';
     if (isTc) { sv('gx-tc-total',''); sv('gx-tc-personal',''); sv('gx-amount',''); g('gx-tc-split-preview').textContent=''; }
@@ -7161,6 +7283,12 @@ function selectGxPM(el, pm) {
     const mixRow = g('gx-mixto-row');
     if (mixRow) mixRow.style.display = pm === 'mixto' ? 'block' : 'none';
     if (pm !== 'mixto') { sv('gx-mix-ef',''); sv('gx-mix-ban',''); g('gx-mix-preview').textContent=''; }
+    /* Caja se arma sólo con efectivo y banco, así que un gasto 'otro' no le
+       resta a ningún bolsillo — que es justamente lo correcto para algo
+       comprado con tarjeta. Lo que faltaba era decirlo, porque un gasto que
+       no aparece en Caja se ve como si no se hubiera guardado. */
+    const credHint = g('gx-pm-credito-hint');
+    if (credHint) credHint.style.display = pm === 'otro' ? 'block' : 'none';
 }
 
 function updateGxMixPreview() {

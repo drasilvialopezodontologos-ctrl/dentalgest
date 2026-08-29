@@ -3680,11 +3680,47 @@ const DB = {
         try { return JSON.parse(localStorage.getItem('dg_'+k)); } catch { return null; }
     },
     set(k, v) {
+        if (k === 'gx') v = _normGx(v);
         if (_dgCache) _dgCache[k] = v;
         localStorage.setItem('dg_'+k, JSON.stringify(v)); // respaldo offline
         _dgSyncServer();
     }
 };
+
+/* ══════════════════════════════════════════════════════════
+   LA CATEGORÍA SE GUARDABA CON UN NOMBRE Y SE LEÍA CON OTRO
+   ══════════════════════════════════════════════════════════
+   El formulario de Gastos guardaba la categoría en «catId». Toda la
+   contabilidad la busca en «cat». Nadie lee «catId» jamás: se escribe y
+   se queda ahí. Resultado: cada gasto que ella ESCRIBE en la app nace
+   sin categoría a los ojos de las cuentas.
+
+   Las filas de agosto sí la tienen porque entraron importadas, no por el
+   formulario. Por eso agosto cuadra al peso y esto llevaba escondido
+   desde siempre.
+
+   Lo que rompía, probado:
+
+   - un pago de honorarios anotado en Gastos NO se excluye, y el
+     honorario queda restado DOS VECES (es el mismo daño que ya
+     habíamos tapado por el lado de los ajustes de caja)
+   - lo mismo con una quincena de las muchachas, el arriendo y la
+     seguridad social: se cuentan encima de lo de Configuración
+   - insumos, laboratorio y pasajes dejan de contar como gasto que sube
+     y baja, así que la carga fija se infla y el PUNTO DE EQUILIBRIO
+     que muestra el Panel y el manual sale mal
+
+   Se arregla en DB.set, que es por donde pasan TODAS las escrituras:
+   así quedan cubiertos los cuatro sitios que hoy crean gastos y
+   cualquiera que se agregue mañana, sin tener que acordarse. */
+function _normGx(lista) {
+    if (!Array.isArray(lista)) return lista;
+    return lista.map(gx => {
+        if (!gx || typeof gx !== 'object') return gx;
+        if (gx.cat || !gx.catId) return gx;
+        return { ...gx, cat: gx.catId };
+    });
+}
 
 /* Devuelve una promesa que se cumple (true/false) cuando el envío al servidor
    termina de verdad. Quien necesite recargar la página DEBE esperarla primero:
@@ -3738,6 +3774,7 @@ async function _dgLoadFromServer() {
         if (data && data.length > 0) {
             _dgCache = {};
             data.forEach(row => { _dgCache[row.key] = row.value; });
+            _repararGx();
             // Actualiza localStorage como respaldo offline
             Object.entries(_dgCache).forEach(([k,v]) => {
                 localStorage.setItem('dg_'+k, JSON.stringify(v));
@@ -3762,10 +3799,25 @@ async function _dgLoadFromServer() {
     Object.keys(localStorage).filter(k => k.startsWith('dg_')).forEach(k => {
         try { _dgCache[k.slice(3)] = JSON.parse(localStorage.getItem(k)); } catch {}
     });
+    _repararGx();
     // Primera vez con datos en localStorage → subirlos a Supabase
     if (Object.keys(_dgCache).length > 0) _dgSyncServer();
     _dgSetupRealtime();
     return true;
+}
+
+/* Los gastos que ella ya escribió quedaron sin «cat» (ver _normGx). Este
+   arreglo corre al abrir la app y les pone la categoría que siempre
+   tuvieron guardada en «catId». No inventa nada: sólo copia el dato de
+   un renglón al otro. Si no hay nada que reparar, no toca el servidor. */
+function _repararGx() {
+    if (!_dgCache || !Array.isArray(_dgCache.gx)) return;
+    const antes = _dgCache.gx.filter(gx => gx && !gx.cat && gx.catId).length;
+    if (!antes) return;
+    _dgCache.gx = _normGx(_dgCache.gx);
+    localStorage.setItem('dg_gx', JSON.stringify(_dgCache.gx));
+    _dgSyncServer();
+    console.log('[DentalGest] categoría repuesta en ' + antes + ' gasto(s)');
 }
 
 function _dgSetupRealtime() {

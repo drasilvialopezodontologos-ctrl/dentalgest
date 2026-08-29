@@ -1475,10 +1475,15 @@
                         <p>Lo que se paga <strong>haya o no haya pacientes</strong>. El arriendo,
                         el internet, el sueldo de Sandry, la luz.</p>
                         <p>Esta es la diferencia que de verdad importa, y es la que le dice cuánto
-                        tiene que producir para no perder. Sus fijos son $5.000.000 al mes.
-                        Trabajando 26 días, son <strong>$192.308 diarios sólo para quedar en
-                        ceros</strong> — ese número se lo muestra el Panel del día, y no es un
-                        adorno: es el piso.</p>
+                        tiene que producir para no perder.</p>
+
+                        <div id="man-cifras-fijos"></div>
+
+                        <p>Ojo con la cuenta, porque no es «la carga fija dividida entre los días».
+                        De cada peso que usted cobra, una parte se va en el honorario de quien hizo
+                        el tratamiento: para tapar $100 de arriendo hay que producir más de $100.
+                        Ese número —el que de verdad es el piso— se llama <strong>punto de
+                        equilibrio</strong>, y se lo muestra el Panel del día. No es un adorno.</p>
 
                         <h4>Utilidad</h4>
                         <p>Lo que sobra al final: ingresos − costos − gastos fijos.</p>
@@ -1968,7 +1973,7 @@ Devolver no es gastar.</strong></div>
                         <div class="man-glo"><b>Prestaciones sociales</b> — cesantías, intereses, prima, vacaciones. Se le deben a las <strong>empleadas</strong>, no a los especialistas.</div>
                         <div class="man-glo"><b>Producción</b> — el valor de los tratamientos hechos en el mes. No es lo que entró al cajón: incluye lo que quedó a crédito.</div>
                         <div class="man-glo"><b>Provisión</b> — plata que se aparta hoy para algo que se debe pagar después, como la prima de diciembre.</div>
-                        <div class="man-glo"><b>Punto de equilibrio</b> — cuánto hay que producir para no perder ni ganar. El suyo: <strong>$192.308 por día</strong>.</div>
+                        <div class="man-glo"><b>Punto de equilibrio</b> — cuánto hay que producir para no perder ni ganar. <span id="man-glo-equil">Lo calcula el Panel del día con las cifras del mes.</span></div>
                         <div class="man-glo"><b>Recobro</b> — plata de terceros que pasa por su cajón. El agua de Bitico. No es ingreso ni gasto.</div>
                         <div class="man-glo"><b>Utilidad</b> — lo que sobra. Ingresos − costos − gastos.</div>
                     </div>
@@ -4441,6 +4446,7 @@ async function navigate(page) {
     if(page==='reportes')     initReportes();
     if(page==='anulaciones')    initAnulaciones();
     if(page==='controles')     initControles();
+    if(page==='manual')        initManual();
 
     if(t) envolverTablasAnchas(t);   // tablas anchas: que se deslicen, no que estiren
 }
@@ -4586,6 +4592,91 @@ function buscarEnManual(q) {
         if (sirve) hallados++;
     });
     if (aviso) aviso.style.display = hallados ? 'none' : 'block';
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAS CIFRAS DEL MANUAL NO SE ESCRIBEN A MANO
+   ══════════════════════════════════════════════════════════
+
+   El manual decía «sus fijos son $5.000.000 al mes» y «$192.308 diarios
+   sólo para quedar en ceros». Números de una configuración vieja que
+   quedaron congelados dentro del texto. Con las cifras de verdad la carga
+   fija es $9.586.250 y el piso diario pasa del millón: casi seis veces lo
+   que decía. Un manual que se consulta justamente para saber cuánto hay
+   que producir no puede decir la quinta parte.
+
+   Y la cuenta que hace aquí es la MISMA del Panel del día, no otra:
+
+     · el punto de equilibrio no es «los fijos ÷ los días» — de cada peso
+       cobrado sólo queda la tajada que sobra después del honorario del
+       especialista, así que hay que producir más que los fijos;
+     · y se reparte entre los días que ella ATIENDE, no entre 26 contando
+       domingos, que es una meta que no existe.
+
+   Si las dos pantallas dijeran números distintos del mismo mes volveríamos
+   a tener dos versiones de la misma cuenta, que es de lo que se trataba. */
+function initManual() {
+    const cont = g('man-cifras-fijos');
+    const glo  = g('man-glo-equil');
+    if (!cont && !glo) return;
+
+    const mes   = todayISO().slice(0, 7);
+    const mesTx = (DB.get('tx') || []).filter(t  => t.date && t.date.startsWith(mes));
+    const mesGx = (DB.get('gx') || []).filter(gx => gx.date && gx.date.startsWith(mes));
+    const R     = calcResultadoMes(mesTx, mesGx);
+
+    const nombreMes = new Date(mes + '-01T12:00:00')
+        .toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+
+    const diasConProd  = new Set(mesTx.map(t => t.date)).size;
+    const diasDelMes   = new Date(+mes.slice(0,4), +mes.slice(5,7), 0).getDate();
+    const diasCorridos = Math.min(diasDelMes, +todayISO().slice(8,10));
+    const diasProdMes  = diasCorridos > 0
+        ? Math.max(diasConProd, Math.round(diasConProd / diasCorridos * diasDelMes))
+        : diasConProd;
+    const puntoEq = diasProdMes > 0 ? Math.ceil(R.equilibrio / diasProdMes) : R.equilibrio;
+
+    /* Sin cobros todavía no hay tajada, y calcResultadoMes devuelve entonces
+       equilibrio = totalFijos. Eso está bien como número de reserva, pero
+       aquí NO se puede escribir como si fuera su piso: el 1 de septiembre
+       diría «produzca $5.876.222» cuando de verdad, con su tajada de
+       siempre, tendría que producir cerca de $9.800.000. Un piso 40% por
+       debajo del real es peor que no dar ninguno. Mientras no haya
+       producción del mes se muestra la carga fija —que sí se sabe, sale de
+       Configuración— y se dice de frente que falta la otra mitad. */
+    const hayProd = R.prod > 0;
+
+    if (cont) {
+        cont.innerHTML = R.totalFijos <= 0
+            ? `<p style="color:var(--muted)">Ponga el arriendo y los sueldos en
+               ⚙️ Configuración y aquí van a aparecer sus cifras de verdad.</p>`
+            : `<table>
+                <tr><th colspan="2">Sus cifras de ${nombreMes}</th></tr>
+                <tr><td><strong>Carga fija</strong><br>lo que se paga haya o no haya pacientes</td>
+                    <td style="text-align:right;font-weight:800;white-space:nowrap">${fmt(R.cargaFijaTotal)}</td></tr>
+                ${R.gastosVariables > 0 ? `<tr><td>Lo que sube y baja con los pacientes<br>laboratorio, insumos, pasajes</td>
+                    <td style="text-align:right;white-space:nowrap">${fmt(R.gastosVariables)}</td></tr>` : ''}
+                <tr><td>Lo que costó el mes entero</td>
+                    <td style="text-align:right;white-space:nowrap">${fmt(R.totalFijos)}</td></tr>
+                ${hayProd ? `
+                <tr><td><strong>Punto de equilibrio</strong><br>lo que hay que producir para no perder</td>
+                    <td style="text-align:right;font-weight:800;white-space:nowrap">${fmt(R.equilibrio)}</td></tr>
+                ${diasProdMes > 0 ? `<tr><td>Repartido entre los ${diasProdMes} días que atiende</td>
+                    <td style="text-align:right;font-weight:800;white-space:nowrap">${fmt(puntoEq)} al día</td></tr>` : ''}
+                ` : `
+                <tr><td colspan="2" style="color:var(--muted)">El punto de equilibrio de
+                    ${nombreMes} aparece aquí en cuanto registre los primeros cobros del mes:
+                    depende de cuánto se va en honorarios, y eso todavía no se sabe.</td></tr>
+                `}
+               </table>`;
+    }
+
+    if (glo) {
+        glo.innerHTML = (hayProd && R.equilibrio > 0 && diasProdMes > 0)
+            ? `El suyo, con ${nombreMes}: <strong>${fmt(R.equilibrio)}</strong> al mes,
+               <strong>${fmt(puntoEq)}</strong> por cada día que atiende.`
+            : `Lo calcula el Panel del día con las cifras del mes.`;
+    }
 }
 
 /* ── Configuración: guardar ── */

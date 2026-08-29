@@ -4932,19 +4932,101 @@ function _dgSyncServer() {
     return _dgSyncServer._p;
 }
 
+/* ── Rescate al abrir ───────────────────────────────────────────────────
+   Antes, al abrir, la copia del servidor se escribía encima de la de este
+   equipo sin mirarla. Cuando un guardado había fallado (sin internet, o el
+   upsert rechazado por una clave nula), arriba quedaba una copia atrasada y
+   la recarga siguiente se tragaba el trabajo del día sin decir nada.
+   Ahora se compara renglón por renglón por «id»: lo que sólo existe en este
+   equipo se conserva, se vuelve a subir y se le avisa en pantalla.
+   Contrapartida aceptada: si un renglón se borró a propósito desde OTRO
+   equipo, este de acá lo devuelve. Por eso el aviso dice qué volvió, para
+   poder borrarlo otra vez. Resucitar un renglón se ve y se arregla; perder
+   un día de cobros, no. */
+function _dgCopiaLocal() {
+    const local = {};
+    Object.keys(localStorage).filter(k => k.startsWith('dg_')).forEach(k => {
+        try { local[k.slice(3)] = JSON.parse(localStorage.getItem(k)); } catch {}
+    });
+    return local;
+}
+
+/* Sólo se comparan las listas cuyos renglones traen «id»: cobros, gastos,
+   ajustes… Lo demás (config, atajos) no se puede casar renglón con renglón
+   sin arriesgar duplicados, así que no se toca. */
+function _dgEsListaDeRenglones(v) {
+    return Array.isArray(v) && v.some(r => r && typeof r === 'object' && r.id !== undefined);
+}
+
+/* Mete en «servidor» los renglones que están en este equipo y allá no.
+   Devuelve el recuento de lo rescatado, por clave. */
+function _dgRescatarLoLocal(servidor, local) {
+    const rescatado = [];
+    Object.keys(local).forEach(k => {
+        const aca = local[k];
+        if (!_dgEsListaDeRenglones(aca)) return;
+        const alla = Array.isArray(servidor[k]) ? servidor[k] : [];
+        const idsAlla = new Set(alla.map(r => r && r.id));
+        const faltan = aca.filter(r => r && r.id !== undefined && !idsAlla.has(r.id));
+        if (!faltan.length) return;
+        servidor[k] = alla.concat(faltan);
+        rescatado.push({ clave: k, cuantos: faltan.length });
+    });
+    return rescatado;
+}
+
+/* Un toast de tres segundos no sirve acá: esto pasa durante el arranque,
+   mientras ella mira otra cosa. El aviso se queda hasta que lo cierre. */
+function _dgAvisarRescate(rescatado) {
+    const nombres = { tx:'cobros', gx:'gastos', aj:'ajustes de caja', planes:'planes de tratamiento',
+                      alq:'alquileres de silla', catalog:'tratamientos del catálogo',
+                      anulaciones:'anulaciones', prestamos:'préstamos', cierres:'cierres de caja',
+                      cierresMes:'cierres de mes', concil:'conciliaciones', nomina:'renglones de nómina' };
+    const detalle = rescatado
+        .map(r => `<li>${r.cuantos} ${nombres[r.clave] || r.clave}</li>`).join('');
+    const capa = document.createElement('div');
+    capa.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;'
+                       + 'display:flex;align-items:center;justify-content:center;padding:16px';
+    capa.innerHTML = `
+        <div style="background:#fff;border-radius:14px;max-width:420px;padding:20px;
+                    font-family:inherit;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+            <div style="font-size:18px;font-weight:700;margin-bottom:10px">
+                ⚠️ Recuperé trabajo de este computador
+            </div>
+            <div style="font-size:14px;line-height:1.5">
+                Lo guardado en internet estaba atrasado. Esto sólo estaba en este
+                computador y lo devolví en su sitio:
+                <ul style="margin:8px 0 0 18px">${detalle}</ul>
+            </div>
+            <div style="font-size:13px;color:#666;margin-top:12px;line-height:1.5">
+                Ya lo volví a subir. Revise que las cifras del mes le cuadren.
+                Si algo de esto lo había borrado a propósito, bórrelo otra vez.
+            </div>
+            <button style="margin-top:16px;width:100%;padding:11px;border:0;border-radius:9px;
+                           background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer">
+                Entendido
+            </button>
+        </div>`;
+    capa.querySelector('button').onclick = () => capa.remove();
+    document.body.appendChild(capa);
+}
+
 async function _dgLoadFromServer() {
     try {
         const { data, error } = await _sb.from('data').select('key, value');
         if (error) throw error;
         if (data && data.length > 0) {
-            _dgCache = {};
-            data.forEach(row => { _dgCache[row.key] = row.value; });
+            const servidor = {};
+            data.forEach(row => { servidor[row.key] = row.value; });
+            const rescatado = _dgRescatarLoLocal(servidor, _dgCopiaLocal());
+            _dgCache = servidor;
             _repararGx();
             // Actualiza localStorage como respaldo offline
             Object.entries(_dgCache).forEach(([k,v]) => {
                 localStorage.setItem('dg_'+k, JSON.stringify(v));
             });
             _dgSetOnline(true);
+            if (rescatado.length) { _dgSyncServer(); _dgAvisarRescate(rescatado); }
             _dgSetupRealtime();
             return true;
         }

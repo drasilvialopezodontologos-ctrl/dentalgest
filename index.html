@@ -13211,14 +13211,10 @@ function marcarComoDescuento(txId) {
             t.descNota      = motivo || '';
             t.descMarcadoAt = new Date().toISOString();
             DB.set('tx', txs);
-            /* Repintar sólo la ficha del doctor que está abierta. Antes esto
-               llamaba a navigate(_currentPage), que rearma Reportes entero y
-               deja la ficha cerrada: ella marcaba el primero y tenía que
-               volver a buscar al doctor para ver el segundo. repVerDoctor
-               alterna, así que dos llamadas = cerrar y volver a pintar. */
-            const det = g('rd-det-' + t.docId);
-            if (det && !det.hidden) { repVerDoctor(t.docId); repVerDoctor(t.docId); }
-            else navigate(_currentPage);
+            /* Este botón ahora también sale en el Panel de inicio, así que ya
+               no basta con repintar la ficha del doctor: hay que refrescar la
+               pantalla donde ella esté parada. */
+            _repintarTrasComision(t.docId);
             toast(`✅ ${t.patient}: descuento de ${fmt(desc)} — ya no aparece debiendo`, 'success');
         },
         { verbo: 'Marcar', titulo: 'Marcar como descuento' }
@@ -13231,10 +13227,18 @@ function marcarComoDescuento(txId) {
    página entera y deja la ficha del doctor cerrada: ella corregía el primer
    cobro y tenía que volver a buscar al doctor para ver el segundo. */
 function _repintarTrasComision(docId) {
+    let algo = false;
+    /* La ficha del doctor puede estar abierta en Reportes aunque ella esté
+       parada en otra página —la página anterior no se desmonta, se esconde—
+       así que se repinta si está abierta, sin que eso cuente como «ya
+       refresqué lo que ella está viendo». repVerDoctor alterna: dos llamadas
+       son cerrar y volver a pintar, y la ficha queda abierta donde estaba. */
     const det = g('rd-det-' + docId);
-    if (det && !det.hidden) { repVerDoctor(docId); repVerDoctor(docId); return; }
-    if (g('comm-list')) { renderComisiones(); return; }
-    navigate(_currentPage);
+    if (det && !det.hidden) { repVerDoctor(docId); repVerDoctor(docId); }
+    if (_currentPage === 'comisiones' && g('comm-list')) { renderComisiones(); algo = true; }
+    if (_currentPage === 'dashboard'  && g('db-cartera')) { renderCartera();   algo = true; }
+    if (_currentPage === 'reportes' && det && !det.hidden) algo = true;
+    if (!algo) navigate(_currentPage);
 }
 
 /* Cursar la comisión que nunca se causó. Es el único camino que existe para
@@ -17309,6 +17313,13 @@ function cobrosSospechosos() {
     tx.forEach(t => {
         if (t.splitChild || t.fromPlan || t.type === 'saldo' || t.pagoPrevio) return;
         if (conPlan.has(t.id) || t.commStatus === 'owner') return;
+        /* Ya contestado: si ella marcó que fue descuento, el descuadre dejó de
+           ser una pregunta. El aviso de Reportes sí lo respetaba, éste no, y
+           como el Panel es la pantalla que abre todos los días, Karol Cervera y
+           Leidy Duarte le seguían saliendo «para revisar» después de haberlo
+           resuelto —y con un botón que la volvía a empujar a anotar la deuda,
+           que es justo el error que acabábamos de deshacer. */
+        if (t.discountAmt > 0) return;
         if (!(t.commission > 0)) return;
         const pct = pctComision(t.docId);
         if (!pct) return;
@@ -17365,7 +17376,14 @@ function renderCartera() {
                     <div style="font-size:11px;color:${colorDias(d.dias)}">Entraron ${fmt(d.pagado)} de ${fmt(d.base)} · ${lblDias(d.dias)}</div>
                 </div>
                 <div style="font-size:13px;font-weight:800;color:#4A6FA5;white-space:nowrap">${fmt(d.falta)}</div>
-                <button onclick="abrirQuedoDebiendo('${eh(d.tx.id)}')" style="background:var(--bronze);color:white;border:none;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Anotar</button>
+                ${/* Las dos respuestas, no una. Con un solo botón —«Anotar», que
+                      abre la deuda— la salida que hay es la que se toma: así
+                      quedaron anotadas como deudas Karol Cervera y Leidy
+                      Duarte, que eran descuentos. El texto de arriba ya dice
+                      que puede ser lo uno o lo otro; faltaba poder contestarlo
+                      aquí mismo, en la pantalla donde sale. */''}
+                <button onclick="abrirQuedoDebiendo('${eh(d.tx.id)}')" title="El paciente quedó debiendo esa diferencia" style="background:var(--bronze);color:white;border:none;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">📋 Debe</button>
+                <button onclick="marcarComoDescuento('${eh(d.tx.id)}')" title="Usted le hizo un descuento: el honorario se pagó sobre el precio de lista" style="background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🏷️ Descuento</button>
             </div>`).join('');
     }
 

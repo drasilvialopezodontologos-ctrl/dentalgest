@@ -9619,13 +9619,21 @@ function confirmEditRx() {
     const tx      = txs[idx];
     const newDate = g('rxe-date').value || tx.date;
     const newComm = getRxCommissionFor(tx.docId, precio, tx.labCost||0, tx.treatId);
+    /* Un cobro en «la clínica se lo queda» se deja quieto, igual que uno ya
+       pagado. Antes se le recalculaba el monto pero NO el estado, y quedaba
+       diciendo dos cosas a la vez: comisión de $200.000 y «no lleva comisión».
+       Ese número no entraba en ningún total —todos descuentan los 'owner'— ni
+       salía en Comisiones, así que corregirle el precio al abono de Ismael
+       Pertuz parecía arreglarlo y no arreglaba nada. Para cursarla de verdad
+       está el botón del aviso, que sí le cambia el estado. */
+    const congelada = tx.commStatus === 'paid' || tx.commStatus === 'owner';
     txs[idx] = {
         ...tx,
         date:         newDate,
         price:        precio,
         payMethod:    pm,
-        commission:   tx.commStatus === 'paid' ? tx.commission : (newComm?.amount || 0),
-        commLabel:    tx.commStatus === 'paid' ? tx.commLabel  : (newComm?.label  || ''),
+        commission:   congelada ? tx.commission : (newComm?.amount || 0),
+        commLabel:    congelada ? tx.commLabel  : (newComm?.label  || ''),
         correctedAt:  new Date().toISOString(),
         correctionNote: nota,
         originalPrice:  tx.originalPrice || tx.price,
@@ -10616,6 +10624,45 @@ function _repHonorariosEnNotas(lista) {
     return (lista || []).reduce((s, t) => s + _honorarioEnNota(t), 0);
 }
 
+/* ── El cobro que se quedó sin comisión y no aparece por ningún lado ─────────
+
+   Un cobro en «la clínica se lo queda» (commStatus 'owner') no sale en NINGUNA
+   pestaña de Comisiones: el filtro sólo conoce pendiente, diferida y pagada.
+   Como el lápiz de editar comisión vive dentro de esa lista, un cobro que entró
+   ahí por error no tiene por dónde alcanzarse. Le pasó al abono de $400.000 de
+   Ismael Pertuz del 15 de agosto: entró por la importación del Excel, nadie le
+   sacó el 50% de la Dra. Cabeza, y ella lo buscó en Comisiones y no estaba.
+
+   Pero «owner» tapa tres situaciones muy distintas y sólo una es un error:
+
+     · el doctor no cobra porcentaje —los recaudos de alquiler van a nombre de
+       la titular— y ahí no hay comisión que cursar;
+     · la comisión existe pero está anotada en OTRO cobro: un pago mixto parte
+       el cobro en dos y la comisión va entera en el principal (el control de
+       Manuel Vibanco del 8 de agosto es exactamente eso);
+     · o ella misma la puso en cero a propósito con el lápiz.
+
+   Sólo el cobro que no cae en ninguna de ésas es una pregunta abierta. Avisar
+   de los otros enseña a ignorar el aviso, y entonces el que importa tampoco se
+   ve. En los 99 cobros de agosto este filtro deja pasar uno: el de Ismael.
+
+   Devuelve lo que le tocaría al doctor, o 0 si no hay nada que preguntar. */
+function _comisionSinCursar(t) {
+    if (!t || t.commStatus !== 'owner') return 0;
+    if (t.sinComisionOk)                return 0;   // ya la revisó y dijo que así está bien
+    if ((t.commission || 0) > 0)        return 0;
+    if (!(t.price > 0))                 return 0;
+    if (_honorarioEnNota(t) > 0)        return 0;   // el honorario está en la nota, se paga por Gastos
+    const etiqueta = t.commLabel || '';
+    if (/registro principal|pago mixto/i.test(etiqueta)) return 0;
+    if (/ajustad/i.test(etiqueta))                       return 0;   // se puso en cero a mano
+    const d = getDoctores()[t.docId];
+    if (!d || d.tipo !== 'porcentaje') return 0;
+    const c = comisionDe({ docId: t.docId, price: t.price || 0,
+                           lab: t.labCost || 0, treatId: t.treatId || null });
+    return (c && c.amount > 0) ? c.amount : 0;
+}
+
 /* La nota, sin el renglón del honorario — que ya está arriba, en su etiqueta y
    con su porcentaje. Si lo único que decía la nota era eso, no se muestra nada;
    si traía algo más (una comisión aparte, un aviso del importador), eso sí se
@@ -10696,6 +10743,12 @@ function repVerDoctor(docId) {
            entrado nada. No hay porcentaje que comparar, así que el aviso de
            arriba no lo agarra; éste sí. */
         const enCero = precio === 0 && gana > 0;
+        /* Al revés que el de arriba: aquí entró plata y no salió honorario, con
+           un doctor que sí cobra porcentaje. Ni «descuadra» ni «enCero» lo
+           agarran —sin comisión no hay porcentaje que comparar— así que este
+           cobro se veía con una etiqueta gris que decía «sin comisión en el
+           cobro» y nada más. Y en Comisiones no aparece en ninguna pestaña. */
+        const sinCursar = _comisionSinCursar(t);
         return `<div class="rd-item">
             <div class="rd-item-hd">
                 <span class="rd-fecha">${eh(_repFechaCorta(t.date))}</span>
@@ -10724,6 +10777,29 @@ function repVerDoctor(docId) {
                 <strong>${fmt(gana)}</strong> de honorario. Es plata que sale sin que haya entrado nada.
                 O al cobro se le olvidó el precio, o el trabajo fue de cortesía y el doctor igual se cobra.
                 Las dos cosas se arreglan, pero hay que saber cuál fue.</div>` : ''}
+            ${sinCursar ? `<div class="rd-ojo rd-ojo-mal">⚠️ Este cobro está marcado <strong>«la clínica se lo queda»</strong>
+                y no le cursó comisión a ${eh(dc.short || dc.name || docId)}. ${
+                    /* El porcentaje se saca de la cifra misma y no de «esperado»:
+                       un tratamiento puede traer su propio porcentaje —los
+                       retenedores de Nay van al 50% y no al 55%— y comisionDe
+                       ya lo tuvo en cuenta. Mostrar el del doctor diría una
+                       cosa al lado de una cifra que sale de otra. */
+                    baseCom > 0 ? `Al ${(sinCursar / baseCom * 100).toFixed(0)}% del trato` : 'Del trato'}
+                le tocarían <strong>${fmt(sinCursar)}</strong>.
+                <div style="margin-top:6px">Mientras siga así no aparece en Comisiones —ni en Pendientes, ni en
+                Diferidas, ni en Pagadas— así que no hay dónde verlo ni dónde cobrarlo.</div>
+                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                  <button onclick="cursarComision('${eh(t.id)}')"
+                    style="padding:6px 12px;border-radius:8px;border:none;background:var(--bronze);
+                           color:white;font-size:11px;font-weight:700;cursor:pointer">
+                    💰 Cursar los ${fmt(sinCursar)}
+                  </button>
+                  <button onclick="dejarSinComision('${eh(t.id)}')"
+                    style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);
+                           background:white;color:var(--dark);font-size:11px;font-weight:700;cursor:pointer">
+                    ✅ Está bien así
+                  </button>
+                </div></div>` : ''}
             ${descuadra ? `<div class="rd-ojo rd-ojo-mal">⚠️ Ese ${pctReal.toFixed(1)}% no es el ${esperado.toFixed(0)}% del trato.
                 Para que ${com > 0 ? 'la comisión diera' : 'el honorario diera'} ${fmt(gana)} al ${esperado.toFixed(0)}%,
                 el tratamiento tendría que valer <strong>${fmt(baseImplicita)}</strong> y aquí está cobrado en ${fmt(precio)}.
@@ -13149,6 +13225,100 @@ function marcarComoDescuento(txId) {
     );
 }
 
+/* Repintar sólo lo que está a la vista. Estos avisos salen en dos sitios —la
+   ficha del doctor en Reportes y el recuadro de Comisiones— y cada uno se
+   redibuja distinto. Antes esto era navigate(_currentPage), que rearma la
+   página entera y deja la ficha del doctor cerrada: ella corregía el primer
+   cobro y tenía que volver a buscar al doctor para ver el segundo. */
+function _repintarTrasComision(docId) {
+    const det = g('rd-det-' + docId);
+    if (det && !det.hidden) { repVerDoctor(docId); repVerDoctor(docId); return; }
+    if (g('comm-list')) { renderComisiones(); return; }
+    navigate(_currentPage);
+}
+
+/* Cursar la comisión que nunca se causó. Es el único camino que existe para
+   sacar un cobro de «la clínica se lo queda»: el lápiz de editar comisión vive
+   dentro de la lista de Comisiones, y un cobro en ese estado no sale en
+   ninguna de sus tres pestañas. */
+function cursarComision(txId) {
+    const txs = DB.get('tx') || [];
+    const t   = txs.find(x => x.id === txId);
+    if (!t) { toast('No encuentro ese cobro', 'error'); return; }
+
+    /* Se recalcula aquí y no se recibe pintado: si cambió el pacto del doctor
+       o el precio del cobro desde que se dibujó la fila, guardaríamos una
+       comisión que ya no es la que dice el botón. */
+    const monto = _comisionSinCursar(t);
+    if (!monto) { toast('Aquí no hay comisión que cursar', 'error'); return; }
+
+    const c   = comisionDe({ docId: t.docId, price: t.price || 0,
+                             lab: t.labCost || 0, treatId: t.treatId || null });
+    const nom = getDoctores()[t.docId]?.name || t.docId;
+    /* comisionDe decide sola si se paga ya o al terminar el caso —la Dra.
+       Cabeza cobra al entregar cuando hay laboratorio— y ese estado es el que
+       manda. Escribirlo a mano en «pendiente» le habría puesto a la vista
+       plata que todavía no se le debe. */
+    const difer = c.status === COMISION_ESTADO.diferida;
+
+    showDeleteModal(
+        'Cursar la comisión',
+        `${t.patient || '(sin paciente)'} — ${t.treatName || 'tratamiento'}\n` +
+        `${_repFechaCorta(t.date)} · cobrado ${fmt(t.price || 0)}\n\n` +
+        `Comisión para ${nom}: ${fmt(monto)}\n` +
+        `${c.label || ''}\n\n` +
+        (difer
+            ? `Queda en DIFERIDAS: se le paga al terminar el caso, no ahora.\n\n`
+            : `Queda en PENDIENTES, listo para pagarle.\n\n`) +
+        `✅ No se mueve ni el cobro, ni el precio, ni la caja. La plata sólo ` +
+        `sale el día que usted le pague, desde Comisiones.`,
+        (motivo) => {
+            t.commission     = monto;
+            t.commStatus     = difer ? 'deferred' : 'pending';
+            t.commLabel      = c.label || `Comisión cursada: ${fmt(monto)}`;
+            t.commPaidAmount = 0;
+            t.comisionCursadaAt = new Date().toISOString();
+            if (motivo) t.comisionCursadaNota = motivo;
+            DB.set('tx', txs);
+            _repintarTrasComision(t.docId);
+            toast(`✅ ${fmt(monto)} para ${nom} — ahora están en ${difer ? 'Diferidas' : 'Pendientes'}`, 'success');
+        },
+        { verbo: 'Cursar', titulo: 'Cursar la comisión' }
+    );
+}
+
+/* La otra respuesta. No cambia un solo peso: sólo deja anotado que ya la miró,
+   para que el aviso deje de preguntar lo mismo cada vez que abra la ficha. Un
+   aviso que no se puede callar termina ignorándose, y con él los que sí
+   importan. */
+function dejarSinComision(txId) {
+    const txs = DB.get('tx') || [];
+    const t   = txs.find(x => x.id === txId);
+    if (!t) { toast('No encuentro ese cobro', 'error'); return; }
+    const monto = _comisionSinCursar(t);
+    const nom   = getDoctores()[t.docId]?.name || t.docId;
+
+    showDeleteModal(
+        'Dejarlo sin comisión',
+        `${t.patient || '(sin paciente)'} — ${t.treatName || 'tratamiento'}\n` +
+        `${_repFechaCorta(t.date)} · cobrado ${fmt(t.price || 0)}\n\n` +
+        `Los ${fmt(t.price || 0)} se quedan enteros en la clínica y ${nom} no ` +
+        `cobra nada por este trabajo.\n\n` +
+        `El aviso de los ${fmt(monto)} deja de salir. No se borra nada: si ` +
+        `después resulta que sí había que pagarle, se vuelve a abrir desde aquí ` +
+        `mismo con el lápiz de la ficha del doctor.`,
+        (motivo) => {
+            t.sinComisionOk    = true;
+            t.sinComisionNota  = motivo || '';
+            t.sinComisionAt    = new Date().toISOString();
+            DB.set('tx', txs);
+            _repintarTrasComision(t.docId);
+            toast(`✅ ${t.patient || 'Ese cobro'}: se queda sin comisión`, 'success');
+        },
+        { verbo: 'Confirmar', titulo: 'Dejarlo sin comisión' }
+    );
+}
+
 function crearPlanPorSaldo(txId) {
     const t = (DB.get('tx') || []).find(x => x.id === txId);
     if (!t) { toast('No encuentro ese cobro', 'error'); return; }
@@ -13764,8 +13934,49 @@ function renderComisiones() {
             </button>
         </div>` : '';
 
+    /* Los cobros que se quedaron sin comisión no salen en ninguna de las tres
+       pestañas —el filtro de arriba sólo conoce pendiente, diferida y pagada—
+       así que van en un recuadro aparte, arriba de Pendientes, que es donde
+       ella los fue a buscar. Sin esto la respuesta a «no está» es «no está y
+       no hay dónde». */
+    const sinCursar = commTab === 'pending'
+        ? allTx.map(t => ({ t, monto: _comisionSinCursar(t) })).filter(x => x.monto > 0)
+        : [];
+    const sinCursarBanner = sinCursar.length > 0 ? `
+        <div style="background:rgba(242,209,203,.35);border:1.5px solid var(--pink);border-radius:12px;padding:12px 16px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font-size:20px">⚠️</span>
+                <div style="flex:1;min-width:200px">
+                    <div style="font-size:13px;font-weight:700;color:var(--dark)">
+                        ${sinCursar.length} cobro${sinCursar.length>1?'s':''} sin comisión cursada —
+                        ${fmt(sinCursar.reduce((s,x)=>s+x.monto,0))} que no aparecían en ninguna pestaña
+                    </div>
+                    <div style="font-size:12px;color:var(--muted);margin-top:2px">
+                        Quedaron marcados «la clínica se lo queda», pero el doctor sí cobra porcentaje.
+                    </div>
+                </div>
+            </div>
+            ${sinCursar.map(({t, monto}) => `
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.07)">
+                    <div style="flex:1;min-width:200px;font-size:12px;color:var(--dark)">
+                        <strong>${eh(t.patient || '(sin paciente)')}</strong> ·
+                        ${eh(_repFechaCorta(t.date))} · ${fmt(t.price || 0)}
+                        <div style="color:var(--muted);margin-top:1px">
+                            ${eh(t.treatName || 'tratamiento')} —
+                            a ${eh(getDoctores()[t.docId]?.short || t.docName || t.docId)} le tocarían ${fmt(monto)}
+                        </div>
+                    </div>
+                    <button onclick="cursarComision('${eh(t.id)}')" style="padding:7px 14px;border-radius:8px;border:none;background:var(--bronze);color:white;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+                        💰 Cursar ${fmt(monto)}
+                    </button>
+                    <button onclick="dejarSinComision('${eh(t.id)}')" style="padding:7px 14px;border-radius:8px;border:1.5px solid var(--border);background:white;color:var(--dark);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+                        ✅ Está bien así
+                    </button>
+                </div>`).join('')}
+        </div>` : '';
+
     if (!filtered.length) {
-        listEl.innerHTML = pmBar + migraBanner + `<div style="text-align:center;padding:56px 24px;color:var(--muted)">
+        listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + `<div style="text-align:center;padding:56px 24px;color:var(--muted)">
             <div style="font-size:40px;margin-bottom:12px">${commTab==='paid'?'✅':'⏳'}</div>
             <div style="font-size:14px;font-weight:700;color:var(--dark)">Sin registros en esta categoría</div>
             <div style="font-size:12px;margin-top:6px">
@@ -13782,7 +13993,7 @@ function renderComisiones() {
         byDoc[t.docId].txs.push(t);
     });
 
-    listEl.innerHTML = pmBar + migraBanner + Object.values(byDoc).map(doc => {
+    listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + Object.values(byDoc).map(doc => {
         const dc       = getDoctores()[doc.docId] || {};
         const color    = dc.color || '#997771';
         const initials = doc.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();

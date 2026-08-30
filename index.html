@@ -10677,7 +10677,11 @@ function repVerDoctor(docId) {
            enseña a ignorar el aviso, y entonces el de $200.000 tampoco se ve.
            Se habla sólo cuando el hueco pasa de diez mil pesos. */
         const hueco     = baseImp ? Math.abs(baseImp - precio) : 0;
-        const descuadra = hueco >= 10000;
+        /* Ya contestado: si ella marcó que fue descuento, el descuadre deja de
+           ser una pregunta abierta. Sin esto el aviso seguía ahí después de
+           marcarlo y volvía a ofrecerle crear la deuda. */
+        const yaEsDesc  = (t.discountAmt || 0) > 0;
+        const descuadra = hueco >= 10000 && !yaEsDesc;
         const baseImplicita = baseImp;
         /* Cobro en cero que igual paga honorario: plata que sale sin que haya
            entrado nada. No hay porcentaje que comparar, así que el aviso de
@@ -10709,17 +10713,54 @@ function repVerDoctor(docId) {
             ${descuadra ? `<div class="rd-ojo rd-ojo-mal">⚠️ Ese ${pctReal.toFixed(1)}% no es el ${esperado.toFixed(0)}% del trato.
                 Para que ${com > 0 ? 'la comisión diera' : 'el honorario diera'} ${fmt(gana)} al ${esperado.toFixed(0)}%,
                 el tratamiento tendría que valer <strong>${fmt(baseImplicita)}</strong> y aquí está cobrado en ${fmt(precio)}.
+                ${/* Antes esto decía «casi siempre quiere decir que el paciente quedó
+                      debiendo» y ponía un solo botón: el de crear la deuda. El mismo
+                      descuadre lo produce un descuento, y con una sola salida a la
+                      vista la gente toma la que hay. Le pasó a ella con Karol Cervera
+                      y con Leidy Duarte: descuentos anotados como deudas. Ahora la
+                      pregunta se hace de verdad, con las dos respuestas al lado. */''}
                 ${baseImplicita > precio
-                    ? `Casi siempre quiere decir que el paciente quedó debiendo <strong>${fmt(baseImplicita - precio)}</strong>
-                       y eso no alcanzó a quedar registrado.
-                       <div style="margin-top:8px">
+                    ? `Eso pasa por una de dos razones, y la app no puede adivinar cuál:
+                       <ul style="margin:6px 0 0;padding-left:18px">
+                         <li>el paciente <strong>quedó debiendo ${fmt(baseImplicita - precio)}</strong> y no se registró; o</li>
+                         <li>usted le <strong>hizo un descuento de ${fmt(baseImplicita - precio)}</strong> y el honorario se pagó sobre el precio de lista.</li>
+                       </ul>
+                       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
                          <button onclick="crearPlanPorSaldo('${eh(t.id)}')"
                            style="padding:6px 12px;border-radius:8px;border:none;background:var(--bronze);
                                   color:white;font-size:11px;font-weight:700;cursor:pointer">
-                           📋 Pasarlo a plan de tratamiento
+                           📋 Quedó debiendo
+                         </button>
+                         <button onclick="marcarComoDescuento('${eh(t.id)}')"
+                           style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);
+                                  background:white;color:var(--dark);font-size:11px;font-weight:700;cursor:pointer">
+                           🏷️ Fue un descuento
                          </button>
                        </div>`
                     : `Casi siempre quiere decir que se dio un descuento después de liquidar.`}</div>` : ''}
+            ${yaEsDesc ? `<div class="rd-ojo">🏷️ <strong>Descuento de ${fmt(t.discountAmt)}</strong> —
+                de ${fmt(t.originalPrice || (precio + t.discountAmt))} de lista se cobró ${fmt(precio)}.
+                El paciente no debe nada.${(() => {
+                    /* Lo que de verdad le queda a la clínica: hay que restar
+                       también el material y el laboratorio. Con el honorario
+                       solo, el de Karol Cervera daba exactamente cero —no era
+                       «menor que», era igual— y el aviso no salía, cuando es
+                       justo el caso que hay que ver: cobró $50.000, pagó
+                       $50.000 de honorario y $6.000 de material. */
+                    const costos = (t.matCost || 0) + (t.labCost || 0);
+                    const queda  = precio - gana - costos;
+                    if (!(gana > 0 && queda <= 0))
+                        return ` El descuento salió de la clínica: el honorario se pagó sobre el precio de lista.`;
+                    const detalle = costos > 0
+                        ? `el honorario de ${fmt(gana)} más ${fmt(costos)} de material y laboratorio`
+                        : `el honorario de ${fmt(gana)}`;
+                    return ` ⚠️ Ojo: entraron ${fmt(precio)} y salieron ${fmt(gana + costos)} —${detalle}—,
+                        así que este tratamiento ${queda < 0
+                            ? `le costó ${fmt(-queda)}` : `no le dejó nada`}
+                        en vez de dejarle algo. El descuento salió entero de la clínica: el honorario
+                        se pagó sobre el precio de lista.`;
+                })()}
+                ${t.descNota ? `<div style="margin-top:6px;font-size:11px">📝 ${eh(t.descNota)}</div>` : ''}</div>` : ''}
             ${/* El honorario ya lo dice la etiqueta de arriba con su porcentaje, y la
                   cabecera explica de qué se trata y cuánto suma. Repetirlo en un recuadro
                   por cada cobro llenaba la pantalla de trece párrafos iguales, y entonces
@@ -13025,6 +13066,75 @@ function savePlan() {
 
    Del saldo tampoco se descuenta comisión todavía: cuando el paciente pague,
    ese abono sí será un cobro nuevo y ahí se liquidará lo que corresponda. */
+/* ── «No debe nada: le hice descuento» ──────────────────────────────────────
+   Cuando el honorario no cuadra con el precio, la pantalla decía «casi siempre
+   quiere decir que el paciente quedó debiendo» y ofrecía UN solo botón, el de
+   convertirlo en deuda. Pero el mismo descuadre lo produce un descuento, y ahí
+   la única salida que se ve es la equivocada.
+
+   Caso real: a Karol Cervera la valoración de rehabilitación le vale $100.000
+   y se le dejó en $50.000; a la Dra. Cabeza se le pagó su 50% sobre los
+   $100.000 de lista. Como el honorario quedó en $50.000 sobre un cobro de
+   $50.000, la app dedujo una deuda de $50.000 que Karol no tiene.
+
+   Esto NO toca el precio, ni la comisión, ni la caja: sólo le pone el nombre
+   correcto a la diferencia. Lo que se cobró se cobró. */
+function marcarComoDescuento(txId) {
+    const txs = DB.get('tx') || [];
+    const t   = txs.find(x => x.id === txId);
+    if (!t) { toast('No encuentro ese cobro', 'error'); return; }
+    if (t.discountAmt > 0) { toast('Ese cobro ya está marcado como descuento', 'error'); return; }
+
+    /* Igual que en crearPlanPorSaldo: se recalcula aquí y no se recibe pintado.
+       Si cambió el pacto del doctor o el precio desde que se dibujó la fila,
+       guardaríamos un descuento que ya no es. */
+    const precio = t.price || 0;
+    const gana   = (t.commStatus !== 'owner' ? (t.commission || 0) : 0) || _honorarioEnNota(t);
+    const pct    = pctComision(t.docId);
+    const lista  = (pct && gana) ? Math.round(gana / pct) : 0;
+    const desc   = lista - precio;
+    if (desc <= 0) { toast('Aquí no hay descuento que marcar', 'error'); return; }
+
+    const ya = (DB.get('planes') || []).find(p => p.origenTx === txId);
+    const avisoPlan = ya
+        ? `\n\n⚠️ Ojo: este cobro ya tiene un plan de deuda abierto por ${fmt((ya.totalAgreed||0) - (ya.abonos||[]).reduce((s,a)=>s+a.amount,0))}. Anúlelo en Planes de tto., o el paciente le va a seguir apareciendo debiendo.`
+        : '';
+
+    showDeleteModal(
+        'Marcar como descuento',
+        `${t.patient || '(sin paciente)'} — ${t.treatName || 'tratamiento'}\n\n` +
+        `Precio de lista: ${fmt(lista)}\nSe le cobró: ${fmt(precio)}\nDescuento: ${fmt(desc)}\n\n` +
+        `El honorario de ${fmt(gana)} se pagó sobre los ${fmt(lista)} de lista, así que ` +
+        `ese descuento salió de la clínica, no del doctor.\n\n` +
+        `✅ No se mueve ni el cobro, ni la comisión, ni la caja. Sólo deja de ` +
+        `aparecer como deuda del paciente.${avisoPlan}`,
+        (motivo) => {
+            /* «originalPrice» ya carga dos significados distintos en la app:
+               al registrar con descuento (saveRx) guarda el precio de lista
+               del catálogo, y al corregir un cobro (confirmEditRx) guarda el
+               precio que tenía antes de la corrección, para auditoría. El
+               cobro de Karol Cervera traía $49.955 por lo segundo. Pisarlo
+               sin más borraba ese rastro, así que se aparta primero. */
+            if (t.originalPrice && t.originalPrice !== lista) t.precioAntesDeCorregir = t.originalPrice;
+            t.originalPrice = lista;
+            t.discountAmt   = desc;
+            t.descNota      = motivo || '';
+            t.descMarcadoAt = new Date().toISOString();
+            DB.set('tx', txs);
+            /* Repintar sólo la ficha del doctor que está abierta. Antes esto
+               llamaba a navigate(_currentPage), que rearma Reportes entero y
+               deja la ficha cerrada: ella marcaba el primero y tenía que
+               volver a buscar al doctor para ver el segundo. repVerDoctor
+               alterna, así que dos llamadas = cerrar y volver a pintar. */
+            const det = g('rd-det-' + t.docId);
+            if (det && !det.hidden) { repVerDoctor(t.docId); repVerDoctor(t.docId); }
+            else navigate(_currentPage);
+            toast(`✅ ${t.patient}: descuento de ${fmt(desc)} — ya no aparece debiendo`, 'success');
+        },
+        { verbo: 'Marcar', titulo: 'Marcar como descuento' }
+    );
+}
+
 function crearPlanPorSaldo(txId) {
     const t = (DB.get('tx') || []).find(x => x.id === txId);
     if (!t) { toast('No encuentro ese cobro', 'error'); return; }
@@ -13351,11 +13461,23 @@ function deletePlan(planId) {
     const plans = DB.get('planes') || [];
     const plan  = plans.find(p=>p.id===planId);
     if (!plan) return;
-    const nAbonos = plan.abonos.length;
-    const totalAbonado = plan.abonos.reduce((s,a)=>s+a.amount,0);
+    /* Los abonos con «yaRegistrado» NO se van de la caja al anular: esa plata
+       entró por un cobro del día, el cobro vive por su cuenta y el filtro de
+       abajo no lo toca —sólo borra los tx que nacieron del plan—. Contarlos
+       aquí le prometía a ella que se iba a devolver plata que no se devuelve.
+       Caso de verdad: marcó «quedó debiendo» en un tratamiento que en realidad
+       llevaba descuento, fue a anular el plan, y la ventana le dijo «se van de
+       la caja $80.000». No se iba nada. Con ese susto encima, o no lo anula o
+       lo anula sin creerle a los números. */
+    const abonosQueVuelven = plan.abonos.filter(a => !a.yaRegistrado);
+    const nAbonos = abonosQueVuelven.length;
+    const totalAbonado = abonosQueVuelven.reduce((s,a)=>s+a.amount,0);
+    const yaEstaban = plan.abonos.filter(a => a.yaRegistrado);
     const extra = nAbonos>0
         ? `\n⚠️ Se van de la caja ${nAbonos === 1 ? 'el abono' : 'los ' + nAbonos + ' abonos'} por ${fmt(totalAbonado)}, y con ellos la comisión que causaron.`
-        : '';
+        : (yaEstaban.length
+            ? `\n✅ La caja no se mueve: ${yaEstaban.length === 1 ? 'el pago' : 'los pagos'} de ${fmt(yaEstaban.reduce((s,a)=>s+a.amount,0))} ${yaEstaban.length === 1 ? 'ya estaba anotado' : 'ya estaban anotados'} como cobro y ahí se ${yaEstaban.length === 1 ? 'queda' : 'quedan'}. Lo único que desaparece es la deuda.`
+            : '');
     showDeleteModal(
         'Anular plan de tratamiento',
         `${plan.patient} — ${plan.treatDesc} — Total: ${fmt(plan.totalAgreed)}${extra}`,
@@ -18050,9 +18172,22 @@ function saveCostosAll() {
 ═══════════════════════════════════════════════════════════════ */
 let _delCb = null;
 
-function showDeleteModal(title, desc, onConfirm) {
+/* Nació sólo para anular, y por eso viene con basurero, botón rojo y «motivo
+   de la anulación». Marcar un descuento no borra nada, y con ese vestido
+   parecía que sí: cualquiera cancela antes de leer. Los opts dejan cambiarle
+   la cara sin tocar las once llamadas que ya existen. */
+function showDeleteModal(title, desc, onConfirm, opts) {
+    const o = opts || {};
     g('del-modal-title').textContent = title;
     g('del-modal-desc').textContent  = desc;
+    g('del-modal-desc').style.whiteSpace = 'pre-line';   // el texto viene con saltos
+    g('del-modal-icon').textContent  = o.icono  || '🗑️';
+    g('del-modal-lbl').textContent   = o.etiquetaMotivo || 'Motivo de la anulación';
+    const btn = g('del-modal-ok');
+    btn.textContent     = o.verbo || 'Anular registro';
+    btn.style.background = o.color || 'var(--danger)';
+    g('del-modal-reason').placeholder = o.placeholder
+        || 'Ej: Error de digitación, paciente canceló, valor incorrecto...';
     g('del-modal-reason').value = '';
     _delCb = onConfirm;
     g('delete-modal').style.display = 'flex';
@@ -18612,15 +18747,15 @@ function confirmExtracto() {
 <div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
     <div style="background:white;border-radius:16px;padding:28px 24px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(0,0,0,.25)">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-            <span style="font-size:22px">🗑️</span>
+            <span id="del-modal-icon" style="font-size:22px">🗑️</span>
             <h3 id="del-modal-title" style="margin:0;font-size:16px;font-weight:800;color:var(--dark)">Anular registro</h3>
         </div>
-        <p id="del-modal-desc" style="margin:0 0 18px;font-size:13px;color:var(--muted);line-height:1.5"></p>
-        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Motivo de la anulación</label>
+        <p id="del-modal-desc" style="margin:0 0 18px;font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-line"></p>
+        <label id="del-modal-lbl" style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Motivo de la anulación</label>
         <textarea id="del-modal-reason" rows="3" placeholder="Ej: Error de digitación, paciente canceló, valor incorrecto..." style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;resize:vertical;outline:none"></textarea>
         <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
             <button onclick="closeDeleteModal()" style="padding:9px 20px;border:1.5px solid var(--border);border-radius:10px;background:white;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Cancelar</button>
-            <button onclick="confirmDeleteModal()" style="padding:9px 20px;border:none;border-radius:10px;background:var(--danger);color:white;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Anular registro</button>
+            <button id="del-modal-ok" onclick="confirmDeleteModal()" style="padding:9px 20px;border:none;border-radius:10px;background:var(--danger);color:white;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Anular registro</button>
         </div>
     </div>
 </div>

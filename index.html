@@ -10666,12 +10666,21 @@ function repVerDoctor(docId) {
            en el campo de comisión sino escrito en la nota, y para sacar el
            porcentaje da lo mismo de dónde salga: es la misma plata. */
         const gana = com || oculto;
+        /* El laboratorio se descuenta ANTES de sacar el porcentaje —así lo hace
+           comisionDe()— así que la comisión de un cobro con laboratorio nunca
+           va a ser el porcentaje del precio. Sin restarlo, este panel le
+           gritaba «ese 25,1% no es el 50% del trato» al abono de $1.400.000 de
+           Ismael Pertuz, que estaba liquidado exacto: 50% de $1.400.000 menos
+           $696.900 de laboratorio. La base del porcentaje es lo que queda
+           después del laboratorio, y el precio implícito lo vuelve a sumar. */
+        const lab     = t.labCost || 0;
+        const baseCom = Math.max(0, precio - lab);
         /* El porcentaje que DE VERDAD se aplicó, no el del trato. Cuando no
            cuadran es porque la base no fue el precio cobrado — un descuento,
            o un saldo que quedó debiendo. Eso hay que verlo. */
-        const pctReal  = precio > 0 && gana > 0 ? (gana / precio * 100) : null;
+        const pctReal  = baseCom > 0 && gana > 0 ? (gana / baseCom * 100) : null;
         const esperado = pctTrato ? pctTrato * 100 : null;
-        const baseImp  = pctReal != null && esperado ? Math.round(gana / (esperado / 100)) : 0;
+        const baseImp  = pctReal != null && esperado ? Math.round(gana / (esperado / 100)) + lab : 0;
         /* Aviso por plata, no por decimales. Un 34,3% en vez de 35% es
            $1.429 — redondeo de la liquidación, no un problema. Avisar de eso
            enseña a ignorar el aviso, y entonces el de $200.000 tampoco se ve.
@@ -10703,6 +10712,11 @@ function repVerDoctor(docId) {
                             entra en $0 y dividir por cero daba pantalla en blanco. */
                          pctReal != null ? ` · ${pctReal.toFixed(1)}%` : ''}</span>`
                     : `<span class="rd-tag">sin comisión en el cobro</span>`}
+                ${/* Sin esto el porcentaje parece salido de la nada: al lado de un
+                      cobro de $1.400.000 se lee «50%» pero la comisión son
+                      $351.550. El porcentaje es correcto; la base no es el precio. */''}
+                ${lab > 0 && gana > 0
+                    ? `<span class="rd-tag">sobre ${fmt(baseCom)} · ${fmt(lab)} de laboratorio</span>` : ''}
                 ${t.commLabel && !/^importado/i.test(t.commLabel)
                     ? `<span class="rd-tag">${eh(t.commLabel)}</span>` : ''}
             </div>

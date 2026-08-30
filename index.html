@@ -13341,6 +13341,33 @@ function renderPlanes() {
                         <button class="btn btn-primary" onclick="saveAbono('${p.id}')">Abonar</button>
                     </div>
                 </div>
+                ${/* Cuando el plan se arma DESPUÉS de que el paciente ya venía
+                      abonando, los primeros abonos ya están anotados como cobros
+                      del día. Sin esta casilla sólo había dos salidas malas:
+                      volver a anotarlos —y entonces el mes se infla y la comisión
+                      se paga dos veces— o no anotarlos, y el plan le muestra un
+                      saldo que el paciente no debe. Le pasó con Ismael Pertuz:
+                      su abono del 15 de agosto ya estaba registrado, así que el
+                      plan le quedaba debiendo $400.000 de mentira.
+                      El modelo ya sabía hacerlo (crearPlanPorSaldo escribe
+                      «yaRegistrado»); lo que faltaba era el interruptor. */''}
+                ${/* Ojo: «.plan-add-form label» pone todo en mayúsculas y a 10px —
+                      sirve para rótulos de campo, no para una frase que hay que
+                      leer. Y el aviso se toggle con style.display y no con el
+                      atributo «hidden», porque un display:block en línea le gana
+                      a hidden y el texto salía siempre, con la casilla apagada. */''}
+                <label style="display:flex;gap:8px;align-items:flex-start;margin-top:12px;
+                              font-size:11.5px;font-weight:400;text-transform:none;letter-spacing:0;
+                              color:var(--dark);cursor:pointer;line-height:1.5">
+                    <input type="checkbox" id="ab-ya-${p.id}" style="margin-top:2px;flex:none"
+                           onchange="g('ab-ya-hint-${p.id}').style.display=this.checked?'block':'none'">
+                    <span style="display:block">Este abono <strong>ya está anotado</strong> como cobro del día
+                        <span style="display:block;color:var(--muted)">sólo descontarlo del saldo, sin volver a registrarlo</span>
+                        <span id="ab-ya-hint-${p.id}" style="display:none;margin-top:5px;color:var(--bronze)">
+                            No se crea otro cobro, no entra plata a la caja y no causa
+                            comisión: todo eso ya pasó el día que lo anotó.</span>
+                    </span>
+                </label>
                 ${saldo<=0 ? `<button class="btn" style="width:100%;margin-top:10px;background:rgba(94,140,106,.12);color:var(--success);border:1.5px solid var(--success)" onclick="completePlan('${p.id}')">✅ Marcar como completado</button>` : ''}
             </div>` : '';
 
@@ -13398,7 +13425,20 @@ function saveAbono(planId) {
     if (idx<0) return;
     const plan = plans[idx];
     const abId = 'ab'+Date.now();
-    plan.abonos.push({id:abId, date, amount:amt, payMethod:pm, createdAt:new Date().toISOString()});
+    /* «Ya está anotado como cobro del día»: el abono entra al plan para que el
+       saldo salga bien, pero NO se crea cobro, NO entra plata a la caja y NO
+       causa comisión — todo eso ya ocurrió el día que ella lo registró. Es la
+       misma marca que pone crearPlanPorSaldo. */
+    const yaAnotado = !!(g('ab-ya-'+planId) && g('ab-ya-'+planId).checked);
+    plan.abonos.push({id:abId, date, amount:amt, payMethod:pm,
+                      ...(yaAnotado && { yaRegistrado:true }),
+                      createdAt:new Date().toISOString()});
+    if (yaAnotado) {
+        DB.set('planes', plans);
+        renderPlanes();
+        toast(`✅ ${fmt(amt)} descontados del saldo — el cobro que ya tenía no se tocó`,'success');
+        return;
+    }
 
     /* ── Un abono es un cobro, no un apunte de caja ─────────────────────────
        Antes el abono se anotaba solo en la caja y nunca aparecía como

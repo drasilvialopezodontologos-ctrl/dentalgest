@@ -221,6 +221,19 @@
             padding:2px 6px; border-radius:99px;
         }
         .sb-footer { padding:14px 20px; border-top:1px solid rgba(255,255,255,.08); flex-shrink:0; }
+        /* La fechita de versión. Discreta a propósito: no compite con nada,
+           pero está siempre a la vista para poder mirarla sin buscarla. */
+        #sb-version { margin-top:10px; padding:7px 9px; border-radius:6px; cursor:pointer;
+                      font-size:10.5px; line-height:1.4; color:rgba(255,255,255,.42);
+                      background:rgba(255,255,255,.04); transition:background .15s, color .15s; }
+        #sb-version:hover { background:rgba(255,255,255,.09); color:rgba(255,255,255,.72); }
+        #sb-version strong { color:rgba(255,255,255,.68); font-weight:600; }
+        #sb-version-sub { margin-top:2px; font-size:9.5px; opacity:.72; }
+        #sb-version.v-buscando { color:#E8D9B4; }
+        #sb-version.v-vieja    { background:rgba(200,150,40,.18); color:#F0D89B; }
+        #sb-version.v-vieja strong { color:#FFE9AE; }
+        #sb-version.v-aldia    { background:rgba(94,140,106,.18); color:#BEDCC6; }
+        #sb-version.v-aldia strong { color:#D8EEDD; }
         .btn-logout {
             display:flex; align-items:center; gap:8px;
             color:rgba(255,255,255,.32); cursor:pointer;
@@ -1505,6 +1518,16 @@
 
         <div class="sb-footer">
             <button class="btn-logout" onclick="doLogout()">⬅️ Cerrar sesión</button>
+
+            <!-- La fechita. Dice qué copia del programa está viendo en este
+                 momento, y al tocarla le pregunta al servidor si hay una más
+                 nueva. Es el único punto de la pantalla que distingue «no lo
+                 arreglaron» de «su ventana está vieja». -->
+            <div id="sb-version" onclick="buscarActualizacion()"
+                 title="Toque para preguntarle al servidor si hay una versión más nueva">
+                <div id="sb-version-txt">Versión <strong id="sb-version-fecha">—</strong></div>
+                <div id="sb-version-sub">¿No ve un cambio? Toque aquí</div>
+            </div>
         </div>
     </aside>
 
@@ -4706,6 +4729,23 @@ create policy "solo con cuenta"
 <script>
 'use strict';
 
+/* ══ Sello de versión ══════════════════════════════════════════════════════
+   El acceso directo del escritorio abre el sitio publicado, no un archivo
+   de este computador. Y GitHub manda «cache-control: max-age=600», o sea
+   que Chrome se queda con la copia vieja hasta diez minutos. Ella empuja
+   bien, el sitio se actualiza bien, y su ventana sigue mostrando lo de
+   antes — sin que ninguno de los dos tenga cómo darse cuenta.
+
+   Esta fecha es lo único que distingue una copia de otra. Va escrita a mano
+   y SE CAMBIA EN CADA PUSH: si me olvido, el aviso miente y es peor que no
+   tenerlo. La de abajo es la que ella lee; la de arriba es la que se compara
+   contra el servidor, y tiene que poder ordenarse (año-mes-día hora).
+
+   No es un dato del negocio: es la identidad de este archivo. Por eso sí va
+   escrita aquí adentro y no es una casilla editable.                        */
+const APP_BUILD        = '2026-08-31 12:55';
+const APP_BUILD_HUMANO = '31 ago · 12:55 p.m.';
+
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
     nombre:'Consultorio Odontológico Dra. Silvia López',
@@ -5168,6 +5208,88 @@ function toast(msg, type='', ms=3500){
     setTimeout(()=>t.remove(), ms);
 }
 
+/* ══ La fechita de versión ═════════════════════════════════════════════════
+   El problema que resuelve: ella empuja un cambio, el sitio se actualiza, y
+   su ventana sigue mostrando lo de antes porque Chrome guardó la copia vieja.
+   Sin esto, «no lo arreglaron» y «su pantalla está vieja» se ven idénticos,
+   y el día entero se va buscando un error que no existe.
+
+   Le pregunta al servidor cuál versión tiene publicada y la compara con la
+   que está corriendo aquí. La pregunta se hace sola una vez al entrar —
+   porque el problema es justamente que ella no tiene motivo para sospechar—
+   y también cuando toque el recuadro.                                       */
+function pintarVersion() {
+    const f = g('sb-version-fecha');
+    if (f) f.textContent = APP_BUILD_HUMANO;
+}
+
+/* Saca el sello del HTML que devolvió el servidor. Si el archivo publicado
+   fuera tan viejo que no lo tenga, devuelve null y lo tratamos como «no sé»,
+   nunca como «está al día». */
+function _selloDe(html) {
+    const m = (html || '').match(/const APP_BUILD\s+=\s+'([^']+)'/);
+    return m ? m[1] : null;
+}
+
+let _buscandoVersion = false;
+
+async function buscarActualizacion(silencioso) {
+    if (_buscandoVersion) return;
+    const caja = g('sb-version'), sub = g('sb-version-sub');
+    if (!caja || !sub) return;
+
+    _buscandoVersion = true;
+    if (!silencioso) { caja.className = 'v-buscando'; sub.textContent = 'Preguntando al servidor…'; }
+
+    try {
+        /* La dirección lleva un número distinto cada vez: así Chrome no puede
+           contestar con lo que tiene guardado, tiene que ir a preguntar. */
+        const r = await fetch(location.pathname + '?_v=' + Date.now(), { cache: 'reload' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const alla = _selloDe(await r.text());
+        if (!alla) throw new Error('sin sello');
+
+        if (alla === APP_BUILD) {
+            if (silencioso) { caja.className = ''; sub.textContent = '¿No ve un cambio? Toque aquí'; }
+            else {
+                caja.className = 'v-aldia';
+                sub.textContent = 'Está viendo la última. El cambio que busca no está subido.';
+                setTimeout(() => { caja.className = ''; sub.textContent = '¿No ve un cambio? Toque aquí'; }, 12000);
+            }
+        } else {
+            /* Hay una más nueva publicada. No la traigo solo: recargar en
+               media consulta sería peor. Se lo digo y ella decide cuándo. */
+            caja.className = 'v-vieja';
+            sub.innerHTML = 'Hay una versión más nueva publicada.'
+                + '<div style="margin-top:6px"><button onclick="event.stopPropagation();traerVersionNueva()" '
+                + 'style="width:100%;padding:6px;border:0;border-radius:5px;cursor:pointer;'
+                + 'background:#C89628;color:#241C08;font-weight:700;font-size:10.5px">🔄 Traerla ahora</button></div>';
+        }
+    } catch (e) {
+        /* Sin internet, o el servidor no contestó. Callar es lo correcto:
+           inventar «está al día» sería exactamente la mentira que esto vino
+           a evitar. */
+        if (!silencioso) {
+            caja.className = '';
+            sub.textContent = 'No pude preguntar (¿sin internet?). Intente más tarde.';
+            setTimeout(() => { sub.textContent = '¿No ve un cambio? Toque aquí'; }, 8000);
+        }
+    } finally {
+        _buscandoVersion = false;
+    }
+}
+
+async function traerVersionNueva() {
+    const sub = g('sb-version-sub');
+    if (sub) sub.textContent = 'Trayendo la versión nueva…';
+    /* Primero refresco lo que Chrome tiene guardado para la dirección normal,
+       para que el acceso directo del escritorio también abra la nueva la
+       próxima vez. Después recargo con una dirección única, que es la única
+       manera de estar seguro de que no me sirve la vieja otra vez. */
+    try { await fetch(location.pathname, { cache: 'reload' }); } catch (e) {}
+    location.replace(location.pathname + '?v=' + Date.now());
+}
+
 /* ── Login ── */
 function renderLoginUsuarios(){
     const cont = g('loginUsuarios');
@@ -5468,6 +5590,12 @@ function enterApp(){
     const cfg=DB.get('config')||DEFAULTS;
     g('sbClinic').textContent=cfg.nombre||DEFAULTS.nombre;
     renderSyncBadge();   // pinta el estado de la conexión al entrar
+    pintarVersion();     // qué copia del programa está viendo
+    /* Y le pregunta al servidor si hay una más nueva, callado. Va con retraso
+       para no pelear con la bajada de datos, y no dice nada si todo está al
+       día: sólo se enciende cuando de verdad hay algo que ella no está
+       viendo, que es el único momento en que sirve. */
+    setTimeout(() => buscarActualizacion(true), 6000);
     _vigilarTablas();    // vigila las tablas nuevas para que no estiren la pantalla
     _dgVigilarInactividad();  // en equipo compartido, cierra solo si nadie lo toca
     const init=DB.get('initialized');

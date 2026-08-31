@@ -4743,8 +4743,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 12:55';
-const APP_BUILD_HUMANO = '31 ago · 12:55 p.m.';
+const APP_BUILD        = '2026-08-31 16:30';
+const APP_BUILD_HUMANO = '31 ago · 4:30 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -10928,6 +10928,20 @@ function repVerDoctor(docId) {
                     ✅ Está bien así
                   </button>
                 </div></div>` : ''}
+            ${/* La constancia de que ella dijo «está bien así», con el camino de
+                  vuelta. En gris y sin ⚠️: ya decidió, no hay que insistirle.
+                  Pero tiene que quedar A LA VISTA, porque si no el cobro se
+                  vuelve invisible en toda la aplicación y no habría cómo
+                  encontrarlo nunca más. */''}
+            ${t.sinComisionOk ? `<div class="rd-nota">
+                ✅ Usted marcó que este cobro va <strong>sin comisión</strong>${
+                    t.sinComisionAt ? ` el ${_repFechaCorta(String(t.sinComisionAt).slice(0, 10))}` : ''}${
+                    t.sinComisionNota ? ` — «${eh(t.sinComisionNota)}»` : ''}.
+                <button onclick="deshacerSinComision('${eh(t.id)}')"
+                    style="margin-left:6px;padding:3px 9px;border-radius:6px;
+                           border:1px solid var(--border);background:white;color:var(--dark);
+                           font-size:10px;font-weight:700;cursor:pointer">↩️ Deshacer</button>
+              </div>` : ''}
             ${descuadra ? `<div class="rd-ojo rd-ojo-mal">⚠️ Ese ${pctReal.toFixed(1)}% no es el ${esperado.toFixed(0)}% del trato.
                 Para que ${com > 0 ? 'la comisión diera' : 'el honorario diera'} ${fmt(gana)} al ${esperado.toFixed(0)}%,
                 el tratamiento tendría que valer <strong>${fmt(baseImplicita)}</strong> y aquí está cobrado en ${fmt(precio)}.
@@ -13436,9 +13450,9 @@ function dejarSinComision(txId) {
         `${_repFechaCorta(t.date)} · cobrado ${fmt(t.price || 0)}\n\n` +
         `Los ${fmt(t.price || 0)} se quedan enteros en la clínica y ${nom} no ` +
         `cobra nada por este trabajo.\n\n` +
-        `El aviso de los ${fmt(monto)} deja de salir. No se borra nada: si ` +
-        `después resulta que sí había que pagarle, se vuelve a abrir desde aquí ` +
-        `mismo con el lápiz de la ficha del doctor.`,
+        `El aviso de los ${fmt(monto)} deja de salir. No se borra nada: queda ` +
+        `una nota gris en esta misma ficha, con un botón de «deshacer», por si ` +
+        `después resulta que sí había que pagarle.`,
         (motivo) => {
             t.sinComisionOk    = true;
             t.sinComisionNota  = motivo || '';
@@ -13449,6 +13463,38 @@ function dejarSinComision(txId) {
         },
         { verbo: 'Confirmar', titulo: 'Dejarlo sin comisión' }
     );
+}
+
+/* ── Deshacer el «está bien así» ────────────────────────────────────────────
+   Esto faltaba y era un hueco grave. Al marcar `sinComisionOk`, el aviso de
+   la ficha se apaga y el cobro sigue en `owner`, o sea invisible en las tres
+   pestañas de Comisiones. Sin este botón no quedaba UNA sola puerta de vuelta:
+   un clic de más y esa comisión desaparecía para siempre, en silencio.
+
+   Peor todavía: la ventana de confirmación le prometía que se podía deshacer
+   «con el lápiz de la ficha del doctor», y eso era mentira — con la comisión
+   en cero no hay lápiz que abrir. Prometer una salida que no existe es peor
+   que no ofrecerla.
+
+   La nota gris se queda a la vista para siempre en la ficha del doctor. No
+   como aviso —ella ya decidió y hay que respetarle la decisión— sino como
+   constancia de que decidió, con el camino de vuelta al lado.              */
+function deshacerSinComision(txId) {
+    const txs = DB.get('tx') || [];
+    const t   = txs.find(x => x.id === txId);
+    if (!t) { toast('No encuentro ese cobro', 'error'); return; }
+    if (!t.sinComisionOk) { toast('Ese cobro no estaba marcado', 'error'); return; }
+
+    delete t.sinComisionOk;
+    delete t.sinComisionNota;
+    delete t.sinComisionAt;
+    DB.set('tx', txs);
+
+    const monto = _comisionSinCursar(t);
+    _repintarTrasComision(t.docId);
+    toast(monto > 0
+        ? `↩️ Vuelve a salir el aviso de ${fmt(monto)}`
+        : '↩️ Se quitó la marca', 'success');
 }
 
 function crearPlanPorSaldo(txId) {
@@ -14107,8 +14153,32 @@ function renderComisiones() {
                 </div>`).join('')}
         </div>` : '';
 
+    /* Los que ella ya despachó con «está bien así». Un renglón gris, sin ⚠️ y
+       sin cifras grandes: la decisión está tomada y no se le insiste. Pero si
+       no estuviera aquí, un clic de más los borraría del mapa —siguen en
+       `owner`, o sea fuera de las tres pestañas— y el único camino de vuelta
+       sería saber ir a Reportes → Por doctor y abrir la ficha correcta. */
+    const yaDichos = commTab === 'pending'
+        ? allTx.filter(t => t.sinComisionOk && t.commStatus === 'owner')
+        : [];
+    const yaDichosLinea = yaDichos.length > 0 ? `
+        <div style="font-size:11.5px;color:var(--muted);margin:-4px 0 14px;padding:8px 12px;
+                    background:rgba(0,0,0,.025);border-radius:9px">
+            ✅ ${yaDichos.length} cobro${yaDichos.length>1?'s':''} que usted marcó
+            «está bien así» — la clínica se los queda entero${yaDichos.length>1?'s':''}.
+            ${yaDichos.map(t => `
+                <div style="margin-top:5px">
+                    ${eh(t.patient || '(sin paciente)')} · ${eh(_repFechaCorta(t.date))} ·
+                    ${fmt(t.price || 0)} · ${eh(getDoctores()[t.docId]?.short || t.docName || t.docId)}
+                    <button onclick="deshacerSinComision('${eh(t.id)}')"
+                        style="margin-left:6px;padding:2px 8px;border-radius:6px;
+                               border:1px solid var(--border);background:white;color:var(--dark);
+                               font-size:10px;font-weight:700;cursor:pointer">↩️ Deshacer</button>
+                </div>`).join('')}
+        </div>` : '';
+
     if (!filtered.length) {
-        listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + `<div style="text-align:center;padding:56px 24px;color:var(--muted)">
+        listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + yaDichosLinea + `<div style="text-align:center;padding:56px 24px;color:var(--muted)">
             <div style="font-size:40px;margin-bottom:12px">${commTab==='paid'?'✅':'⏳'}</div>
             <div style="font-size:14px;font-weight:700;color:var(--dark)">Sin registros en esta categoría</div>
             <div style="font-size:12px;margin-top:6px">
@@ -14125,7 +14195,7 @@ function renderComisiones() {
         byDoc[t.docId].txs.push(t);
     });
 
-    listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + Object.values(byDoc).map(doc => {
+    listEl.innerHTML = pmBar + migraBanner + sinCursarBanner + yaDichosLinea + Object.values(byDoc).map(doc => {
         const dc       = getDoctores()[doc.docId] || {};
         const color    = dc.color || '#997771';
         const initials = doc.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();

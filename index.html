@@ -4743,8 +4743,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 16:30';
-const APP_BUILD_HUMANO = '31 ago · 4:30 p.m.';
+const APP_BUILD        = '2026-08-31 20:10';
+const APP_BUILD_HUMANO = '31 ago · 8:10 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -7689,6 +7689,32 @@ function _empTarjeta(id, e, esNueva) {
                     </div>
                 </div>
                 <span class="hint">Vacío = se calcula solo (sueldo ÷ 2, menos 4% y 4%).</span>
+                <label class="fg" style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer">
+                    <input type="checkbox" id="emp-sindesc-${id}" style="margin-top:2px;width:16px;height:16px;flex:none"
+                           ${e.sinDescuento === true ? 'checked' : ''}>
+                    <span>
+                        <span style="font-weight:600">No le descuento nada</span>
+                        <span class="hint" style="display:block;margin-top:2px">
+                            Marcado, el recibo deja de restar salud y pensión: la quincena bruta
+                            es lo que ella recibe. Se apaga desmarcando esta misma casilla.
+                        </span>
+                    </span>
+                </label>
+                <div class="fg" style="margin-top:10px">
+                    <label>Salud y pensión que le descuento (quincena)</label>
+                    <div class="inp-pre"><span class="pre-lbl">$</span>
+                        <input type="number" class="fc" id="emp-desc-sp-${id}" value="${v(e.descSP)}" placeholder="0"></div>
+                    <span class="hint">Una sola cifra, la que usted le descuenta para pagarle la PILA.
+                        Reemplaza el 4% y el 4% de arriba. Vacío o cero = se usan esos dos.</span>
+                </div>
+                <div class="fg" style="margin-top:10px">
+                    <label>PILA que pago al mes por ella</label>
+                    <div class="inp-pre"><span class="pre-lbl">$</span>
+                        <input type="number" class="fc" id="emp-pila-${id}" value="${v(e.pilaMes)}" placeholder="auto"></div>
+                    <span class="hint">Lo que dice su planilla, no lo que la app estime.
+                        Si paga una sola planilla por varias, divídala entre ellas.
+                        Vacío = la app lo calcula sobre el salario mínimo.</span>
+                </div>
             </details>
         </div>
         <div class="eq-side">
@@ -7773,6 +7799,9 @@ function leerEmpleadasDeLaPantalla() {
             brutoQ:      num('emp-bruto-'   + id) || 0,
             descSalud:   num('emp-salud-'   + id) || 0,
             descPension: num('emp-pension-' + id) || 0,
+            sinDescuento: !!(g('emp-sindesc-' + id) || {}).checked,
+            descSP:      num('emp-desc-sp-' + id) || 0,
+            pilaMes:     num('emp-pila-'    + id) || 0,
             cesStart: desde, startDate: desde,
             activo: base[id] ? base[id].activo !== false : true,
         };
@@ -11632,6 +11661,7 @@ function _empleadaDeLaSemilla(base, cfg, yr) {
         brutoQ:      parseFloat(cfg[base.cfgBruto])   || 0,
         descSalud:   parseFloat(cfg[base.cfgSalud])   || 0,
         descPension: parseFloat(cfg[base.cfgPension]) || 0,
+        sinDescuento: false, descSP: 0, pilaMes: 0,
         cesStart: desde, startDate: desde, activo: true,
     };
 }
@@ -11654,6 +11684,9 @@ function getEmployees() {
                 brutoQ:      parseFloat(e.brutoQ)      || 0,
                 descSalud:   parseFloat(e.descSalud)   || 0,
                 descPension: parseFloat(e.descPension) || 0,
+                sinDescuento: e.sinDescuento === true,
+                descSP:      parseFloat(e.descSP)      || 0,
+                pilaMes:     parseFloat(e.pilaMes)     || 0,
                 cesStart: desde, startDate: e.startDate || desde,
                 activo: e.activo !== false,
                 /* El último día que trabajó tiene que pasar de largo: es lo que
@@ -11898,10 +11931,21 @@ function calcQuincena(emp) {
     // Si hay valores exactos de contadora → usarlos; si no → calcular automáticamente
     const brutoQ = emp.brutoQ > 0 ? emp.brutoQ : Math.round(emp.salary / 2);
     const t      = Math.round(emp.transport / 2); // auxilio transporte quincena
+    /* Hay acuerdos en los que a la empleada NO se le descuenta nada: la salud y
+       la pensión se le entregan en la mano junto con la quincena. Antes eso no
+       se podía decir: un cero en la casilla de descuento se leía como «calcúlalo
+       tú» y volvía al 4%, así que el volante que ella firma anunciaba un total
+       menor al que de verdad recibía. Ahora la casilla de al lado lo apaga. */
+    const sinDesc = emp.sinDescuento === true;
+    /* Cuando el acuerdo es «le descuento tanto para la PILA» y no dos
+       porcentajes separados, el recibo tiene que decir un solo renglón con esa
+       cifra. Partirla en salud y pensión sería inventarse un reparto. */
+    const descSP  = Math.max(0, parseFloat(emp.descSP) || 0);
+    const usaAuto = !sinDesc && descSP === 0;
     // Descuentos a cargo de la empleada (se descuentan del bruto)
-    const descSaludQ   = emp.descSalud   > 0 ? emp.descSalud   : Math.round(emp.salary * 0.04 / 2);
-    const descPensionQ = emp.descPension > 0 ? emp.descPension : Math.round(emp.salary * 0.04 / 2);
-    const netQ = brutoQ - descSaludQ - descPensionQ;        // lo que recibe en mano
+    const descSaludQ   = usaAuto ? (emp.descSalud   > 0 ? emp.descSalud   : Math.round(emp.salary * 0.04 / 2)) : 0;
+    const descPensionQ = usaAuto ? (emp.descPension > 0 ? emp.descPension : Math.round(emp.salary * 0.04 / 2)) : 0;
+    const netQ = brutoQ - descSaludQ - descPensionQ - descSP;   // lo que recibe en mano
     // Aportes empleador PILA — base: SMLMV (por ley el IBC mínimo es el salario mínimo)
     const _cfg  = DB.get('config') || {};
     const smlmv = parseFloat(_cfg.smlmv) || 1750905;
@@ -11911,15 +11955,24 @@ function calcQuincena(emp) {
     const penM  = Math.round(base * PEN_EMP);
     const arlM  = Math.round(base * arl);
     const cajaM = Math.round(base * CAJA);
-    const paraM = epsM + penM + arlM + cajaM;
+    /* La planilla real manda. Lo que la app calcula sobre el mínimo es una
+       estimación, y la PILA que se paga de verdad casi nunca da igual: entra
+       redondeo, la caja de compensación tiene su propia liquidación, y el
+       operador cobra aparte. Si ella escribe lo que paga, el recibo imprime
+       eso y no el estimado. Se vacía la casilla para volver al cálculo. */
+    const pilaReal = Math.max(0, parseFloat(emp.pilaMes) || 0);
+    const paraM    = pilaReal > 0 ? pilaReal : (epsM + penM + arlM + cajaM);
     return {
-        brutoQ, descSaludQ, descPensionQ, netQ,
+        brutoQ, descSaludQ, descPensionQ, netQ, sinDesc, descSP, pilaReal,
         transport: t,
         totalEmpleada: netQ + t,   // lo que se deposita a la empleada
         epsM, penM, arlM, cajaM, paraM,
         epsQ: Math.round(epsM/2), penQ: Math.round(penM/2),
         arlQ: Math.round(arlM/2), cajaQ: Math.round(cajaM/2), paraQ: Math.round(paraM/2),
-        costoTotalQ: Math.round(netQ + t + paraM/2) // costo real clínica = neto + transporte + aportes patronales
+        /* El costo de la clínica se mide sobre el BRUTO, no sobre el neto: lo que
+           se le descuenta a la empleada sale igual del bolsillo de la clínica,
+           sólo que va a la PILA en vez de a su mano. */
+        costoTotalQ: Math.round(brutoQ + t + paraM/2)
     };
 }
 
@@ -12132,10 +12185,14 @@ function renderNominaQuinc() {
                          color:var(--muted);margin-bottom:8px">💵 Lo que recibe</div>
                     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">
                         ${fRow('Quincena bruta', fmt(q.brutoQ))}
+                        ${q.sinDesc ? '' : (q.descSP > 0 ? `
+                        ${fRow('(−) Salud y pensión', '−'+fmt(q.descSP), 'var(--danger)')}
+                        ${fSep()}
+                        ${fRow('Neto quincena', fmt(q.netQ))}` : `
                         ${fRow('(−) Salud empleada (4%)', '−'+fmt(q.descSaludQ), 'var(--danger)')}
                         ${fRow('(−) Pensión empleada (4%)', '−'+fmt(q.descPensionQ), 'var(--danger)')}
                         ${fSep()}
-                        ${fRow('Neto quincena', fmt(q.netQ))}
+                        ${fRow('Neto quincena', fmt(q.netQ))}`)}
                         ${fRow('(+) Auxilio de transporte', '+'+fmt(q.transport), 'var(--success)')}
                         <div style="display:flex;justify-content:space-between;border-top:2px solid var(--border);
                              padding-top:10px;margin-top:8px">
@@ -12149,10 +12206,12 @@ function renderNominaQuinc() {
                     <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
                          color:var(--muted);margin-bottom:8px">🏛️ Costo clínica (parafiscales por quincena)</div>
                     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">
-                        ${fRow('EPS empleador (8.5%)', fmt(q.epsQ))}
+                        ${q.pilaReal > 0
+                            ? fRow('PILA de su planilla (÷2)', fmt(q.paraQ))
+                            : `${fRow('EPS empleador (8.5%)', fmt(q.epsQ))}
                         ${fRow('Pensión empleador (12%)', fmt(q.penQ))}
                         ${fRow('ARL Clase I (0.522%)', fmt(q.arlQ))}
-                        ${fRow('Caja Compensación (4%)', fmt(q.cajaQ))}
+                        ${fRow('Caja Compensación (4%)', fmt(q.cajaQ))}`}
                         <div style="display:flex;justify-content:space-between;border-top:2px solid var(--border);
                              padding-top:10px;margin-top:8px">
                             <span style="font-size:12px;font-weight:800">Costo total clínica</span>
@@ -18417,10 +18476,14 @@ function printNominaRecibo(empId, quinceId, periodoLabel) {
         <div style="background:#f9f5f3;border-radius:6px;padding:10px 12px;margin-bottom:10px">
             <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#997771;margin-bottom:7px">Liquidación</div>
             <div style="${rowStyle}"><span>Quincena bruta</span><span style="font-weight:600">${fmt(q.brutoQ)}</span></div>
+            ${q.sinDesc ? '' : (q.descSP > 0 ? `
+            <div style="${rowStyle}color:#c0392b"><span>(–) Salud y pensión</span><span>–${fmt(q.descSP)}</span></div>
+            ${dividerD}
+            <div style="${rowStyle}"><span>Neto quincena</span><span style="font-weight:700">${fmt(q.netQ)}</span></div>` : `
             <div style="${rowStyle}color:#c0392b"><span>(–) Salud empleada (4%)</span><span>–${fmt(q.descSaludQ)}</span></div>
             <div style="${rowStyle}color:#c0392b"><span>(–) Pensión empleada (4%)</span><span>–${fmt(q.descPensionQ)}</span></div>
             ${dividerD}
-            <div style="${rowStyle}"><span>Neto quincena</span><span style="font-weight:700">${fmt(q.netQ)}</span></div>
+            <div style="${rowStyle}"><span>Neto quincena</span><span style="font-weight:700">${fmt(q.netQ)}</span></div>`)}
             <div style="${rowStyle}"><span>(+) Auxilio de transporte</span><span style="font-weight:700;color:#2e7d32">+${fmt(q.transport)}</span></div>
             ${divider}
             <div style="${rowStyle}font-size:13px;font-weight:800"><span>TOTAL A DEPOSITAR</span><span style="color:#2e7d32">${fmt(q.totalEmpleada)}</span></div>
@@ -18429,13 +18492,16 @@ function printNominaRecibo(empId, quinceId, periodoLabel) {
         ${histSection}
 
         <div style="background:#f9f5f3;border-radius:6px;padding:10px 12px;margin-bottom:10px">
-            <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#997771;margin-bottom:7px">Aportes patronales PILA / mes (base SMLMV ${fmt(parseFloat((DB.get('config')||{}).smlmv)||1750905)})</div>
+            <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#997771;margin-bottom:7px">Aportes patronales PILA / mes${q.pilaReal > 0 ? '' : ` (base SMLMV ${fmt(parseFloat((DB.get('config')||{}).smlmv)||1750905)})`}</div>
+            ${q.pilaReal > 0 ? `
+            <div style="${rowStyle}color:#555"><span>EPS, pensión, ARL y caja de compensación</span><span style="font-weight:700">${fmt(q.paraM)}</span></div>
+            <div style="font-size:9px;color:#999;margin-top:4px">Según la planilla pagada por la empleadora.</div>` : `
             <div style="${rowStyle}color:#555"><span>EPS empleador (8.5%)</span><span>${fmt(q.epsM)}</span></div>
             <div style="${rowStyle}color:#555"><span>Pensión empleador (12%)</span><span>${fmt(q.penM)}</span></div>
             <div style="${rowStyle}color:#555"><span>ARL Clase I (0.522%)</span><span>${fmt(q.arlM)}</span></div>
             <div style="${rowStyle}color:#555"><span>Caja de Compensación (4%)</span><span>${fmt(q.cajaM)}</span></div>
             ${divider}
-            <div style="${rowStyle}font-weight:700;color:#555"><span>Total aportes patronales / mes</span><span>${fmt(q.paraM)}</span></div>
+            <div style="${rowStyle}font-weight:700;color:#555"><span>Total aportes patronales / mes</span><span>${fmt(q.paraM)}</span></div>`}
         </div>
 
         <div style="margin-top:16px;page-break-inside:avoid">

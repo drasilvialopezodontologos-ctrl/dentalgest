@@ -4775,8 +4775,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 22:40';
-const APP_BUILD_HUMANO = '31 ago · 10:40 p.m.';
+const APP_BUILD        = '2026-08-31 23:20';
+const APP_BUILD_HUMANO = '31 ago · 11:20 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -19191,13 +19191,18 @@ function openPILAModal(month) {
                <div><label style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:3px">Fecha de pago</label>
                <input type="date" id="pila-fecha" class="fc" value="${todayISO()}" style="font-size:13px"></div>
                <div><label style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:3px">Pagado con</label>
-               <select id="pila-pm" class="fc" style="font-size:13px">
+               <select id="pila-pm" class="fc" style="font-size:13px" onchange="_pilaSyncExterno()">
                    <option value="banco">🏦 Bancolombia</option>
                    <option value="efectivo">💵 Efectivo</option>
+                   <option value="externo">📋 Ya lo anoté en Gastos</option>
                </select></div>
            </div>
            <div><label style="font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:3px">Monto pagado</label>
-           <input type="number" id="pila-monto" class="fc" value="${p.total}" style="font-size:13px"></div>`;
+           <input type="number" id="pila-monto" class="fc" value="${p.total}" style="font-size:13px"></div>
+           <p id="pila-ext-aviso" style="display:none;font-size:11px;line-height:1.5;color:var(--bronze);background:#FFF5EE;border-radius:8px;padding:9px 11px;margin:9px 0 0">
+               Se marca la planilla como pagada <strong>sin volver a crear el gasto</strong> ni mover la caja,
+               porque el gasto ya lo anotó usted a mano en Gastos. Úselo sólo si de verdad ya está allá:
+               si no, esta PILA no le va a quedar registrada en ningún lado.</p>`;
 
     const foot = isPaid
         ? `<button onclick="g('modal-pila').style.display='none'" style="padding:10px 20px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cerrar</button>`
@@ -19224,6 +19229,11 @@ function openPILAModal(month) {
     modal.style.display = 'flex';
 }
 
+function _pilaSyncExterno() {
+    const av = g('pila-ext-aviso');
+    if (av) av.style.display = (g('pila-pm')||{}).value === 'externo' ? '' : 'none';
+}
+
 function savePILA() {
     if (!_pilaMonth) return;
     const p      = getPILAMensual();
@@ -19232,6 +19242,15 @@ function savePILA() {
     const fecha  = g('pila-fecha')?.value || todayISO();
     if (!amount) { toast('Ingresa el monto pagado','error'); return; }
 
+    /* Sus empleadas cotizan mes adelantado: la planilla de agosto la paga
+       en agosto, y ella la anota a mano en Gastos ese mismo día. Cuando
+       después venía a marcar la PILA, la app le creaba el gasto otra vez
+       — el mes le quedaba con dos seguridades sociales y la caja bajaba
+       doble. La única salida era no marcarla nunca y dejar el aviso en
+       rojo para siempre. Con «ya lo anoté en Gastos» se marca la planilla
+       y no se toca ni Gastos ni la caja. */
+    const externo = pm === 'externo';
+
     // Guardar registro PILA
     const pilaDB = DB.get('pila') || [];
     pilaDB.push({ id:'pila'+Date.now(), month:_pilaMonth, date:fecha, amount, payMethod:pm,
@@ -19239,14 +19258,18 @@ function savePILA() {
     DB.set('pila', pilaDB);
 
     // Registrar como gasto (segsoc)
-    const allGx = DB.get('gx') || [];
     const mesLbl = new Date(_pilaMonth+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
-    allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
-                 provider:'PILA', desc:`PILA ${mesLbl} — ${p.etiqueta}`,
-                 amount, paySource:pm, notes:'Aportes patronales', createdAt:Date.now() });
-    DB.set('gx', allGx);
+    if (!externo) {
+        const allGx = DB.get('gx') || [];
+        allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
+                     provider:'PILA', desc:`PILA ${mesLbl} — ${p.etiqueta}`,
+                     amount, paySource:pm, notes:'Aportes patronales', createdAt:Date.now() });
+        DB.set('gx', allGx);
+    }
 
-    toast(`✅ PILA ${_pilaMonth} registrada — ${fmt(amount)}`, 'success');
+    toast(externo
+        ? `✅ PILA ${mesLbl} marcada como pagada — el gasto es el que usted ya tenía anotado`
+        : `✅ PILA ${_pilaMonth} registrada — ${fmt(amount)}`, 'success');
     g('modal-pila').style.display = 'none';
     renderNominaPILA();
     renderGxList();
@@ -19316,7 +19339,7 @@ function openSsiModal(month) {
     const mesLbl = new Date(month+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
     g('ssi-modal-sub').textContent    = titularCorto() + ' · ' + mesLbl;
     g('ssi-modal-amount').textContent = fmt(ssi);
-    ['ssi-btn-ban','ssi-btn-ef'].forEach(id => {
+    ['ssi-btn-ban','ssi-btn-ef','ssi-btn-ext'].forEach(id => {
         const el = g(id);
         el.style.border = '2px solid var(--border)';
         el.style.background = 'white';
@@ -19332,9 +19355,12 @@ function closeSsiModal() {
 
 function selectSsiPM(pm) {
     _ssiModalPM = pm;
-    const map = { banco:'ssi-btn-ban', efectivo:'ssi-btn-ef' };
-    ['ssi-btn-ban','ssi-btn-ef'].forEach(id => {
+    const av = g('ssi-ext-aviso');
+    if (av) av.style.display = pm === 'externo' ? '' : 'none';
+    const map = { banco:'ssi-btn-ban', efectivo:'ssi-btn-ef', externo:'ssi-btn-ext' };
+    ['ssi-btn-ban','ssi-btn-ef','ssi-btn-ext'].forEach(id => {
         const el = g(id);
+        if (!el) return;
         el.style.border = '2px solid var(--border)';
         el.style.background = 'white'; el.style.color = '';
     });
@@ -19354,13 +19380,20 @@ function confirmSsiModal() {
     ssiDB.push({ id:'ssi'+Date.now(), month, date:fecha, amount:ssi, payMethod:_ssiModalPM, createdAt:Date.now() });
     DB.set('ssi_pag', ssiDB);
     const mesLbl = new Date(month+'-15').toLocaleDateString('es-CO',{month:'long',year:'numeric'});
-    const allGx = DB.get('gx') || [];
-    allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
-                 provider:'SSI ' + titularCorto(), desc:`Seguridad social independiente — ${mesLbl}`,
-                 amount:ssi, paySource:_ssiModalPM, notes:'Cotizante independiente', createdAt:Date.now() });
-    DB.set('gx', allGx);
+    /* Igual que en PILA: si el gasto ya lo anotó ella a mano, volverlo a
+       crear le duplica el mes y le baja la caja dos veces. */
+    const ssiExterno = _ssiModalPM === 'externo';
+    if (!ssiExterno) {
+        const allGx = DB.get('gx') || [];
+        allGx.push({ id:'gx'+Date.now(), date:fecha, catId:'segsoc', catLabel:'🏥 Seguridad social',
+                     provider:'SSI ' + titularCorto(), desc:`Seguridad social independiente — ${mesLbl}`,
+                     amount:ssi, paySource:_ssiModalPM, notes:'Cotizante independiente', createdAt:Date.now() });
+        DB.set('gx', allGx);
+    }
     const pmLbl = _ssiModalPM === 'banco' ? '🏦 Bancolombia' : '💵 Efectivo';
-    toast(`✅ SSI ${mesLbl} registrada — ${fmt(ssi)} · ${pmLbl}`, 'success');
+    toast(ssiExterno
+        ? `✅ S.S. ${mesLbl} marcada como pagada — el gasto es el que usted ya tenía anotado`
+        : `✅ SSI ${mesLbl} registrada — ${fmt(ssi)} · ${pmLbl}`, 'success');
     closeSsiModal();
     renderNomSilvia();
     renderGxList();
@@ -20101,6 +20134,10 @@ function confirmExtracto() {
             <button id="ssi-btn-ban" onclick="selectSsiPM('banco')" style="padding:12px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🏦 Bancolombia</button>
             <button id="ssi-btn-ef"  onclick="selectSsiPM('efectivo')" style="padding:12px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">💵 Efectivo</button>
         </div>
+        <button id="ssi-btn-ext" onclick="selectSsiPM('externo')" style="width:100%;margin:-10px 0 12px;padding:9px;border-radius:10px;border:2px solid var(--border);background:white;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);font-family:inherit">📋 Ya lo anoté en Gastos — no crear el gasto otra vez</button>
+        <p id="ssi-ext-aviso" style="display:none;font-size:11px;line-height:1.5;color:var(--bronze);background:#FFF5EE;border-radius:8px;padding:9px 11px;margin:0 0 14px">
+            Se marca como pagada <strong>sin volver a crear el gasto</strong> ni mover la caja, porque el
+            gasto ya lo anotó usted a mano en Gastos. Úselo sólo si de verdad ya está allá.</p>
         <div style="display:flex;gap:8px">
             <button onclick="closeSsiModal()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:white;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">Cancelar</button>
             <button onclick="confirmSsiModal()" style="flex:2;padding:10px;border-radius:10px;border:none;background:var(--bronze);color:white;cursor:pointer;font-weight:700;font-family:inherit;font-size:13px">✅ Confirmar pago</button>

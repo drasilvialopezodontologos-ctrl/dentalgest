@@ -4743,8 +4743,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 20:10';
-const APP_BUILD_HUMANO = '31 ago · 8:10 p.m.';
+const APP_BUILD        = '2026-08-31 20:35';
+const APP_BUILD_HUMANO = '31 ago · 8:35 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -7689,17 +7689,19 @@ function _empTarjeta(id, e, esNueva) {
                     </div>
                 </div>
                 <span class="hint">Vacío = se calcula solo (sueldo ÷ 2, menos 4% y 4%).</span>
-                <label class="fg" style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer">
-                    <input type="checkbox" id="emp-sindesc-${id}" style="margin-top:2px;width:16px;height:16px;flex:none"
-                           ${e.sinDescuento === true ? 'checked' : ''}>
-                    <span>
-                        <span style="font-weight:600">No le descuento nada</span>
-                        <span class="hint" style="display:block;margin-top:2px">
-                            Marcado, el recibo deja de restar salud y pensión: la quincena bruta
-                            es lo que ella recibe. Se apaga desmarcando esta misma casilla.
-                        </span>
-                    </span>
-                </label>
+                <div class="fg" style="margin-top:14px">
+                    <label for="emp-sindesc-${id}"
+                           style="display:flex;align-items:center;gap:8px;cursor:pointer;
+                                  text-transform:none;letter-spacing:0;font-size:13px;
+                                  font-weight:600;color:var(--dark)">
+                        <input type="checkbox" id="emp-sindesc-${id}"
+                               style="width:16px;height:16px;flex:none;margin:0;accent-color:var(--bronze)"
+                               ${e.sinDescuento === true ? 'checked' : ''}>
+                        No le descuento nada
+                    </label>
+                    <span class="hint">Marcado, el recibo deja de restar salud y pensión: la quincena
+                        bruta es lo que ella recibe. Se apaga desmarcando esta misma casilla.</span>
+                </div>
                 <div class="fg" style="margin-top:10px">
                     <label>Salud y pensión que le descuento (quincena)</label>
                     <div class="inp-pre"><span class="pre-lbl">$</span>

@@ -1485,6 +1485,9 @@
             <div class="nav-item" data-page="caja" onclick="navigate('caja')">
                 <span class="ni-icon">🏦</span><span class="ni-lbl">Caja</span>
             </div>
+            <div class="nav-item" onclick="irAPrestamos()">
+                <span class="ni-icon">🤝</span><span class="ni-lbl">Préstamos y deudas</span>
+            </div>
             <div class="nav-item" data-page="comisiones" onclick="navigate('comisiones')">
                 <span class="ni-icon">💰</span><span class="ni-lbl">Comisiones</span>
             </div>
@@ -4098,20 +4101,33 @@ create policy "solo con cuenta"
                      y ese dinero no aparecía en ninguna parte de la app. No es
                      ingreso de la clínica ni gasto: es una deuda. Por eso vive en su
                      propia lista y no toca nunca la utilidad del mes. -->
-                <div class="db-section" style="margin-bottom:20px">
+                <div class="db-section" id="pr-seccion" style="margin-bottom:20px">
                     <div class="db-sec-hdr">
-                        <h3>🤝 Lo que la clínica le debe a usted</h3>
+                        <h3>🤝 Préstamos y deudas</h3>
                         <div id="pr-saldo-chip" style="font-size:14px;font-weight:800;color:var(--bronze);font-variant-numeric:tabular-nums">$0</div>
                     </div>
                     <div style="padding:18px">
                         <div style="margin-bottom:16px;padding:13px 16px;background:rgba(191,143,58,.09);border-radius:12px;border-left:4px solid var(--bronze)">
                             <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:var(--text)">
-                                Cuando usted pone plata <strong>suya</strong> para algo de la clínica —un equipo, un
-                                arreglo, tapar una quincena— eso <strong>no es plata de la clínica</strong>. Es una
-                                <strong>deuda</strong>: la clínica se la tiene que devolver.</p>
+                                Plata que la clínica <strong>tiene que devolver</strong>. Puede ser suya —usted puso
+                                de su bolsillo para un equipo, un arreglo, tapar una quincena— o de un
+                                <strong>banco</strong>, como un crédito o un rotativo.</p>
                             <p style="margin:0;font-size:12px;line-height:1.6;color:var(--text)">
-                                Por eso lo que anote aquí <strong>no cambia la utilidad del mes</strong>, ni para
-                                bien ni para mal. Sólo lleva la cuenta de cuánto le falta por recuperar.</p>
+                                En ninguno de los dos casos <strong>cambia la utilidad del mes</strong>: plata prestada
+                                no es venta, y pagar una cuota no es un gasto. Aquí sólo se lleva la cuenta de
+                                cuánto se debe y a quién.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">¿Quién le prestó a la clínica?</label>
+                            <div class="caja-tipo-btns">
+                                <button class="caja-tipo-btn sel-in" id="pr-a-duena" onclick="prestamoAcreedor(this,'duena')">🤝 Usted</button>
+                                <button class="caja-tipo-btn"        id="pr-a-banco" onclick="prestamoAcreedor(this,'banco')">🏦 Un banco</button>
+                            </div>
+                            <p id="pr-acre-hint" style="margin:8px 2px 0;font-size:11.5px;line-height:1.6;color:var(--muted)"></p>
+                        </div>
+                        <div class="form-group" id="pr-entidad-grp" style="display:none">
+                            <label class="form-label">¿Cuál banco?</label>
+                            <input class="form-input" type="text" id="pr-entidad" placeholder="Ej: Bancoomeva">
                         </div>
                         <div class="form-group">
                             <label class="form-label">¿Qué pasó?</label>
@@ -4743,8 +4759,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 20:35';
-const APP_BUILD_HUMANO = '31 ago · 8:35 p.m.';
+const APP_BUILD        = '2026-08-31 21:15';
+const APP_BUILD_HUMANO = '31 ago · 9:15 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -16009,6 +16025,25 @@ function saveAjuste() {
 
 let prTipoSel   = 'presta';
 let prBucketSel = 'ninguno';
+/* Quién es el acreedor. Contablemente no son la misma cuenta: lo que se le
+   debe a la dueña es una cuenta por pagar al socio, y lo que se le debe al
+   banco es una obligación financiera. Meterlas en el mismo saldo hacía que
+   un crédito de Bancoomeva se leyera como plata que ella puso de su bolsillo.
+   Los registros viejos no traen el campo: se leen como 'duena', que es lo
+   único que se podía anotar cuando se guardaron. */
+let prAcreedorSel = 'duena';
+
+const _prEsBanco   = p => (p.acreedor || 'duena') === 'banco';
+const _prNombreAcr = p => _prEsBanco(p) ? (p.entidad || 'el banco') : 'usted';
+
+function prestamoAcreedor(el, a) {
+    ['pr-a-duena','pr-a-banco'].forEach(id => { const b=g(id); if(b) b.classList.remove('sel-in','sel-out'); });
+    el.classList.add('sel-in');
+    prAcreedorSel = a;
+    const grp = g('pr-entidad-grp');
+    if (grp) grp.style.display = a === 'banco' ? '' : 'none';
+    _prSyncHint();
+}
 
 function prestamoTipo(el, t) {
     ['pr-t-presta','pr-t-devuelve'].forEach(id => { const b=g(id); if(b) b.classList.remove('sel-in','sel-out'); });
@@ -16029,29 +16064,58 @@ function prestamoBucket(el, b) {
    plata entró a la caja?» al lado de «la clínica me devolvió» se lee al
    revés de lo que es. */
 function _prSyncHint() {
+    const banco = prAcreedorSel === 'banco';
+
+    /* Los dos botones de «¿qué pasó?» no se pueden llamar igual en los dos
+       casos: «la clínica me devolvió» es falso cuando quien cobra es el banco. */
+    const bPresta = g('pr-t-presta'), bDevuelve = g('pr-t-devuelve');
+    if (bPresta)   bPresta.textContent   = banco ? '🏦 El banco le prestó'      : '🤝 Le presté a la clínica';
+    if (bDevuelve) bDevuelve.textContent = banco ? '↩️ Le pagué una cuota'      : '↩️ La clínica me devolvió';
+
+    const acre = g('pr-acre-hint');
+    if (acre) acre.innerHTML = banco
+        ? 'Un crédito, un rotativo o una tarjeta a nombre de la clínica. Se le debe al <strong>banco</strong>, no a usted, y se lleva aparte de su plata.'
+        : 'Plata <strong>suya</strong>, de su bolsillo. La clínica se la tiene que devolver a usted.';
+
     const lbl  = g('pr-bols-lbl');
     const hint = g('pr-bols-hint');
     if (!lbl || !hint) return;
     if (prTipoSel === 'presta') {
         lbl.textContent = '¿La plata entró a la caja de la clínica?';
         hint.innerHTML = prBucketSel === 'ninguno'
-            ? 'Usted le pagó <strong>directo al proveedor</strong>. La clínica nunca tuvo esa plata en la mano, así que Caja no se mueve — sólo queda anotada la deuda. <em>Este es el caso del aire acondicionado.</em>'
+            ? (banco
+                ? 'El banco le pagó <strong>directo al proveedor</strong>, o el desembolso cayó en una cuenta que la app no lleva. Caja no se mueve — sólo queda anotada la deuda.'
+                : 'Usted le pagó <strong>directo al proveedor</strong>. La clínica nunca tuvo esa plata en la mano, así que Caja no se mueve — sólo queda anotada la deuda. <em>Este es el caso del aire acondicionado.</em>')
             : 'La plata entró al bolsillo y ahí quedó disponible para gastar. Caja <strong>sube</strong>, pero la utilidad del mes no se mueve: no es un ingreso de la clínica, es plata prestada.';
     } else {
-        lbl.textContent = '¿De qué bolsillo salió la devolución?';
+        lbl.textContent = banco
+            ? '¿De qué bolsillo salió la cuota?'
+            : '¿De qué bolsillo salió la devolución?';
         hint.innerHTML = prBucketSel === 'ninguno'
-            ? 'No saldrá plata de ningún bolsillo — sólo bajará la deuda. Úselo si le devolvieron por fuera de estas cuentas.'
-            : 'Caja <strong>baja</strong> porque la plata salió de verdad, pero <strong>no es un gasto</strong>: la clínica no compró nada con eso, sólo le pagó lo que le debía. La utilidad del mes no cambia.';
+            ? (banco
+                ? 'No saldrá plata de ningún bolsillo — sólo bajará la deuda. Úselo si el banco se la descontó de una cuenta que la app no lleva.'
+                : 'No saldrá plata de ningún bolsillo — sólo bajará la deuda. Úselo si le devolvieron por fuera de estas cuentas.')
+            : (banco
+                ? 'Caja <strong>baja</strong> porque la plata salió de verdad, pero <strong>no es un gasto</strong>: está abonando a la deuda. La utilidad del mes no cambia. <em>Los intereses sí son gasto y van por Gastos, aparte.</em>'
+                : 'Caja <strong>baja</strong> porque la plata salió de verdad, pero <strong>no es un gasto</strong>: la clínica no compró nada con eso, sólo le pagó lo que le debía. La utilidad del mes no cambia.');
     }
 }
 
-function prestamoSaldo() {
+/* Sin argumento devuelve la deuda total. Con 'duena' o 'banco', sólo la de
+   ese acreedor — que es la que importa para avisar «le está devolviendo más
+   de lo que le debe»: abonarle al banco no baja lo que se le debe a ella. */
+function prestamoSaldo(acreedor) {
     return (DB.get('prestamos') || [])
+        .filter(p => !acreedor || (p.acreedor || 'duena') === acreedor)
         .reduce((s,p) => s + (p.tipo === 'presta' ? (p.monto||0) : -(p.monto||0)), 0);
 }
 
 function initPrestamos() {
-    prTipoSel = 'presta'; prBucketSel = 'ninguno';
+    prTipoSel = 'presta'; prBucketSel = 'ninguno'; prAcreedorSel = 'duena';
+    ['pr-a-duena','pr-a-banco'].forEach(id => { const b=g(id); if(b) b.classList.remove('sel-in','sel-out'); });
+    if (g('pr-a-duena')) g('pr-a-duena').classList.add('sel-in');
+    if (g('pr-entidad-grp')) g('pr-entidad-grp').style.display = 'none';
+    sv('pr-entidad','');
     ['pr-t-presta','pr-t-devuelve'].forEach(id => { const b=g(id); if(b) b.classList.remove('sel-in','sel-out'); });
     if (g('pr-t-presta')) g('pr-t-presta').classList.add('sel-in');
     ['pr-b-nin','pr-b-ef','pr-b-ban'].forEach(id => { const x=g(id); if(x) x.classList.remove('selected'); });
@@ -16062,16 +16126,32 @@ function initPrestamos() {
     renderPrestamos();
 }
 
+/* El menú lleva aquí. La sección vive dentro de Caja y arranca plegada, así
+   que además de traerla hay que abrirla y ponerla a la vista: si no, el botón
+   dejaba a la vista media pantalla de Cierre de caja y nada de préstamos. */
+async function irAPrestamos() {
+    await navigate('caja');
+    const sec = g('pr-seccion');
+    if (!sec) return;
+    if (sec.classList.contains('pleg-cerrada')) plegarSeccion('caja', sec);
+    sec.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
 function savePrestamo() {
     const monto    = Math.round(parseFloat(gv('pr-monto')) || 0);
     const concepto = gv('pr-concepto').trim();
     const fecha    = gv('pr-fecha') || todayISO();
+    const esBanco  = prAcreedorSel === 'banco';
+    const entidad  = esBanco ? (gv('pr-entidad').trim() || 'Banco') : '';
     if (!monto || monto <= 0) { toast('Escriba el monto', 'error'); return; }
     if (!concepto)            { toast('Escriba para qué fue', 'error'); return; }
+    if (esBanco && !gv('pr-entidad').trim()) { toast('Escriba cuál banco', 'error'); return; }
 
-    const saldoAntes = prestamoSaldo();
+    const saldoAntes = prestamoSaldo(prAcreedorSel);
     if (prTipoSel === 'devuelve' && monto > saldoAntes) {
-        toast(`Ojo: la clínica sólo le debe ${fmt(Math.max(0,saldoAntes))}`, 'error');
+        toast(esBanco
+            ? `Ojo: a ${entidad} sólo le queda debiendo ${fmt(Math.max(0,saldoAntes))}`
+            : `Ojo: la clínica sólo le debe ${fmt(Math.max(0,saldoAntes))}`, 'error');
     }
 
     const now = new Date().toISOString();
@@ -16082,6 +16162,8 @@ function savePrestamo() {
         monto,
         concepto,
         bolsillo: prBucketSel,
+        acreedor: prAcreedorSel,
+        entidad,
         createdAt: now
     };
 
@@ -16096,8 +16178,8 @@ function savePrestamo() {
             type: prTipoSel === 'presta' ? 'in' : 'out',
             amount: monto,
             desc: (prTipoSel === 'presta'
-                    ? 'Préstamo de la dueña — '
-                    : 'Devolución a la dueña — ') + concepto,
+                    ? (esBanco ? `Préstamo de ${entidad} — `  : 'Préstamo de la dueña — ')
+                    : (esBanco ? `Cuota a ${entidad} — `      : 'Devolución a la dueña — ')) + concepto,
             prestamoId: rec.id,
             createdAt: now
         };
@@ -16109,9 +16191,12 @@ function savePrestamo() {
     sv('pr-monto',''); sv('pr-concepto','');
     renderCaja();
     renderPrestamos();
+    const saldoAcr = prestamoSaldo(prAcreedorSel);
     toast(prTipoSel === 'presta'
-        ? `🤝 Anotado: la clínica le debe ${fmt(prestamoSaldo())}`
-        : `↩️ Anotado. Le quedan por recuperar ${fmt(Math.max(0, prestamoSaldo()))}`, 'success');
+        ? (esBanco ? `🏦 Anotado: la clínica le debe ${fmt(saldoAcr)} a ${entidad}`
+                   : `🤝 Anotado: la clínica le debe ${fmt(saldoAcr)}`)
+        : (esBanco ? `↩️ Abonado. Queda debiendo ${fmt(Math.max(0, saldoAcr))} a ${entidad}`
+                   : `↩️ Anotado. Le quedan por recuperar ${fmt(Math.max(0, saldoAcr))}`), 'success');
 }
 
 function deletePrestamo(id) {
@@ -16119,14 +16204,18 @@ function deletePrestamo(id) {
     const rec  = list.find(p => p.id === id);
     if (!rec) return;
     const esPresta = rec.tipo === 'presta';
+    const esBanco  = _prEsBanco(rec);
+    const quien    = esBanco ? (rec.entidad || 'el banco') : 'la dueña';
     showDeleteModal(
-        esPresta ? 'Anular préstamo' : 'Anular devolución',
+        esPresta ? 'Anular préstamo' : (esBanco ? 'Anular cuota' : 'Anular devolución'),
         `${fmt(rec.monto)} — ${rec.concepto}\n` +
         (rec.ajId
             ? 'Se quitará también el movimiento de caja que lo acompañaba.'
             : 'No movió plata en Caja, así que no se revierte ningún bolsillo.'),
         (motivo) => {
-            logAnulacion('prestamo', esPresta ? 'Préstamo de la dueña' : 'Devolución a la dueña', rec, motivo);
+            logAnulacion('prestamo',
+                esPresta ? `Préstamo de ${quien}` : (esBanco ? `Cuota a ${quien}` : 'Devolución a la dueña'),
+                rec, motivo);
             DB.set('prestamos', list.filter(p => p.id !== id));
             if (rec.ajId) DB.set('aj', (DB.get('aj') || []).filter(a => a.id !== rec.ajId));
             renderCaja();
@@ -16142,6 +16231,8 @@ function renderPrestamos() {
     const prestado  = list.filter(p=>p.tipo==='presta').reduce((s,p)=>s+(p.monto||0),0);
     const devuelto  = list.filter(p=>p.tipo!=='presta').reduce((s,p)=>s+(p.monto||0),0);
     const saldo     = prestado - devuelto;
+    const saldoDue  = prestamoSaldo('duena');
+    const saldoBco  = prestamoSaldo('banco');
 
     const chip = g('pr-saldo-chip');
     if (chip) {
@@ -16155,8 +16246,8 @@ function renderPrestamos() {
     if (!list.length) {
         el.innerHTML = `<div style="text-align:center;padding:28px 20px;color:var(--muted);background:var(--bg);border-radius:12px">
             <div style="font-size:30px;margin-bottom:8px">🤝</div>
-            <div style="font-size:13px;font-weight:700;color:var(--dark)">La clínica no le debe nada anotado</div>
-            <div style="font-size:11.5px;margin-top:5px;line-height:1.6">Si alguna vez puso plata suya para algo de la clínica, anótelo arriba<br>para que no se le olvide cuánto le falta por recuperar.</div>
+            <div style="font-size:13px;font-weight:700;color:var(--dark)">La clínica no debe nada anotado</div>
+            <div style="font-size:11.5px;margin-top:5px;line-height:1.6">Anote aquí la plata suya que puso para algo de la clínica,<br>y los créditos que tenga con bancos, para no perderles el rastro.</div>
         </div>`;
         return;
     }
@@ -16164,10 +16255,15 @@ function renderPrestamos() {
     const BOLS = { ninguno:'🚫 No pasó por caja', efectivo:'💵 Efectivo', banco:'🏦 Bancolombia' };
     const rows = list.map(p => {
         const esPresta = p.tipo === 'presta';
+        const esBanco  = _prEsBanco(p);
         const d = p.date ? new Date(p.date+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'}) : '—';
+        const quePaso = esPresta
+            ? (esBanco ? '🏦 Le prestaron' : '🤝 Le prestó')
+            : (esBanco ? '↩️ Abonó cuota'  : '↩️ Le devolvieron');
         return `<tr>
             <td style="font-size:11px;color:var(--muted);white-space:nowrap">${d}</td>
-            <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);font-weight:700">${esPresta?'🤝 Le prestó':'↩️ Le devolvieron'}</span></td>
+            <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);font-weight:700">${quePaso}</span></td>
+            <td style="font-size:11px;font-weight:700;white-space:nowrap;color:${esBanco?'var(--danger)':'var(--bronze)'}">${esBanco?'🏦 '+eh(p.entidad||'Banco'):'🤝 Usted'}</td>
             <td style="font-size:12px;font-weight:600">${eh(p.concepto||'—')}</td>
             <td style="font-size:10.5px;color:var(--muted);white-space:nowrap">${BOLS[p.bolsillo]||BOLS.ninguno}</td>
             <td style="font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;color:${esPresta?'var(--bronze)':'var(--success)'}">${esPresta?'+':'−'}${fmt(p.monto)}</td>
@@ -16175,19 +16271,33 @@ function renderPrestamos() {
         </tr>`;
     }).join('');
 
+    /* Por banco, para no dejar «$1.700.000 al banco» sin decir a cuál. */
+    const porBanco = {};
+    list.filter(_prEsBanco).forEach(p => {
+        const k = p.entidad || 'Banco';
+        porBanco[k] = (porBanco[k] || 0) + (p.tipo === 'presta' ? (p.monto||0) : -(p.monto||0));
+    });
+    const lineaBanco = Object.entries(porBanco)
+        .filter(([,v]) => v !== 0)
+        .map(([k,v]) => `<div style="display:flex;justify-content:space-between;color:var(--danger)">
+            <span>🏦 Le debe a ${eh(k)}</span><strong style="font-variant-numeric:tabular-nums">${fmt(v)}</strong></div>`)
+        .join('');
+
     el.innerHTML = `<div style="overflow-x:auto"><table class="db-compact-table">
-        <thead><tr><th>Fecha</th><th>Qué pasó</th><th>Para qué</th><th>Bolsillo</th><th>Monto</th><th></th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Qué pasó</th><th>A quién</th><th>Para qué</th><th>Bolsillo</th><th>Monto</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
     </table></div>
     <div style="margin-top:14px;padding:12px 16px;background:var(--bg);border-radius:12px;font-size:12.5px;line-height:1.9">
-        <div style="display:flex;justify-content:space-between"><span>Usted le ha puesto a la clínica</span><strong style="font-variant-numeric:tabular-nums">${fmt(prestado)}</strong></div>
-        <div style="display:flex;justify-content:space-between;color:var(--muted)"><span>La clínica le ha devuelto</span><strong style="font-variant-numeric:tabular-nums">${devuelto ? '−'+fmt(devuelto) : fmt(0)}</strong></div>
-        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:7px;padding-top:7px;font-weight:800;color:${saldo>0?'var(--bronze)':(saldo<0?'var(--danger)':'var(--dark)')}">
-            <span>${saldo<0?'La clínica le devolvió de más':'Le falta por recuperar'}</span><span style="font-variant-numeric:tabular-nums">${fmt(Math.abs(saldo))}</span></div>
+        <div style="display:flex;justify-content:space-between;color:${saldoDue>0?'var(--bronze)':'var(--muted)'}">
+            <span>🤝 Le debe a usted</span><strong style="font-variant-numeric:tabular-nums">${fmt(saldoDue)}</strong></div>
+        ${lineaBanco}
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:7px;padding-top:7px;font-weight:800;color:${saldo>0?'var(--dark)':(saldo<0?'var(--danger)':'var(--dark)')}">
+            <span>${saldo<0?'Se pagó de más':'Deuda total de la clínica'}</span><span style="font-variant-numeric:tabular-nums">${fmt(Math.abs(saldo))}</span></div>
     </div>
     <p style="margin:10px 2px 0;font-size:11.5px;line-height:1.6;color:var(--muted)">
-        Nada de esta tabla entra en la utilidad del mes. Prestar no es vender y devolver no es gastar
-        — es la misma plata suya yendo y viniendo.</p>`;
+        Nada de esta tabla entra en la utilidad del mes: prestar no es vender y abonar no es gastar.
+        Lo suyo y lo del banco van separados porque son deudas distintas —
+        <strong>los intereses del banco sí son gasto</strong> y se anotan en Gastos, aparte de la cuota.</p>`;
 }
 
 function showBoldSettle() {

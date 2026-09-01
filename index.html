@@ -4127,7 +4127,7 @@ create policy "solo con cuenta"
                         </div>
                         <div class="form-group" id="pr-entidad-grp" style="display:none">
                             <label class="form-label">¿Cuál banco?</label>
-                            <input class="form-input" type="text" id="pr-entidad" placeholder="Ej: Bancoomeva">
+                            <input class="form-input" type="text" id="pr-entidad" placeholder="Ej: Bancoomeva" oninput="_prSyncHint()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">¿Qué pasó?</label>
@@ -4138,16 +4138,32 @@ create policy "solo con cuenta"
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
                             <div class="form-group">
-                                <label class="form-label">Monto</label>
-                                <input class="form-input" type="number" id="pr-monto" placeholder="0" min="0">
+                                <label class="form-label" id="pr-monto-lbl">Monto</label>
+                                <input class="form-input" type="number" id="pr-monto" placeholder="0" min="0" oninput="prSyncSplit()">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Fecha</label>
                                 <input class="form-input" type="date" id="pr-fecha">
                             </div>
                         </div>
+                        <div class="form-group" id="pr-tasa-grp" style="display:none">
+                            <label class="form-label">Tasa de interés mensual que le cobran</label>
+                            <input class="form-input" type="number" id="pr-tasa" step="0.01" min="0" placeholder="0,00">
+                            <p style="margin:8px 2px 0;font-size:11.5px;line-height:1.6;color:var(--muted)">
+                                En porcentaje mensual, la que diga su extracto o su carta de aprobación.
+                                Sirve para que la app le proponga cuánto de cada cuota es interés —
+                                usted siempre puede corregirlo. Si la deja vacía, no propone nada.</p>
+                        </div>
+                        <div class="form-group" id="pr-interes-grp" style="display:none">
+                            <label class="form-label">De esa cuota, ¿cuánto fue interés?</label>
+                            <div style="display:flex;gap:8px;align-items:stretch">
+                                <input class="form-input" type="number" id="pr-interes" placeholder="0" min="0" style="flex:1" oninput="prSyncSplit()">
+                                <button type="button" class="btn" id="pr-calc-btn" onclick="prCalcInteres()" style="white-space:nowrap">Calcular</button>
+                            </div>
+                            <div id="pr-split-prev" style="margin-top:10px;padding:11px 14px;background:var(--bg);border-radius:10px;font-size:12.5px;line-height:1.8"></div>
+                        </div>
                         <div class="form-group">
-                            <label class="form-label">¿Para qué fue?</label>
+                            <label class="form-label" id="pr-concepto-lbl">¿Para qué fue?</label>
                             <input class="form-input" type="text" id="pr-concepto" placeholder="Ej: aire acondicionado de los consultorios">
                         </div>
                         <div class="form-group" style="margin-bottom:16px">
@@ -4759,8 +4775,8 @@ create policy "solo con cuenta"
 
    No es un dato del negocio: es la identidad de este archivo. Por eso sí va
    escrita aquí adentro y no es una casilla editable.                        */
-const APP_BUILD        = '2026-08-31 21:15';
-const APP_BUILD_HUMANO = '31 ago · 9:15 p.m.';
+const APP_BUILD        = '2026-08-31 22:40';
+const APP_BUILD_HUMANO = '31 ago · 10:40 p.m.';
 
 /* ── Configuración por defecto ── */
 const DEFAULTS = {
@@ -9917,6 +9933,12 @@ const CATS_BASE = {
        descuenta sin avisar— y hasta hoy no tenía dónde ir sin volverse «Varios».
        Es carga fija: se paga haya o no haya pacientes. */
     cobrosbanco:  { label:'🏦 Cuota de manejo y cobros del banco', providers:['Bancolombia','Bold'] },
+    /* Los intereses de un crédito no son lo mismo que la cuota. La cuota es
+       en parte capital —eso baja la deuda y no es gasto— y en parte interés,
+       que sí es gasto del mes: es lo que cuesta tener la plata prestada.
+       Van aparte de «cobros del banco» porque aquello se paga por tener la
+       cuenta, y esto por deber. Los crea Préstamos y deudas solo. */
+    intereses:    { label:'💰 Intereses de créditos',    providers:['Bancoomeva','Bancolombia'] },
     /* Lo que falta al contar el cajón. Es una pérdida de verdad, así que tiene
        que pesar en el resultado del mes: si sólo moviera el saldo, el efectivo
        cuadraría y el mes mentiría. No lleva `variable` porque un faltante no
@@ -16063,8 +16085,71 @@ function prestamoBucket(el, b) {
    así que la pregunta y la explicación cambian con ella. Sin esto, «¿la
    plata entró a la caja?» al lado de «la clínica me devolvió» se lee al
    revés de lo que es. */
+/* La tasa se guarda con el desembolso, no en Configuración: cada crédito
+   tiene la suya y la de Bancoomeva no es la del sobregiro de Bancolombia.
+   Se usa la del desembolso más reciente de ese mismo banco. */
+function prTasaDe(entidad) {
+    const l = (DB.get('prestamos') || [])
+        .filter(p => _prEsBanco(p) && (p.entidad||'') === entidad && p.tipo === 'presta' && p.tasaMes > 0)
+        .sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    return l.length ? parseFloat(l[0].tasaMes) : 0;
+}
+
+/* Una cuota de banco no es un solo número: parte baja la deuda (capital) y
+   parte es lo que costó deber (interés). El capital no es gasto — la clínica
+   no compró nada, saldó. El interés SÍ es gasto del mes. Anotar la cuota
+   entera como abono le regalaba utilidad que no tuvo; anotarla entera como
+   gasto le borraba la deuda dos veces. Por eso se parte aquí. */
+function prSyncSplit() {
+    const box = g('pr-split-prev');
+    if (!box) return;
+    const cuota   = Math.round(parseFloat(gv('pr-monto'))   || 0);
+    const interes = Math.round(parseFloat(gv('pr-interes')) || 0);
+    const capital = cuota - interes;
+    if (!cuota) { box.innerHTML = '<span style="color:var(--muted)">Escriba la cuota para ver el reparto.</span>'; return; }
+    if (interes > cuota) {
+        box.innerHTML = `<span style="color:var(--danger);font-weight:700">El interés no puede ser mayor que la cuota.</span>`;
+        return;
+    }
+    box.innerHTML =
+        `<div style="display:flex;justify-content:space-between"><span>Baja la deuda (capital)</span>
+            <strong style="font-variant-numeric:tabular-nums">${fmt(capital)}</strong></div>
+         <div style="display:flex;justify-content:space-between;color:var(--danger)"><span>Gasto del mes (interés)</span>
+            <strong style="font-variant-numeric:tabular-nums">${fmt(interes)}</strong></div>
+         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:6px;padding-top:6px;font-weight:800">
+            <span>Sale de la caja</span><span style="font-variant-numeric:tabular-nums">${fmt(cuota)}</span></div>`;
+}
+
+function prCalcInteres() {
+    const entidad = gv('pr-entidad').trim();
+    const tasa    = prTasaDe(entidad);
+    if (!tasa) { toast(`No tengo la tasa de ${entidad||'ese banco'} — anótela en el desembolso`, 'error'); return; }
+    const saldo = prestamoSaldo('banco');
+    if (saldo <= 0) { toast('No hay saldo sobre el cual cobrar interés', 'error'); return; }
+    const propuesto = Math.round(saldo * tasa / 100);
+    sv('pr-interes', String(propuesto));
+    prSyncSplit();
+    toast(`Sobre ${fmt(saldo)} al ${tasa}% mensual: ${fmt(propuesto)}. Corríjalo si su extracto dice otra cosa.`);
+}
+
 function _prSyncHint() {
     const banco = prAcreedorSel === 'banco';
+    /* La tasa se pide al desembolsar; el interés, al pagar la cuota. */
+    const gTasa = g('pr-tasa-grp'), gInt = g('pr-interes-grp');
+    if (gTasa) gTasa.style.display = (banco && prTipoSel === 'presta')   ? '' : 'none';
+    if (gInt)  gInt.style.display  = (banco && prTipoSel === 'devuelve') ? '' : 'none';
+    const lm = g('pr-monto-lbl');
+    if (lm) lm.textContent = (banco && prTipoSel === 'devuelve') ? 'Cuota total' : 'Monto';
+    const lc = g('pr-concepto-lbl');
+    if (lc) lc.textContent = (banco && prTipoSel === 'devuelve') ? '¿De cuál cuota?' : '¿Para qué fue?';
+    const cb = g('pr-calc-btn');
+    if (cb && banco) {
+        const t = prTasaDe(gv('pr-entidad').trim());
+        cb.disabled = !t;
+        cb.style.opacity = t ? '' : '.45';
+        cb.title = t ? `Propone el interés al ${t}% mensual sobre el saldo` : 'Anote la tasa al registrar el desembolso';
+    }
+    if (banco && prTipoSel === 'devuelve') prSyncSplit();
 
     /* Los dos botones de «¿qué pasó?» no se pueden llamar igual en los dos
        casos: «la clínica me devolvió» es falso cuando quien cobra es el banco. */
@@ -16121,6 +16206,7 @@ function initPrestamos() {
     ['pr-b-nin','pr-b-ef','pr-b-ban'].forEach(id => { const x=g(id); if(x) x.classList.remove('selected'); });
     if (g('pr-b-nin')) g('pr-b-nin').classList.add('selected');
     sv('pr-monto',''); sv('pr-concepto','');
+    sv('pr-tasa',''); sv('pr-interes','');
     if (g('pr-fecha')) g('pr-fecha').value = todayISO();
     _prSyncHint();
     renderPrestamos();
@@ -16147,10 +16233,32 @@ function savePrestamo() {
     if (!concepto)            { toast('Escriba para qué fue', 'error'); return; }
     if (esBanco && !gv('pr-entidad').trim()) { toast('Escriba cuál banco', 'error'); return; }
 
+    /* El reparto de la cuota. Sólo aplica pagándole a un banco: lo que ella
+       le devuelve a sí misma no genera intereses. */
+    const esCuota = esBanco && prTipoSel === 'devuelve';
+    const interes = esCuota ? Math.round(parseFloat(gv('pr-interes')) || 0) : 0;
+    if (interes < 0)      { toast('El interés no puede ser negativo', 'error'); return; }
+    if (interes > monto)  { toast('El interés no puede ser mayor que la cuota', 'error'); return; }
+    const capital = monto - interes;
+    if (esCuota && capital === 0 && interes === 0) { toast('Escriba la cuota', 'error'); return; }
+    /* Un gasto siempre sale de un bolsillo: el esquema de gastos no tiene
+       manera de decir «no pasó por la caja». Si se guardara igual habría que
+       inventarle uno, y el interés le drenaría el efectivo sin haber salido
+       de ahí. Mejor pedirlo que adivinarlo. */
+    if (interes > 0 && prBucketSel === 'ninguno') {
+        toast('Escoja de cuál bolsillo salió la cuota para poder anotar el interés', 'error');
+        return;
+    }
+    const tasaMes = (esBanco && prTipoSel === 'presta')
+        ? Math.max(0, parseFloat(gv('pr-tasa')) || 0) : 0;
+
+    /* Lo que se compara con la deuda es el capital, no la cuota entera: los
+       intereses no bajan lo que se debe, así que una cuota de $900.000 sobre
+       una deuda de $850.000 no es un pago de más si $50.000 fueron interés. */
     const saldoAntes = prestamoSaldo(prAcreedorSel);
-    if (prTipoSel === 'devuelve' && monto > saldoAntes) {
+    if (prTipoSel === 'devuelve' && capital > saldoAntes) {
         toast(esBanco
-            ? `Ojo: a ${entidad} sólo le queda debiendo ${fmt(Math.max(0,saldoAntes))}`
+            ? `Ojo: a ${entidad} sólo le queda debiendo ${fmt(Math.max(0,saldoAntes))} de capital`
             : `Ojo: la clínica sólo le debe ${fmt(Math.max(0,saldoAntes))}`, 'error');
     }
 
@@ -16159,27 +16267,34 @@ function savePrestamo() {
         id: 'pr' + Date.now(),
         date: fecha,
         tipo: prTipoSel,
-        monto,
+        /* `monto` es siempre lo que mueve la DEUDA. En una cuota con intereses
+           eso es el capital, no lo que salió del banco: el interés viaja en su
+           propio campo y sale por Gastos. Si `monto` guardara la cuota entera,
+           la deuda bajaría de más y quedaría saldada antes de tiempo. */
+        monto: esCuota ? capital : monto,
         concepto,
         bolsillo: prBucketSel,
         acreedor: prAcreedorSel,
         entidad,
         createdAt: now
     };
+    if (tasaMes > 0) rec.tasaMes = tasaMes;
+    if (esCuota && interes > 0) { rec.interes = interes; rec.cuotaTotal = monto; }
 
     /* El ajuste sólo nace si la plata de verdad pasó por un bolsillo.
        Va amarrado por prestamoId para poder retirarlo tal cual si ella
-       anula el préstamo. */
-    if (prBucketSel !== 'ninguno') {
+       anula el préstamo. Lleva sólo el capital: el interés sale por su
+       propio gasto, y entre los dos suman la cuota que cobró el banco. */
+    if (prBucketSel !== 'ninguno' && rec.monto > 0) {
         const aj = {
             id: 'pr-aj-' + rec.id,
             date: fecha,
             bucket: prBucketSel,
             type: prTipoSel === 'presta' ? 'in' : 'out',
-            amount: monto,
+            amount: rec.monto,
             desc: (prTipoSel === 'presta'
                     ? (esBanco ? `Préstamo de ${entidad} — `  : 'Préstamo de la dueña — ')
-                    : (esBanco ? `Cuota a ${entidad} — `      : 'Devolución a la dueña — ')) + concepto,
+                    : (esBanco ? `Cuota a ${entidad} (capital) — ` : 'Devolución a la dueña — ')) + concepto,
             prestamoId: rec.id,
             createdAt: now
         };
@@ -16187,15 +16302,42 @@ function savePrestamo() {
         rec.ajId = aj.id;
     }
 
+    /* El interés sí es gasto del mes, así que va como gasto de verdad —
+       no como ajuste— para que pese en el resultado y salga en Reportes
+       junto a los demás. Queda amarrado al mismo prestamoId. */
+    if (interes > 0) {
+        const cats = getCategorias();
+        const gx = {
+            id: 'pr-gx-' + rec.id,
+            date: fecha,
+            amount: interes,
+            cat: 'intereses',
+            catLabel: (cats.intereses || {}).label || '💰 Intereses de créditos',
+            provider: entidad,
+            desc: `Intereses ${entidad} — ${concepto}`,
+            /* Los gastos salen por `paySource`, no por `payMethod` — con el
+               nombre equivocado el interés no bajaba de ningún bolsillo y la
+               caja sólo se movía por el capital. */
+            paySource: prBucketSel,
+            prestamoId: rec.id,
+            createdAt: now
+        };
+        DB.set('gx', (DB.get('gx') || []).concat([gx]));
+        rec.gxId = gx.id;
+    }
+
     DB.set('prestamos', (DB.get('prestamos') || []).concat([rec]));
-    sv('pr-monto',''); sv('pr-concepto','');
+    sv('pr-monto',''); sv('pr-concepto',''); sv('pr-interes','');
+    prSyncSplit();
     renderCaja();
     renderPrestamos();
     const saldoAcr = prestamoSaldo(prAcreedorSel);
     toast(prTipoSel === 'presta'
         ? (esBanco ? `🏦 Anotado: la clínica le debe ${fmt(saldoAcr)} a ${entidad}`
                    : `🤝 Anotado: la clínica le debe ${fmt(saldoAcr)}`)
-        : (esBanco ? `↩️ Abonado. Queda debiendo ${fmt(Math.max(0, saldoAcr))} a ${entidad}`
+        : (esBanco ? (interes > 0
+                        ? `↩️ ${fmt(capital)} a la deuda y ${fmt(interes)} a intereses. Queda debiendo ${fmt(Math.max(0, saldoAcr))}`
+                        : `↩️ Abonado. Queda debiendo ${fmt(Math.max(0, saldoAcr))} a ${entidad}`)
                    : `↩️ Anotado. Le quedan por recuperar ${fmt(Math.max(0, saldoAcr))}`), 'success');
 }
 
@@ -16208,16 +16350,18 @@ function deletePrestamo(id) {
     const quien    = esBanco ? (rec.entidad || 'el banco') : 'la dueña';
     showDeleteModal(
         esPresta ? 'Anular préstamo' : (esBanco ? 'Anular cuota' : 'Anular devolución'),
-        `${fmt(rec.monto)} — ${rec.concepto}\n` +
+        `${fmt(rec.cuotaTotal || rec.monto)} — ${rec.concepto}\n` +
         (rec.ajId
             ? 'Se quitará también el movimiento de caja que lo acompañaba.'
-            : 'No movió plata en Caja, así que no se revierte ningún bolsillo.'),
+            : 'No movió plata en Caja, así que no se revierte ningún bolsillo.') +
+        (rec.gxId ? `\nY el gasto de intereses de ${fmt(rec.interes)} que salió de esta cuota.` : ''),
         (motivo) => {
             logAnulacion('prestamo',
                 esPresta ? `Préstamo de ${quien}` : (esBanco ? `Cuota a ${quien}` : 'Devolución a la dueña'),
                 rec, motivo);
             DB.set('prestamos', list.filter(p => p.id !== id));
             if (rec.ajId) DB.set('aj', (DB.get('aj') || []).filter(a => a.id !== rec.ajId));
+            if (rec.gxId) DB.set('gx', (DB.get('gx') || []).filter(x => x.id !== rec.gxId));
             renderCaja();
             renderPrestamos();
             toast('Anulado — queda en Anulaciones con su motivo');
@@ -16233,6 +16377,7 @@ function renderPrestamos() {
     const saldo     = prestado - devuelto;
     const saldoDue  = prestamoSaldo('duena');
     const saldoBco  = prestamoSaldo('banco');
+    const totInteres = list.reduce((s,p) => s + (parseFloat(p.interes) || 0), 0);
 
     const chip = g('pr-saldo-chip');
     if (chip) {
@@ -16260,13 +16405,18 @@ function renderPrestamos() {
         const quePaso = esPresta
             ? (esBanco ? '🏦 Le prestaron' : '🤝 Le prestó')
             : (esBanco ? '↩️ Abonó cuota'  : '↩️ Le devolvieron');
+        /* En una cuota con intereses hay dos cifras: la que salió del banco y
+           la que bajó la deuda. Mostrar una sola deja la otra sin explicar. */
+        const detalle = p.interes > 0
+            ? `<div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:2px">
+                 cuota ${fmt(p.cuotaTotal)} · interés ${fmt(p.interes)}</div>` : '';
         return `<tr>
             <td style="font-size:11px;color:var(--muted);white-space:nowrap">${d}</td>
             <td><span style="font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);font-weight:700">${quePaso}</span></td>
             <td style="font-size:11px;font-weight:700;white-space:nowrap;color:${esBanco?'var(--danger)':'var(--bronze)'}">${esBanco?'🏦 '+eh(p.entidad||'Banco'):'🤝 Usted'}</td>
             <td style="font-size:12px;font-weight:600">${eh(p.concepto||'—')}</td>
             <td style="font-size:10.5px;color:var(--muted);white-space:nowrap">${BOLS[p.bolsillo]||BOLS.ninguno}</td>
-            <td style="font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;color:${esPresta?'var(--bronze)':'var(--success)'}">${esPresta?'+':'−'}${fmt(p.monto)}</td>
+            <td style="font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;color:${esPresta?'var(--bronze)':'var(--success)'}">${esPresta?'+':'−'}${fmt(p.monto)}${detalle}</td>
             <td style="text-align:right"><button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="deletePrestamo('${p.id}')">Anular</button></td>
         </tr>`;
     }).join('');
@@ -16294,10 +16444,17 @@ function renderPrestamos() {
         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:7px;padding-top:7px;font-weight:800;color:${saldo>0?'var(--dark)':(saldo<0?'var(--danger)':'var(--dark)')}">
             <span>${saldo<0?'Se pagó de más':'Deuda total de la clínica'}</span><span style="font-variant-numeric:tabular-nums">${fmt(Math.abs(saldo))}</span></div>
     </div>
+    ${totInteres > 0 ? `<div style="margin-top:10px;padding:11px 16px;background:rgba(192,57,43,.07);border-radius:10px;border-left:4px solid var(--danger);font-size:12.5px;line-height:1.7">
+        <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--danger)">
+            <span>💰 Intereses pagados</span><span style="font-variant-numeric:tabular-nums">${fmt(totInteres)}</span></div>
+        <div style="color:var(--muted);font-size:11.5px;margin-top:3px">Esto sí es gasto del mes y ya está anotado en Gastos,
+            en «Intereses de créditos». No lo vuelva a anotar allá.</div>
+    </div>` : ''}
     <p style="margin:10px 2px 0;font-size:11.5px;line-height:1.6;color:var(--muted)">
-        Nada de esta tabla entra en la utilidad del mes: prestar no es vender y abonar no es gastar.
-        Lo suyo y lo del banco van separados porque son deudas distintas —
-        <strong>los intereses del banco sí son gasto</strong> y se anotan en Gastos, aparte de la cuota.</p>`;
+        Los saldos de arriba no entran en la utilidad del mes: prestar no es vender y abonar capital
+        no es gastar. Lo suyo y lo del banco van separados porque son deudas distintas.
+        <strong>Los intereses sí son gasto</strong> y la app los manda sola a Gastos cuando usted
+        parte la cuota.</p>`;
 }
 
 function showBoldSettle() {
